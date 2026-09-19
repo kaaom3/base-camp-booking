@@ -1,0 +1,24 @@
+=== วิธีการติดตั้งและรันระบบด้วย PM2 ===
+
+1. ติดตั้ง PM2 (ทำครั้งเดียวในเครื่องใหม่)
+เปิด Command Prompt แบบ Administrator แล้วพิมพ์:
+npm install -g pm2
+
+2. ตั้งค่า Ngrok Token (ทำครั้งเดียวในเครื่องใหม่)
+ngrok config add-authtoken 3JXYrYchYzyScmfL3Sufv5iOoRo_4LKtXQHvC7xtNbZmCj4ug
+
+3. สั่งรันระบบทั้ง 2 ตัว
+เข้าไปที่โฟลเดอร์โปรเจกต์ (ที่มีไฟล์ server.js) แล้วพิมพ์ทีละบรรทัด:
+pm2 start server.js --name "basecamp-server"
+pm2 start ngrok.exe --name "ngrok-tunnel" -- http --domain=sibling-compacted-decrease.ngrok-free.dev 5050
+
+4. บันทึกการตั้งค่า
+pm2 save
+
+=== คำสั่งจัดการ PM2 พื้นฐาน ===
+pm2 list         (ดูว่าโปรแกรมไหนกำลังรันอยู่บ้าง)
+pm2 logs         (ดู log การทำงานและ error)
+pm2 restart all  (รีสตาร์ทระบบทั้งหมด)
+pm2 stop all     (หยุดระบบทั้งหมด)
+
+หมายเหตุ: การย้ายไปเครื่องใหม่ อย่าลืมก๊อปปี้ไฟล์ .env และ ngrok.exe ติดไปด้วยนะครับ
