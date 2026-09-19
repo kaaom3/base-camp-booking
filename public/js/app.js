@@ -1,0 +1,293 @@
+let selectedSlot = null;
+let currentFacility = null;
+const isEn = typeof currentLang !== 'undefined' && currentLang === 'en';
+
+document.addEventListener('DOMContentLoaded', () => {
+    initDatePicker();
+
+    const savedRoom = localStorage.getItem('basecamp_room');
+    if(savedRoom) {
+        checkMyBooking(savedRoom);
+    }
+
+    document.getElementById('booking-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        if (currentFacility === 'ice_bath') {
+            const confirmMsg = isEn ? 
+                "There is a fee of 50 THB per session for the Ice Bath.\nPlease pay at the front counter.\n\nDo you want to proceed with the booking?" : 
+                "บ่อน้ำแข็งมีค่าบริการ 50 บาทต่อรอบ\nกรุณาติดต่อชำระเงินที่เคาน์เตอร์ก่อนเข้าใช้งาน\n\nคุณต้องการยืนยันการจองหรือไม่?";
+            if (!confirm(confirmMsg)) {
+                return; // User cancelled
+            }
+        }
+        
+        await submitBooking();
+    });
+});
+
+function initDatePicker() {
+    const dateInput = document.getElementById('bookingDate');
+    const today = new Date();
+    const minDateStr = today.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+    dateInput.min = minDateStr;
+    dateInput.value = minDateStr;
+    const maxDate = new Date();
+    maxDate.setDate(today.getDate() + 7);
+    const maxDateStr = maxDate.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+    dateInput.max = maxDateStr;
+}
+
+function selectFacility(fac) {
+    currentFacility = fac;
+    document.getElementById('facility-container').classList.add('hidden');
+    document.getElementById('consent-container').classList.remove('hidden');
+    
+    document.getElementById('terms-game_room').style.display = 'none';
+    document.getElementById('terms-ice_bath').style.display = 'none';
+    document.getElementById('terms-' + fac).style.display = 'block';
+    
+    // Reset consent
+    document.getElementById('agreeCheckbox').checked = false;
+    document.getElementById('btn-consent').disabled = true;
+}
+
+function backToFacility() {
+    document.getElementById('consent-container').classList.add('hidden');
+    document.getElementById('booking-container').classList.add('hidden');
+    document.getElementById('facility-container').classList.remove('hidden');
+    currentFacility = null;
+    selectedSlot = null;
+}
+
+function toggleConsentBtn() {
+    const isChecked = document.getElementById('agreeCheckbox').checked;
+    document.getElementById('btn-consent').disabled = !isChecked;
+}
+
+function acceptConsent() {
+    document.getElementById('consent-container').classList.add('hidden');
+    document.getElementById('booking-container').classList.remove('hidden');
+    
+    // Set headers dynamically
+    const headerEl = document.querySelector('#booking-header p');
+    const titleEl = document.getElementById('slot-section-title');
+    
+    if (currentFacility === 'game_room') {
+        headerEl.innerText = isEn ? 'Select Game Room Time' : 'เลือกเวลาเข้าใช้ห้องเกมส์';
+        titleEl.innerText = isEn ? '🎮 Game Room Slots (1 hr)' : '🎮 เลือกรอบ Game Room (1 ชม.)';
+        titleEl.style.color = 'var(--primary-color)';
+        titleEl.style.borderColor = 'var(--primary-color)';
+    } else {
+        headerEl.innerText = isEn ? 'Select Ice Bath Time' : 'เลือกเวลาแช่บ่อน้ำแข็ง';
+        titleEl.innerText = isEn ? '🧊 Ice Bath Slots (1 hr)' : '🧊 เลือกรอบ Ice Bath (1 ชม.)';
+        titleEl.style.color = '#00bcd4';
+        titleEl.style.borderColor = '#00bcd4';
+    }
+    
+    loadSlots();
+}
+
+const getSelectedDateString = () => {
+    return document.getElementById('bookingDate').value || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+};
+
+function onDateChange() {
+    selectedSlot = null;
+    document.getElementById('btn-submit').disabled = true;
+    loadSlots();
+}
+
+async function loadSlots() {
+    const container = document.getElementById('slots-container');
+    const selectedDate = getSelectedDateString();
+    
+    const loadingText = isEn ? 'Loading time slots...' : 'กำลังโหลดข้อมูลรอบเวลา...';
+    container.innerHTML = `<div class="loading-state">${loadingText}</div>`;
+
+    try {
+        const res = await fetch(`/api/customer/slots/available?date=${selectedDate}&facility=${currentFacility}`);
+        if (!res.ok) throw new Error('Network response was not ok');
+        
+        const slots = await res.json();
+        container.innerHTML = '';
+        
+        slots.forEach(slot => {
+            const btn = document.createElement('div');
+            btn.className = `slot-btn ${slot.isAvailable ? 'available' : 'booked'}`;
+            
+            const statusText = slot.isAvailable ? 'AVAILABLE' : 'BOOKED';
+            
+            btn.innerHTML = `
+                <div class="slot-time">${slot.startTime} - ${slot.endTime}</div>
+                <div class="slot-status">${statusText}</div>
+            `;
+            
+            if (slot.isAvailable) {
+                btn.onclick = () => selectSlot(slot.slotNumber, btn);
+            }
+
+            container.appendChild(btn);
+        });
+
+    } catch (error) {
+        console.error(error);
+        const errText = isEn ? '❌ Cannot load time slots.' : '❌ ไม่สามารถโหลดข้อมูลรอบเวลาได้';
+        container.innerHTML = `<div class="loading-state" style="color:red;">${errText}</div>`;
+    }
+}
+
+function selectSlot(slotNumber, btnElement) {
+    document.querySelectorAll('#slots-container .slot-btn').forEach(btn => {
+        btn.classList.remove('selected');
+        if(btn.classList.contains('available')) {
+            btn.querySelector('.slot-status').innerText = 'AVAILABLE';
+        }
+    });
+    
+    btnElement.classList.add('selected');
+    btnElement.querySelector('.slot-status').innerText = 'SELECTED';
+    
+    selectedSlot = slotNumber;
+    document.getElementById('btn-submit').disabled = false;
+}
+
+async function submitBooking() {
+    if (!selectedSlot) return alert(isEn ? 'Please select a time slot' : 'กรุณาเลือกรอบเวลา');
+
+    const roomNumber = document.getElementById('roomNumber').value;
+    const displayName = document.getElementById('displayName').value;
+    const selectedDate = getSelectedDateString();
+
+    const btn = document.getElementById('btn-submit');
+    const originalText = btn.innerText;
+    btn.innerText = isEn ? 'PROCESSING...' : 'กำลังดำเนินการ...';
+    btn.disabled = true;
+
+    try {
+        const res = await fetch('/api/customer/bookings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                displayName, 
+                hotelRoomNumber: roomNumber, 
+                bookingDate: selectedDate, 
+                slotNumber: selectedSlot, 
+                facility: currentFacility
+            })
+        });
+        
+        const data = await res.json();
+        if (!res.ok) {
+            alert(data.message || 'Error');
+            btn.innerText = originalText;
+            btn.disabled = false;
+            return;
+        }
+
+        localStorage.setItem('basecamp_room', roomNumber);
+        
+        checkMyBooking(roomNumber);
+
+    } catch (error) {
+        const connErr = isEn ? 'Cannot connect to server. Please try again.' : 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาลองใหม่';
+        alert(connErr);
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }
+}
+
+async function checkMyBooking(roomNumber) {
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+    try {
+        const res = await fetch(`/api/customer/bookings/my-booking?hotelRoomNumber=${roomNumber}&date=${today}`);
+        if (res.ok) {
+            const data = await res.json(); 
+            document.getElementById('facility-container').classList.add('hidden');
+            document.getElementById('consent-container').classList.add('hidden');
+            document.getElementById('booking-container').classList.add('hidden');
+            showTicket(data);
+        } else {
+            document.getElementById('roomNumber').value = roomNumber;
+        }
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+function showTicket(bookings) {
+    if (!Array.isArray(bookings)) bookings = [bookings];
+    
+    document.getElementById('facility-container').classList.add('hidden');
+    document.getElementById('consent-container').classList.add('hidden');
+    document.getElementById('booking-container').classList.add('hidden');
+    document.getElementById('ticket-container').classList.remove('hidden');
+
+    const wrapper = document.getElementById('tickets-wrapper');
+    wrapper.innerHTML = '';
+
+    bookings.forEach(booking => {
+        let name = "-";
+        if (booking.userId && booking.userId.displayName) name = booking.userId.displayName;
+        
+        const facilityLabel = booking.facility === 'ice_bath' ? (isEn ? '🧊 ICE BATH' : '🧊 บ่อน้ำแข็ง (ICE BATH)') : (isEn ? '🎮 GAME ROOM' : '🎮 ห้องเกมส์ (GAME ROOM)');
+        const color = booking.facility === 'ice_bath' ? '#00bcd4' : 'var(--primary-color)';
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${booking.bookingRef}`;
+
+        let feeAlertHtml = '';
+        if (booking.facility === 'ice_bath') {
+            feeAlertHtml = `
+                <div style="margin-top: 15px; padding: 10px; background: #fff5f5; color: #c53030; border: 1px solid #feb2b2; border-radius: 8px; text-align: center; font-size: 14px; font-weight: bold;">
+                    ${isEn ? '⚠️ Fee: 50 THB. Please pay at the counter.' : '⚠️ ค่าบริการ 50 บาท กรุณาชำระที่เคาน์เตอร์'}
+                </div>
+            `;
+        }
+
+        const ticketHtml = `
+            <div style="border: 1px solid var(--border-color); border-radius: 12px; background: white; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden;">
+                <div style="background: ${color}; color: white; padding: 10px; text-align: center; font-weight: 600; font-size: 16px;">
+                    ${facilityLabel}
+                </div>
+                <div class="ticket-body" style="padding: 20px;">
+                    <div class="qr-box" style="margin-bottom: 20px; text-align: center;">
+                        <img src="${qrUrl}" alt="Booking QR Code" style="width: 150px; height: 150px; display:inline-block;">
+                        <p class="qr-hint" style="margin-top:10px; font-size:13px; color:var(--text-muted);">${isEn ? 'Please show this screen to staff' : 'โปรดแสดงหน้าจอนี้แก่พนักงาน'}</p>
+                    </div>
+                    
+                    <div class="ticket-right-col" style="flex: 1; display: flex; flex-direction: column;">
+                        <div class="ticket-info">
+                            <div class="info-row">
+                                <span class="label">${isEn ? 'Booking Ref' : 'รหัสการจอง'}</span>
+                                <span class="value highlight">${booking.bookingRef}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="label">${isEn ? 'Guest Name' : 'ชื่อผู้จอง'}</span>
+                                <span class="value">${name}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="label">${isEn ? 'Room' : 'ห้องพัก'}</span>
+                                <span class="value">${booking.hotelRoomNumber}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="label">${isEn ? 'Time Slot' : 'เวลารอบ'}</span>
+                                <span class="value highlight">${booking.bookingDate} | ${booking.startTime} - ${booking.endTime}</span>
+                            </div>
+                        </div>
+
+                        ${feeAlertHtml}
+
+                        <div class="alert-box" style="margin-top: ${feeAlertHtml ? '10px' : '15px'};">
+                            ${isEn ? 'Please arrive 5 minutes before your session.' : 'กรุณามาถึงก่อนเวลา 5 นาที'}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        wrapper.innerHTML += ticketHtml;
+    });
+}
+
+function resetSession() {
+    localStorage.removeItem('basecamp_room');
+    window.location.reload();
+}

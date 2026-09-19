@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base Camp Game Room & Ice Bath</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script>const currentLang = 'th';</script>
+    <style>
+        .fac-btn {
+            display: block;
+            width: 100%;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s;
+            border: none;
+        }
+        .fac-game { background: var(--primary-color); }
+        .fac-ice { background: #00bcd4; }
+        .fac-btn:hover { opacity: 0.9; transform: translateY(-2px); }
+        .price-tag { font-size: 14px; font-weight: normal; margin-top: 5px; opacity: 0.9; }
+    </style>
+</head>
+<body>
+    <div class="app-wrapper">
+        
+        <!-- Facility Selection Screen -->
+        <div id="facility-container" class="view-section">
+            <div class="hero-header">
+                <img src="/images/logo.png" alt="Base Camp Hotel">
+                <p>เลือกบริการที่ต้องการจอง</p>
+            </div>
+            <div class="content-body" style="padding: 30px 20px;">
+                <button class="fac-btn fac-game" onclick="selectFacility('game_room')">
+                    🎮 ห้องเกมส์ (Game Room)
+                    <div class="price-tag">ฟรี (Free)</div>
+                </button>
+                <button class="fac-btn fac-ice" onclick="selectFacility('ice_bath')">
+                    🧊 บ่อน้ำแข็ง (Ice Bath)
+                    <div class="price-tag">ค่าบริการ 50 บาท (50 THB)</div>
+                </button>
+                <div style="text-align: center; margin-top: 20px;">
+                    <a href="index.html" style="color: #718096; font-size: 14px; text-decoration: underline;">ย้อนกลับ (Back)</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Consent Screen -->
+        <div id="consent-container" class="view-section hidden">
+            <div class="hero-header">
+                <img src="/images/logo.png" alt="Base Camp Hotel">
+                <p id="consent-title">ข้อตกลงและเงื่อนไข</p>
+            </div>
+            <div class="content-body" style="flex: 1; display: flex; flex-direction: column;">
+                
+                <!-- Game Room Terms -->
+                <div class="terms-box" id="terms-game_room" style="display: none;">
+                    <h4 style="color: var(--primary-color); margin-bottom: 10px;">🎮 ข้อกำหนดห้องเกมส์ (Game Room)</h4>
+                    <ol style="margin-bottom: 20px;">
+                        <li>ท่านสามารถจองเวลาเข้าใช้บริการผ่านระบบคิวอาร์ออน์ไลน์ของโรงแรมที่จัดเตรียมไว้ให้</li>
+                        <li>กำหนดระยะเวลาการเข้าใช้บริการ 1 ชั่วโมงต่อห้องพัก</li>
+                        <li>ปรับลดระดับเสียงให้เหมาะสม เพื่อเป็นการไม่รบกวนกับผู้เข้าพักท่านอื่น</li>
+                        <li>กรุณาเลือกประเภทของเกมส์ให้เหมาะสมกับช่วงอายุของผู้เล่น</li>
+                        <li>ไม่อนุญาติดัดแปลงแก้ไข การตั้งค่า และถอดสายอุปกรณ์ใดๆ หากพบปัญหากรุณาแจ้งพนักงานทันที</li>
+                        <li>ไม่อนุญาตให้นำอาหารและเครื่องดื่มเข้ามารับประทานบริเวณห้องเกมส์โดยเด็ดขาด</li>
+                        <li>หากผู้ใช้บริการประมาทเลินเล่อเป็นเหตุให้อุปกรณ์เกิดความเสียหาย จะต้องรับผิดชอบชดใช้ค่าเสียหายตามมูลค่าจริงของอุปกรณ์นั้นๆ</li>
+                    </ol>
+                </div>
+
+                <!-- Ice Bath Terms -->
+                <div class="terms-box" id="terms-ice_bath" style="display: none;">
+                    <h4 style="color: #00bcd4; margin-bottom: 10px;">🧊 ข้อกำหนดบ่อน้ำแข็ง (Ice Bath)</h4>
+                    <ol>
+                        <li><strong>มีค่าบริการ 50 บาทต่อรอบ</strong> กรุณาชำระเงินและรับคำแนะนำที่เคาน์เตอร์ก่อนใช้บริการ</li>
+                        <li>ผู้ใช้บริการต้องมีสุขภาพแข็งแรง ไม่มีโรคประจำตัว ห้ามผู้ที่เป็นโรคหัวใจ ความดันโลหิตสูง โรคหอบหืด หรือโรคลมชัก เข้าใช้บริการเด็ดขาด</li>
+                        <li>สตรีมีครรภ์ ผู้ที่มีบาดแผลเปิด หรือผู้ที่อยู่ภายใต้ฤทธิ์แอลกอฮอล์/ยาเสพติด ห้ามใช้บริการเด็ดขาด</li>
+                        <li>กำหนดเวลาใช้บริการในห้อง 1 ชั่วโมงต่อรอบ แต่เพื่อความปลอดภัย <strong>ห้ามแช่น้ำแข็งต่อเนื่องเกิน 5-10 นาทีต่อครั้ง</strong></li>
+                        <li>หากมีอาการหน้ามืด หายใจไม่ออก หนาวสั่นรุนแรง หรือเจ็บหน้าอก ให้รีบขึ้นจากอ่างและแจ้งพนักงานทันที</li>
+                        <li>ห้ามแช่น้ำแข็งตามลำพัง ต้องมีผู้ดูแลหรือเพื่อนอยู่ด้วยเสมอ</li>
+                        <li>การลงและขึ้นจากอ่างต้องทำอย่างช้าๆ ระมัดระวังการลื่นล้ม</li>
+                        <li>ผู้ใช้บริการยอมรับความเสี่ยงด้วยตนเอง ทางโรงแรมจะไม่รับผิดชอบต่อปัญหาสุขภาพหรืออุบัติเหตุที่เกิดจากการฝ่าฝืนกฎ</li>
+                    </ol>
+                </div>
+                
+                <label class="checkbox-container">
+                    ข้าพเจ้าได้อ่านและยอมรับข้อตกลงและเงื่อนไขด้านบนทั้งหมด
+                    <input type="checkbox" id="agreeCheckbox" onchange="toggleConsentBtn()">
+                    <span class="checkmark"></span>
+                </label>
+                
+                <button class="btn-primary" id="btn-consent" onclick="acceptConsent()" disabled>ยอมรับ (Accept)</button>
+                <div style="text-align: center; margin-top: 15px;">
+                    <a href="#" onclick="backToFacility()" style="color: #718096; font-size: 14px; text-decoration: underline;">กลับไปเลือกบริการ</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Booking Form Screen -->
+        <div id="booking-container" class="view-section hidden">
+            <div class="hero-header" id="booking-header">
+                <img src="/images/logo.png" alt="Base Camp Hotel">
+                <p>เลือกเวลาใช้บริการ</p>
+            </div>
+            <form id="booking-form" class="content-body">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>หมายเลขห้องพัก (Room No.)</label>
+                        <input type="number" id="roomNumber" required placeholder="เช่น 201">
+                    </div>
+                    <div class="form-group">
+                        <label>ชื่อผู้จอง (Guest Name)</label>
+                        <input type="text" id="displayName" required placeholder="ชื่อของคุณ">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 10px;">
+                    <label>วันที่จอง (Date)</label>
+                    <input type="date" id="bookingDate" required onchange="onDateChange()">
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <h3 class="section-title" id="slot-section-title">เลือกรอบเวลา</h3>
+                    <div class="slots-grid" id="slots-container">
+                        <div class="loading-state">กรุณาเลือกวันที่ก่อน</div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary" id="btn-submit" disabled>ยืนยันการจอง (Confirm)</button>
+                <div style="text-align: center; margin-top: 15px;">
+                    <a href="#" onclick="backToFacility()" style="color: #718096; font-size: 13px; text-decoration: underline;">ยกเลิก / เปลี่ยนบริการ</a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Ticket Screen -->
+        <div id="ticket-container" class="view-section hidden">
+            <div class="hero-header success">
+                <h2>RESERVATION CONFIRMED</h2>
+                <p>การจองของท่านเสร็จสมบูรณ์</p>
+            </div>
+            
+            <div class="content-body" style="padding: 20px; overflow-y: auto;">
+                <div id="tickets-wrapper" style="display: flex; flex-direction: column; gap: 20px;">
+                    <!-- Tickets will be injected here -->
+                </div>
+
+                <div style="margin-top: 30px; text-align: center;">
+                    <a href="#" onclick="resetSession()" style="color: #718096; font-size: 14px; text-decoration: underline;">ทำรายการใหม่ (Clear Session)</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

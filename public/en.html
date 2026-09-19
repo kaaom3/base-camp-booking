@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base Camp Game Room & Ice Bath</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script>const currentLang = 'en';</script>
+    <style>
+        .fac-btn {
+            display: block;
+            width: 100%;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s;
+            border: none;
+        }
+        .fac-game { background: var(--primary-color); }
+        .fac-ice { background: #00bcd4; }
+        .fac-btn:hover { opacity: 0.9; transform: translateY(-2px); }
+        .price-tag { font-size: 14px; font-weight: normal; margin-top: 5px; opacity: 0.9; }
+    </style>
+</head>
+<body>
+    <div class="app-wrapper">
+        
+        <!-- Facility Selection Screen -->
+        <div id="facility-container" class="view-section">
+            <div class="hero-header">
+                <img src="/images/logo.png" alt="Base Camp Hotel">
+                <p>Select Facility</p>
+            </div>
+            <div class="content-body" style="padding: 30px 20px;">
+                <button class="fac-btn fac-game" onclick="selectFacility('game_room')">
+                    🎮 Game Room
+                    <div class="price-tag">Free</div>
+                </button>
+                <button class="fac-btn fac-ice" onclick="selectFacility('ice_bath')">
+                    🧊 Ice Bath
+                    <div class="price-tag">Fee: 50 THB</div>
+                </button>
+                <div style="text-align: center; margin-top: 20px;">
+                    <a href="index.html" style="color: #718096; font-size: 14px; text-decoration: underline;">Back to Language</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Consent Screen -->
+        <div id="consent-container" class="view-section hidden">
+            <div class="hero-header">
+                <img src="/images/logo.png" alt="Base Camp Hotel">
+                <p id="consent-title">Terms and Conditions</p>
+            </div>
+            <div class="content-body" style="flex: 1; display: flex; flex-direction: column;">
+                
+                <!-- Game Room Terms -->
+                <div class="terms-box" id="terms-game_room" style="display: none;">
+                    <h4 style="color: var(--primary-color); margin-bottom: 10px;">🎮 Game Room Rules</h4>
+                    <ol style="margin-bottom: 20px;">
+                        <li>Bookings must be made via the hotel's online QR system.</li>
+                        <li>Service time is limited to 1 hour per room.</li>
+                        <li>Keep volume at a moderate level to avoid disturbing other guests.</li>
+                        <li>Choose age-appropriate games for players.</li>
+                        <li>Do not modify settings or unplug any equipment. Report issues to staff immediately.</li>
+                        <li>Food and drinks are strictly prohibited in the game room.</li>
+                        <li>Guests are liable for any damages caused by negligence and must compensate at full value.</li>
+                    </ol>
+                </div>
+
+                <!-- Ice Bath Terms -->
+                <div class="terms-box" id="terms-ice_bath" style="display: none;">
+                    <h4 style="color: #00bcd4; margin-bottom: 10px;">🧊 Ice Bath Rules</h4>
+                    <ol>
+                        <li><strong>There is a 50 THB fee per session.</strong> Please pay and receive instructions at the counter before use.</li>
+                        <li>Users must be in good health. Individuals with heart conditions, high blood pressure, asthma, or epilepsy are prohibited.</li>
+                        <li>Pregnant women, individuals with open wounds, or those under the influence of alcohol/drugs are strictly prohibited.</li>
+                        <li>Session time in the room is 1 hour, but for safety, <strong>do not immerse in ice water for more than 5-10 continuous minutes.</strong></li>
+                        <li>Exit immediately and notify staff if you experience dizziness, shortness of breath, severe shivering, or chest pain.</li>
+                        <li>Never plunge alone. Always have a companion or staff member nearby.</li>
+                        <li>Enter and exit the bath slowly and carefully to prevent slips and falls.</li>
+                        <li>Users assume all risks. The hotel is not liable for any health issues or injuries resulting from rule violations.</li>
+                    </ol>
+                </div>
+                
+                <label class="checkbox-container">
+                    I have read and accept all terms and conditions above
+                    <input type="checkbox" id="agreeCheckbox" onchange="toggleConsentBtn()">
+                    <span class="checkmark"></span>
+                </label>
+                
+                <button class="btn-primary" id="btn-consent" onclick="acceptConsent()" disabled>Accept</button>
+                <div style="text-align: center; margin-top: 15px;">
+                    <a href="#" onclick="backToFacility()" style="color: #718096; font-size: 14px; text-decoration: underline;">Back to Selection</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Booking Form Screen -->
+        <div id="booking-container" class="view-section hidden">
+            <div class="hero-header" id="booking-header">
+                <img src="/images/logo.png" alt="Base Camp Hotel">
+                <p>Select Time Slot</p>
+            </div>
+            <form id="booking-form" class="content-body">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Room No.</label>
+                        <input type="number" id="roomNumber" required placeholder="e.g. 201">
+                    </div>
+                    <div class="form-group">
+                        <label>Guest Name</label>
+                        <input type="text" id="displayName" required placeholder="Your Name">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 10px;">
+                    <label>Date</label>
+                    <input type="date" id="bookingDate" required onchange="onDateChange()">
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <h3 class="section-title" id="slot-section-title">Select Time Slot</h3>
+                    <div class="slots-grid" id="slots-container">
+                        <div class="loading-state">Please select a date first</div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary" id="btn-submit" disabled>CONFIRM BOOKING</button>
+                <div style="text-align: center; margin-top: 15px;">
+                    <a href="#" onclick="backToFacility()" style="color: #718096; font-size: 13px; text-decoration: underline;">Cancel / Back</a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Ticket Screen -->
+        <div id="ticket-container" class="view-section hidden">
+            <div class="hero-header success">
+                <h2>RESERVATION CONFIRMED</h2>
+                <p>Your booking is complete</p>
+            </div>
+            
+            <div class="content-body" style="padding: 20px; overflow-y: auto;">
+                <div id="tickets-wrapper" style="display: flex; flex-direction: column; gap: 20px;">
+                    <!-- Tickets will be injected here -->
+                </div>
+
+                <div style="margin-top: 30px; text-align: center;">
+                    <a href="#" onclick="resetSession()" style="color: #718096; font-size: 14px; text-decoration: underline;">Book another session</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
