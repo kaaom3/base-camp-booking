@@ -14,17 +14,54 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         
         if (currentFacility === 'ice_bath') {
-            const confirmMsg = isEn ? 
-                "There is a fee of 50 THB per session for the Ice Bath.\nPlease pay at the front counter.\n\nDo you want to proceed with the booking?" : 
-                "บ่อน้ำแข็งมีค่าบริการ 50 บาทต่อรอบ\nกรุณาติดต่อชำระเงินที่เคาน์เตอร์ก่อนเข้าใช้งาน\n\nคุณต้องการยืนยันการจองหรือไม่?";
-            if (!confirm(confirmMsg)) {
-                return; // User cancelled
-            }
+            showCustomConfirmModal();
+        } else {
+            await submitBooking();
         }
-        
-        await submitBooking();
     });
 });
+
+function showCustomConfirmModal() {
+    const modalHtml = `
+    <div id="custom-modal-overlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:flex; justify-content:center; align-items:center; z-index:9999; padding: 20px;">
+        <div style="background:white; border-radius:16px; padding:30px 20px; max-width:400px; width:100%; text-align:center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); animation: popIn 0.3s ease-out;">
+            <div style="font-size: 50px; margin-bottom: 10px;">🧊</div>
+            <h3 style="color: #00bcd4; margin-bottom: 15px; font-size: 22px;">
+                ${isEn ? 'Ice Bath Fee' : 'แจ้งเตือนค่าบริการ'}
+            </h3>
+            <p style="color: #4a5568; margin-bottom: 25px; line-height: 1.6; font-size: 16px;">
+                ${isEn ? 'There is a fee of <strong style="color:#e53e3e; font-size:18px;">50 THB</strong> per session.<br>Please pay at the front counter before using the facility.' : 'บ่อน้ำแข็งมีค่าบริการ <strong style="color:#e53e3e; font-size:18px;">50 บาท</strong> ต่อรอบ<br>กรุณาติดต่อชำระเงินที่เคาน์เตอร์ก่อนเข้าใช้งาน'}
+            </p>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="closeCustomModal()" style="flex: 1; padding: 14px; border-radius: 8px; border: 2px solid #e2e8f0; background: white; color: #4a5568; font-weight: bold; cursor: pointer; font-family: 'Kanit', sans-serif;">
+                    ${isEn ? 'Cancel' : 'ยกเลิก'}
+                </button>
+                <button onclick="confirmCustomModal()" style="flex: 1; padding: 14px; border-radius: 8px; border: none; background: #00bcd4; color: white; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(0, 188, 212, 0.2); font-family: 'Kanit', sans-serif;">
+                    ${isEn ? 'Proceed' : 'ยืนยันการจอง'}
+                </button>
+            </div>
+        </div>
+    </div>
+    <style>
+        @keyframes popIn {
+            0% { transform: scale(0.9); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+window.closeCustomModal = function() {
+    const modal = document.getElementById('custom-modal-overlay');
+    if (modal) modal.remove();
+}
+
+window.confirmCustomModal = async function() {
+    closeCustomModal();
+    await submitBooking();
+}
 
 function initDatePicker() {
     const dateInput = document.getElementById('bookingDate');
