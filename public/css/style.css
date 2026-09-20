@@ -545,3 +545,146 @@ body {
     margin-top: 15px;
     font-size: 15px;
 }
+
+
+/* Progress Bar */
+.step-indicator {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 40px 10px 40px;
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+}
+@media (max-width: 767px) {
+    .step-indicator { padding: 15px 20px 10px 20px; }
+}
+.step-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    flex: 1;
+    z-index: 2;
+}
+.step-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--border-color);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: 5px;
+    transition: all 0.3s;
+}
+.step-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+.step-line {
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    width: 100%;
+    height: 3px;
+    background: var(--border-color);
+    z-index: -1;
+    transition: all 0.3s;
+}
+.step-item:last-child .step-line {
+    display: none;
+}
+.step-item.active .step-dot {
+    background: var(--primary-color);
+    color: white;
+    box-shadow: 0 0 10px rgba(0, 17, 255, 0.3);
+}
+.step-item.active .step-label {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+.step-item.completed .step-dot {
+    background: var(--success-color);
+    color: white;
+}
+.step-item.completed .step-line {
+    background: var(--success-color);
+}
+
+/* Card Buttons */
+.fac-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 25px 20px;
+    margin-bottom: 20px;
+    border-radius: 16px;
+    text-align: center;
+    font-size: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 2px solid transparent;
+    background: white;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    color: var(--text-main);
+    position: relative;
+    overflow: hidden;
+}
+.fac-btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 6px;
+}
+.fac-game::before { background: linear-gradient(90deg, #0011ff, #3344ff); }
+.fac-ice::before { background: linear-gradient(90deg, #00bcd4, #26c6da); }
+.fac-nintendo::before { background: linear-gradient(90deg, #e53e3e, #f56565); }
+.fac-female::before { background: linear-gradient(90deg, #d53f8c, #ed64a6); }
+.fac-both::before { background: linear-gradient(90deg, #805ad5, #9f7aea); }
+
+.fac-btn:hover:not(:disabled) {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 25px rgba(0,0,0,0.1);
+    border-color: var(--border-color);
+}
+.fac-icon {
+    font-size: 36px;
+    margin-bottom: 12px;
+}
+.fac-title {
+    font-size: 18px;
+    margin-bottom: 5px;
+}
+.price-tag { 
+    font-size: 13px; 
+    font-weight: 500; 
+    color: var(--text-muted);
+    background: #f1f5f9;
+    padding: 4px 12px;
+    border-radius: 20px;
+}
+.fac-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+    background: #f8fafc;
+    box-shadow: none;
+    border-color: #e2e8f0;
+}
+.fac-btn:disabled::before {
+    background: #cbd5e0;
+}
+.fac-btn:disabled .price-tag {
+    background: #fee2e2;
+    color: #ef4444;
+}

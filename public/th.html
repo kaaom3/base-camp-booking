@@ -31,6 +31,30 @@
 <body>
     
     <div class="app-wrapper">
+
+        <div class="step-indicator" id="stepIndicator">
+            <div class="step-item active" id="indicator-1">
+                <div class="step-dot">1</div>
+                <div class="step-label">บริการ</div>
+                <div class="step-line"></div>
+            </div>
+            <div class="step-item" id="indicator-2">
+                <div class="step-dot">2</div>
+                <div class="step-label">ตัวเลือก</div>
+                <div class="step-line"></div>
+            </div>
+            <div class="step-item" id="indicator-3">
+                <div class="step-dot">3</div>
+                <div class="step-label">ข้อตกลง</div>
+                <div class="step-line"></div>
+            </div>
+            <div class="step-item" id="indicator-4">
+                <div class="step-dot">4</div>
+                <div class="step-label">เวลา</div>
+                <div class="step-line"></div>
+            </div>
+        </div>
+
         
         <!-- Step 1: Date & Facility -->
         <div id="step-1" class="view-section">
@@ -44,12 +68,16 @@
                     <input type="date" id="globalDate" required class="form-input" style="padding: 15px; font-size: 16px;">
                 </div>
                 
+                
                 <button class="fac-btn fac-game" onclick="goStep2('game_room')">
-                    🎮 ห้องเกมส์ (Game Room)
+                    <div class="fac-icon">🎮</div>
+                    <div class="fac-title">ห้องเกมส์ (Game Room)</div>
                     <div class="price-tag">ฟรี (Free)</div>
                 </button>
+                
                 <button class="fac-btn fac-ice" onclick="goStep2('ice_bath')">
-                    🧊 บ่อน้ำแข็ง (Ice Bath)
+                    <div class="fac-icon">🧊</div>
+                    <div class="fac-title">บ่อน้ำแข็ง (Ice Bath)</div>
                     <div class="price-tag">ค่าบริการ 50 บาท (50 THB)</div>
                 </button>
                 

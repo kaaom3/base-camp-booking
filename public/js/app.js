@@ -8,6 +8,7 @@ let selectedSlot = null; // Used for normal selection (or Male for both)
 let selectedSlot2 = null; // Used for Female when 'both' is selected
 
 document.addEventListener('DOMContentLoaded', () => {
+    updateProgress(1);
     // Set default date to today
     const dateInput = document.getElementById('globalDate');
     if (dateInput) {
@@ -15,6 +16,31 @@ document.addEventListener('DOMContentLoaded', () => {
         dateInput.value = bkkTime.toLocaleDateString('en-CA');
     }
 });
+
+
+function updateProgress(stepNumber) {
+    const indicator = document.getElementById('stepIndicator');
+    if (!indicator) return;
+    
+    if (stepNumber === 5) {
+        indicator.style.display = 'none';
+        return;
+    } else {
+        indicator.style.display = 'flex';
+    }
+
+    for (let i = 1; i <= 4; i++) {
+        const item = document.getElementById('indicator-' + i);
+        if (!item) continue;
+        
+        item.classList.remove('active', 'completed');
+        if (i < stepNumber) {
+            item.classList.add('completed');
+        } else if (i === stepNumber) {
+            item.classList.add('active');
+        }
+    }
+}
 
 function hideAllSteps() {
     ['step-1', 'step-2', 'step-3', 'step-4', 'ticket-container'].forEach(id => {
@@ -36,6 +62,7 @@ async function goStep2(facility) {
     
     hideAllSteps();
     document.getElementById('step-2').classList.remove('hidden');
+    updateProgress(2);
     
     const loadingEl = document.getElementById('options-loading');
     const optionsEl = document.getElementById('options-container');
@@ -60,15 +87,15 @@ async function goStep2(facility) {
             const ninAvail = summary.nintendo > 0;
             
             html += `
-                <button class="fac-btn" style="background: ${ps5Avail ? 'var(--primary-color)' : '#cbd5e0'}; cursor: ${ps5Avail ? 'pointer' : 'not-allowed'};" 
-                    ${ps5Avail ? 'onclick="goStep3(\'ps5\')"' : 'disabled'}>
-                    PlayStation 5
-                    <div class="price-tag">${ps5Avail ? (isEn ? 'Available' : 'ว่าง') : (isEn ? 'Fully Booked' : 'คิวเต็มแล้ว')}</div>
+                <button class="fac-btn fac-game" ${ps5Avail ? 'onclick="goStep3(\'ps5\')"' : 'disabled'}>
+                    <div class="fac-icon">🕹️</div>
+                    <div class="fac-title">PlayStation 5</div>
+                    <div class="price-tag">${ps5Avail ? (isEn ? 'Available' : 'ว่าง') : (isEn ? 'FULLY BOOKED' : 'คิวเต็มแล้ว')}</div>
                 </button>
-                <button class="fac-btn" style="background: ${ninAvail ? '#e53e3e' : '#cbd5e0'}; cursor: ${ninAvail ? 'pointer' : 'not-allowed'};" 
-                    ${ninAvail ? 'onclick="goStep3(\'nintendo\')"' : 'disabled'}>
-                    Nintendo Switch
-                    <div class="price-tag">${ninAvail ? (isEn ? 'Available' : 'ว่าง') : (isEn ? 'Fully Booked' : 'คิวเต็มแล้ว')}</div>
+                <button class="fac-btn fac-nintendo" ${ninAvail ? 'onclick="goStep3(\'nintendo\')"' : 'disabled'}>
+                    <div class="fac-icon">🍄</div>
+                    <div class="fac-title">Nintendo Switch</div>
+                    <div class="price-tag">${ninAvail ? (isEn ? 'Available' : 'ว่าง') : (isEn ? 'FULLY BOOKED' : 'คิวเต็มแล้ว')}</div>
                 </button>
             `;
         } else {
@@ -79,24 +106,23 @@ async function goStep2(facility) {
             const bothAvail = maleAvail && femaleAvail;
             
             html += `
-                <button class="fac-btn" style="background: ${maleAvail ? '#3182ce' : '#cbd5e0'}; cursor: ${maleAvail ? 'pointer' : 'not-allowed'};" 
-                    ${maleAvail ? 'onclick="goStep3(\'male\')"' : 'disabled'}>
-                    ${isEn ? 'Male Bath' : 'บ่อผู้ชาย (Male)'}
-                    <div class="price-tag">${maleAvail ? (isEn ? 'Available' : 'ว่าง') : (isEn ? 'Fully Booked' : 'คิวเต็มแล้ว')}</div>
+                <button class="fac-btn fac-game" ${maleAvail ? 'onclick="goStep3(\'male\')"' : 'disabled'}>
+                    <div class="fac-icon">👨</div>
+                    <div class="fac-title">${isEn ? 'Male Bath' : 'บ่อผู้ชาย (Male)'}</div>
+                    <div class="price-tag">${maleAvail ? (isEn ? 'Available' : 'ว่าง') : (isEn ? 'FULLY BOOKED' : 'คิวเต็มแล้ว')}</div>
                 </button>
-                <button class="fac-btn" style="background: ${femaleAvail ? '#d53f8c' : '#cbd5e0'}; cursor: ${femaleAvail ? 'pointer' : 'not-allowed'};" 
-                    ${femaleAvail ? 'onclick="goStep3(\'female\')"' : 'disabled'}>
-                    ${isEn ? 'Female Bath' : 'บ่อผู้หญิง (Female)'}
-                    <div class="price-tag">${femaleAvail ? (isEn ? 'Available' : 'ว่าง') : (isEn ? 'Fully Booked' : 'คิวเต็มแล้ว')}</div>
+                <button class="fac-btn fac-female" ${femaleAvail ? 'onclick="goStep3(\'female\')"' : 'disabled'}>
+                    <div class="fac-icon">👩</div>
+                    <div class="fac-title">${isEn ? 'Female Bath' : 'บ่อผู้หญิง (Female)'}</div>
+                    <div class="price-tag">${femaleAvail ? (isEn ? 'Available' : 'ว่าง') : (isEn ? 'FULLY BOOKED' : 'คิวเต็มแล้ว')}</div>
                 </button>
-                <button class="fac-btn" style="background: ${bothAvail ? '#805ad5' : '#cbd5e0'}; cursor: ${bothAvail ? 'pointer' : 'not-allowed'};" 
-                    ${bothAvail ? 'onclick="goStep3(\'both\')"' : 'disabled'}>
-                    ${isEn ? 'Couples (Male & Female)' : 'จองทั้งคู่ ชายและหญิง (Couples)'}
-                    <div class="price-tag">${bothAvail ? (isEn ? 'Available' : 'ว่าง') : (isEn ? 'Fully Booked' : 'คิวเต็มแล้ว')}</div>
+                <button class="fac-btn fac-both" ${bothAvail ? 'onclick="goStep3(\'both\')"' : 'disabled'}>
+                    <div class="fac-icon">👩‍❤️‍👨</div>
+                    <div class="fac-title">${isEn ? 'Couples (Both)' : 'จองทั้งคู่ ชายและหญิง'}</div>
+                    <div class="price-tag">${bothAvail ? (isEn ? 'Available' : 'ว่าง') : (isEn ? 'FULLY BOOKED' : 'คิวเต็มแล้ว')}</div>
                 </button>
             `;
         }
-        
         optionsEl.innerHTML = html;
         
     } catch (err) {
@@ -109,6 +135,7 @@ async function goStep2(facility) {
 function goBackToStep1() {
     hideAllSteps();
     document.getElementById('step-1').classList.remove('hidden');
+    updateProgress(1);
     currentFacility = null;
 }
 
@@ -118,6 +145,7 @@ function goStep3(option) {
     currentOption = option;
     hideAllSteps();
     document.getElementById('step-3').classList.remove('hidden');
+    updateProgress(3);
     
     document.getElementById('terms-game_room').style.display = 'none';
     document.getElementById('terms-ice_bath').style.display = 'none';
@@ -140,6 +168,7 @@ function goBackToStep2() {
 function goStep4() {
     hideAllSteps();
     document.getElementById('step-4').classList.remove('hidden');
+    updateProgress(4);
     
     selectedSlot = null;
     selectedSlot2 = null;
@@ -159,6 +188,7 @@ function goStep4() {
 function goBackToStep3() {
     hideAllSteps();
     document.getElementById('step-3').classList.remove('hidden');
+    updateProgress(3);
 }
 
 // ================= SLOT LOGIC =================
@@ -355,6 +385,7 @@ function showTicket(bookings) {
     
     hideAllSteps();
     document.getElementById('ticket-container').classList.remove('hidden');
+    updateProgress(5);
 
     const wrapper = document.getElementById('tickets-wrapper');
     wrapper.innerHTML = '';
