@@ -312,7 +312,7 @@ function openDocument(ref, room, name, date, time, lang, facility = 'game_room')
             </div>
             
             <div class="header-box">
-                <img src="/images/logo.png" alt="Base Camp Logo">
+                <img src="images/logo.png" alt="Base Camp Logo">
                 <h2>${header}</h2>
             </div>
             
