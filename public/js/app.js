@@ -367,6 +367,7 @@ async function submitBooking(e) {
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || 'Error');
+            data.booking.displayName = displayName;
             results.push(data.booking);
         }
 
@@ -392,7 +393,8 @@ function showTicket(bookings) {
 
     bookings.forEach(booking => {
         let name = "-";
-        if (booking.userId && booking.userId.displayName) name = booking.userId.displayName;
+        if (booking.displayName) name = booking.displayName;
+        else if (booking.userId && booking.userId.displayName) name = booking.userId.displayName;
         
         let optionLabel = '';
         if (booking.facilityOption === 'ps5') optionLabel = ' (PS5)';
