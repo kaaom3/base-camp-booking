@@ -143,7 +143,7 @@ async function loadSlots() {
     container.innerHTML = `<div class="loading-state">${loadingText}</div>`;
 
     try {
-        const res = await fetch(`/api/customer/slots/available?date=${selectedDate}&facility=${currentFacility}`, {
+        const res = await fetch(`https://sibling-compacted-decrease.ngrok-free.dev/api/customer/slots/available?date=${selectedDate}&facility=${currentFacility}`, {
             headers: {
                 'ngrok-skip-browser-warning': '69420'
             }
@@ -206,7 +206,7 @@ async function submitBooking() {
     btn.disabled = true;
 
     try {
-        const res = await fetch('/api/customer/bookings', {
+        const res = await fetch('https://sibling-compacted-decrease.ngrok-free.dev/api/customer/bookings', {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
@@ -244,7 +244,11 @@ async function submitBooking() {
 async function checkMyBooking(roomNumber) {
     const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
     try {
-        const res = await fetch(`/api/customer/bookings/my-booking?hotelRoomNumber=${roomNumber}&date=${today}`);
+        const res = await fetch(`https://sibling-compacted-decrease.ngrok-free.dev/api/customer/bookings/my-booking?hotelRoomNumber=${roomNumber}&date=${today}`, {
+            headers: {
+                'ngrok-skip-browser-warning': '69420'
+            }
+        });
         if (res.ok) {
             const data = await res.json(); 
             document.getElementById('facility-container').classList.add('hidden');

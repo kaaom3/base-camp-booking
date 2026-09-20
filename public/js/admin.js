@@ -42,7 +42,9 @@ async function loadSchedule() {
     if(!selectedDate) return;
 
     try {
-        const res = await fetch(`/api/admin/schedule?date=${selectedDate}`);
+        const res = await fetch(`https://sibling-compacted-decrease.ngrok-free.dev/api/admin/schedule?date=${selectedDate}`, {
+            headers: { 'ngrok-skip-browser-warning': '69420' }
+        });
         const bookings = await res.json();
         
         const tbody = document.getElementById('schedule-body');
@@ -98,7 +100,9 @@ async function loadHistory() {
     if(!selectedDate) return;
 
     try {
-        const res = await fetch(`/api/admin/schedule?date=${selectedDate}`);
+        const res = await fetch(`https://sibling-compacted-decrease.ngrok-free.dev/api/admin/schedule?date=${selectedDate}`, {
+            headers: { 'ngrok-skip-browser-warning': '69420' }
+        });
         let bookings = await res.json();
         
         // กรองเฉพาะประวัติที่ใช้งานไปแล้ว (checked_in หรือ completed)
@@ -155,9 +159,12 @@ async function checkIn(bookingRef) {
     if(!confirm(`ยืนยันการ Check-in ให้กับรหัส: ${bookingRef} ใช่หรือไม่?`)) return;
 
     try {
-        const res = await fetch('/api/admin/bookings/check-in', {
+        const res = await fetch('https://sibling-compacted-decrease.ngrok-free.dev/api/admin/bookings/check-in', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'ngrok-skip-browser-warning': '69420'
+            },
             body: JSON.stringify({ bookingRef })
         });
         
@@ -179,8 +186,9 @@ async function cancelBooking(id) {
     if(!confirm('คุณแน่ใจหรือไม่ว่าต้องการยกเลิกการจองนี้? รอบเวลาจะว่างให้คนอื่นจองทันที')) return;
 
     try {
-        const res = await fetch(`/api/admin/bookings/${id}/cancel`, {
-            method: 'PUT'
+        const res = await fetch(`https://sibling-compacted-decrease.ngrok-free.dev/api/admin/bookings/${id}/cancel`, {
+            method: 'PUT',
+            headers: { 'ngrok-skip-browser-warning': '69420' }
         });
         
         if (res.ok) {
