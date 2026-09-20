@@ -1,228 +1,306 @@
-let selectedSlot = null;
-let currentFacility = null;
+
 const isEn = typeof currentLang !== 'undefined' && currentLang === 'en';
 
+let currentFacility = null;
+let currentOption = null;
+let selectedDate = null;
+let selectedSlot = null; // Used for normal selection (or Male for both)
+let selectedSlot2 = null; // Used for Female when 'both' is selected
+
 document.addEventListener('DOMContentLoaded', () => {
-    initDatePicker();
-
-    const savedRoom = localStorage.getItem('basecamp_room');
-    if(savedRoom) {
-        checkMyBooking(savedRoom);
+    // Set default date to today
+    const dateInput = document.getElementById('globalDate');
+    if (dateInput) {
+        const bkkTime = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Bangkok' }));
+        dateInput.value = bkkTime.toLocaleDateString('en-CA');
     }
-
-    document.getElementById('booking-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        if (currentFacility === 'ice_bath') {
-            showCustomConfirmModal();
-        } else {
-            await submitBooking();
-        }
-    });
 });
 
-function showCustomConfirmModal() {
-    const modalHtml = `
-    <div id="custom-modal-overlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:flex; justify-content:center; align-items:center; z-index:9999; padding: 20px;">
-        <div style="background:white; border-radius:16px; padding:30px 20px; max-width:400px; width:100%; text-align:center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); animation: popIn 0.3s ease-out;">
-            <div style="font-size: 50px; margin-bottom: 10px;">🧊</div>
-            <h3 style="color: #00bcd4; margin-bottom: 15px; font-size: 22px;">
-                ${isEn ? 'Ice Bath Fee' : 'แจ้งเตือนค่าบริการ'}
-            </h3>
-            <p style="color: #4a5568; margin-bottom: 25px; line-height: 1.6; font-size: 16px;">
-                ${isEn ? 'There is a fee of <strong style="color:#e53e3e; font-size:18px;">50 THB</strong> per session.<br>Please pay at the front counter before using the facility.' : 'บ่อน้ำแข็งมีค่าบริการ <strong style="color:#e53e3e; font-size:18px;">50 บาท</strong> ต่อรอบ<br>กรุณาติดต่อชำระเงินที่เคาน์เตอร์ก่อนเข้าใช้งาน'}
-            </p>
-            <div style="display: flex; gap: 10px;">
-                <button onclick="closeCustomModal()" style="flex: 1; padding: 14px; border-radius: 8px; border: 2px solid #e2e8f0; background: white; color: #4a5568; font-weight: bold; cursor: pointer; font-family: 'Kanit', sans-serif;">
-                    ${isEn ? 'Cancel' : 'ยกเลิก'}
-                </button>
-                <button onclick="confirmCustomModal()" style="flex: 1; padding: 14px; border-radius: 8px; border: none; background: #00bcd4; color: white; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(0, 188, 212, 0.2); font-family: 'Kanit', sans-serif;">
-                    ${isEn ? 'Proceed' : 'ยืนยันการจอง'}
-                </button>
-            </div>
-        </div>
-    </div>
-    <style>
-        @keyframes popIn {
-            0% { transform: scale(0.9); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-    </style>
-    `;
+function hideAllSteps() {
+    ['step-1', 'step-2', 'step-3', 'step-4', 'ticket-container'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('hidden');
+    });
+}
+
+// ================= STEP 1 -> STEP 2 =================
+
+async function goStep2(facility) {
+    const dateInput = document.getElementById('globalDate');
+    if (!dateInput.value) {
+        alert(isEn ? 'Please select a date' : 'กรุณาเลือกวันที่จอง');
+        return;
+    }
+    selectedDate = dateInput.value;
+    currentFacility = facility;
     
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    hideAllSteps();
+    document.getElementById('step-2').classList.remove('hidden');
+    
+    const loadingEl = document.getElementById('options-loading');
+    const optionsEl = document.getElementById('options-container');
+    loadingEl.style.display = 'block';
+    optionsEl.style.display = 'none';
+
+    try {
+        const res = await fetch(`https://sibling-compacted-decrease.ngrok-free.dev/api/customer/slots/summary?date=${selectedDate}&facility=${currentFacility}`, {
+            headers: { 'ngrok-skip-browser-warning': '69420' }
+        });
+        if (!res.ok) throw new Error('API Error');
+        const summary = await res.json();
+        
+        loadingEl.style.display = 'none';
+        optionsEl.style.display = 'flex';
+        
+        let html = '';
+        if (facility === 'game_room') {
+            document.getElementById('step2-title').innerText = isEn ? '🎮 Select Console' : '🎮 เลือกเครื่องเล่น';
+            
+            const ps5Avail = summary.ps5 > 0;
+            const ninAvail = summary.nintendo > 0;
+            
+            html += `
+                <button class="fac-btn" style="background: ${ps5Avail ? 'var(--primary-color)' : '#cbd5e0'}; cursor: ${ps5Avail ? 'pointer' : 'not-allowed'};" 
+                    ${ps5Avail ? 'onclick="goStep3(\'ps5\')"' : 'disabled'}>
+                    PlayStation 5
+                    <div class="price-tag">${ps5Avail ? (isEn ? 'Available' : 'ว่าง') : (isEn ? 'Fully Booked' : 'คิวเต็มแล้ว')}</div>
+                </button>
+                <button class="fac-btn" style="background: ${ninAvail ? '#e53e3e' : '#cbd5e0'}; cursor: ${ninAvail ? 'pointer' : 'not-allowed'};" 
+                    ${ninAvail ? 'onclick="goStep3(\'nintendo\')"' : 'disabled'}>
+                    Nintendo Switch
+                    <div class="price-tag">${ninAvail ? (isEn ? 'Available' : 'ว่าง') : (isEn ? 'Fully Booked' : 'คิวเต็มแล้ว')}</div>
+                </button>
+            `;
+        } else {
+            document.getElementById('step2-title').innerText = isEn ? '🧊 Select Option' : '🧊 เลือกบ่อที่ต้องการจอง';
+            
+            const maleAvail = summary.male > 0;
+            const femaleAvail = summary.female > 0;
+            const bothAvail = maleAvail && femaleAvail;
+            
+            html += `
+                <button class="fac-btn" style="background: ${maleAvail ? '#3182ce' : '#cbd5e0'}; cursor: ${maleAvail ? 'pointer' : 'not-allowed'};" 
+                    ${maleAvail ? 'onclick="goStep3(\'male\')"' : 'disabled'}>
+                    ${isEn ? 'Male Bath' : 'บ่อผู้ชาย (Male)'}
+                    <div class="price-tag">${maleAvail ? (isEn ? 'Available' : 'ว่าง') : (isEn ? 'Fully Booked' : 'คิวเต็มแล้ว')}</div>
+                </button>
+                <button class="fac-btn" style="background: ${femaleAvail ? '#d53f8c' : '#cbd5e0'}; cursor: ${femaleAvail ? 'pointer' : 'not-allowed'};" 
+                    ${femaleAvail ? 'onclick="goStep3(\'female\')"' : 'disabled'}>
+                    ${isEn ? 'Female Bath' : 'บ่อผู้หญิง (Female)'}
+                    <div class="price-tag">${femaleAvail ? (isEn ? 'Available' : 'ว่าง') : (isEn ? 'Fully Booked' : 'คิวเต็มแล้ว')}</div>
+                </button>
+                <button class="fac-btn" style="background: ${bothAvail ? '#805ad5' : '#cbd5e0'}; cursor: ${bothAvail ? 'pointer' : 'not-allowed'};" 
+                    ${bothAvail ? 'onclick="goStep3(\'both\')"' : 'disabled'}>
+                    ${isEn ? 'Couples (Male & Female)' : 'จองทั้งคู่ ชายและหญิง (Couples)'}
+                    <div class="price-tag">${bothAvail ? (isEn ? 'Available' : 'ว่าง') : (isEn ? 'Fully Booked' : 'คิวเต็มแล้ว')}</div>
+                </button>
+            `;
+        }
+        
+        optionsEl.innerHTML = html;
+        
+    } catch (err) {
+        console.error(err);
+        alert(isEn ? 'Error loading availability. Please try again.' : 'เกิดข้อผิดพลาดในการโหลดคิวว่าง กรุณาลองใหม่');
+        goBackToStep1();
+    }
 }
 
-window.closeCustomModal = function() {
-    const modal = document.getElementById('custom-modal-overlay');
-    if (modal) modal.remove();
+function goBackToStep1() {
+    hideAllSteps();
+    document.getElementById('step-1').classList.remove('hidden');
+    currentFacility = null;
 }
 
-window.confirmCustomModal = async function() {
-    closeCustomModal();
-    await submitBooking();
-}
+// ================= STEP 2 -> STEP 3 =================
 
-function initDatePicker() {
-    const dateInput = document.getElementById('bookingDate');
-    const today = new Date();
-    const minDateStr = today.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
-    dateInput.min = minDateStr;
-    dateInput.value = minDateStr;
-    const maxDate = new Date();
-    maxDate.setDate(today.getDate() + 7);
-    const maxDateStr = maxDate.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
-    dateInput.max = maxDateStr;
-}
-
-function selectFacility(fac) {
-    currentFacility = fac;
-    document.getElementById('facility-container').classList.add('hidden');
-    document.getElementById('consent-container').classList.remove('hidden');
+function goStep3(option) {
+    currentOption = option;
+    hideAllSteps();
+    document.getElementById('step-3').classList.remove('hidden');
     
     document.getElementById('terms-game_room').style.display = 'none';
     document.getElementById('terms-ice_bath').style.display = 'none';
-    document.getElementById('terms-' + fac).style.display = 'block';
+    document.getElementById('terms-' + currentFacility).style.display = 'block';
     
-    // Reset consent
     document.getElementById('agreeCheckbox').checked = false;
     document.getElementById('btn-consent').disabled = true;
 }
 
-function backToFacility() {
-    document.getElementById('consent-container').classList.add('hidden');
-    document.getElementById('booking-container').classList.add('hidden');
-    document.getElementById('facility-container').classList.remove('hidden');
-    currentFacility = null;
-    selectedSlot = null;
-}
-
 function toggleConsentBtn() {
-    const isChecked = document.getElementById('agreeCheckbox').checked;
-    document.getElementById('btn-consent').disabled = !isChecked;
+    document.getElementById('btn-consent').disabled = !document.getElementById('agreeCheckbox').checked;
 }
 
-function acceptConsent() {
-    document.getElementById('consent-container').classList.add('hidden');
-    document.getElementById('booking-container').classList.remove('hidden');
+function goBackToStep2() {
+    goStep2(currentFacility); // re-fetch summary just in case
+}
+
+// ================= STEP 3 -> STEP 4 =================
+
+function goStep4() {
+    hideAllSteps();
+    document.getElementById('step-4').classList.remove('hidden');
     
-    // Set headers dynamically
-    const headerEl = document.querySelector('#booking-header p');
-    const titleEl = document.getElementById('slot-section-title');
-    const optionSelect = document.getElementById('facilityOption');
-    const optionLabel = document.getElementById('facilityOptionLabel');
+    selectedSlot = null;
+    selectedSlot2 = null;
+    document.getElementById('btn-submit').disabled = true;
     
-    optionSelect.innerHTML = '';
+    document.getElementById('slots-container-2').style.display = 'none';
     
-    if (currentFacility === 'game_room') {
-        headerEl.innerText = isEn ? 'Select Game Room Time' : 'เลือกเวลาเข้าใช้ห้องเกมส์';
-        titleEl.innerText = isEn ? '🎮 Game Room Slots (1 hr)' : '🎮 เลือกรอบ Game Room (1 ชม.)';
-        titleEl.style.color = 'var(--primary-color)';
-        titleEl.style.borderColor = 'var(--primary-color)';
-        
-        optionLabel.innerText = isEn ? 'Select Console' : 'เลือกเครื่องเล่น';
-        optionSelect.innerHTML = `
-            <option value="ps5">PlayStation 5</option>
-            <option value="nintendo">Nintendo Switch</option>
-        `;
+    if (currentOption === 'both') {
+        document.getElementById('slot-section-title').innerText = isEn ? '1. Select Time for Male' : '1. เลือกรอบเวลา (บ่อชาย)';
     } else {
-        headerEl.innerText = isEn ? 'Select Ice Bath Time' : 'เลือกเวลาแช่บ่อน้ำแข็ง';
-        titleEl.innerText = isEn ? '🧊 Ice Bath Slots (1 hr)' : '🧊 เลือกรอบ Ice Bath (1 ชม.)';
-        titleEl.style.color = '#00bcd4';
-        titleEl.style.borderColor = '#00bcd4';
-        
-        optionLabel.innerText = isEn ? 'Select Gender' : 'เลือกผู้ใช้บริการ';
-        optionSelect.innerHTML = `
-            <option value="male">${isEn ? 'Male (ชาย)' : 'บ่อชาย (Male)'}</option>
-            <option value="female">${isEn ? 'Female (หญิง)' : 'บ่อหญิง (Female)'}</option>
-            <option value="both">${isEn ? 'Both (ชายและหญิง)' : 'จองทั้งคู่ ชายและหญิง (Both)'}</option>
-        `;
+        document.getElementById('slot-section-title').innerText = isEn ? 'Select Time Slot' : 'เลือกรอบเวลา';
     }
     
-    loadSlots();
+    loadSlotsForOption();
 }
 
-function onOptionChange() {
-    selectedSlot = null;
-    document.getElementById('btn-submit').disabled = true;
-    loadSlots();
+function goBackToStep3() {
+    hideAllSteps();
+    document.getElementById('step-3').classList.remove('hidden');
 }
 
-const getSelectedDateString = () => {
-    return document.getElementById('bookingDate').value || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
-};
+// ================= SLOT LOGIC =================
 
-function onDateChange() {
-    selectedSlot = null;
-    document.getElementById('btn-submit').disabled = true;
-    loadSlots();
-}
-
-async function loadSlots() {
-    const container = document.getElementById('slots-container');
-    const selectedDate = getSelectedDateString();
+async function fetchSlots(option, containerId, isSecondSlot = false) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = `<div class="loading-state">${isEn ? 'Loading slots...' : 'กำลังโหลดรอบ...'}</div>`;
     
-    const loadingText = isEn ? 'Loading time slots...' : 'กำลังโหลดข้อมูลรอบเวลา...';
-    container.innerHTML = `<div class="loading-state">${loadingText}</div>`;
-
     try {
-        const selectedOption = document.getElementById('facilityOption').value;
-        const res = await fetch(`https://sibling-compacted-decrease.ngrok-free.dev/api/customer/slots/available?date=${selectedDate}&facility=${currentFacility}&option=${selectedOption}`, {
-            headers: {
-                'ngrok-skip-browser-warning': '69420'
-            }
+        const res = await fetch(`https://sibling-compacted-decrease.ngrok-free.dev/api/customer/slots/available?date=${selectedDate}&facility=${currentFacility}&option=${option}`, {
+            headers: { 'ngrok-skip-browser-warning': '69420' }
         });
-        if (!res.ok) throw new Error('Network response was not ok');
+        if (!res.ok) throw new Error('Network error');
         
         const slots = await res.json();
-        container.innerHTML = '';
         
+        if (slots.length === 0) {
+            container.innerHTML = `<div class="loading-state">${isEn ? 'No slots available' : 'ไม่มีรอบเวลาที่เปิดให้บริการ'}</div>`;
+            return;
+        }
+
+        container.innerHTML = '';
         slots.forEach(slot => {
-            const btn = document.createElement('div');
-            btn.className = `slot-btn ${slot.isAvailable ? 'available' : 'booked'}`;
-            
-            const statusText = slot.isAvailable ? 'AVAILABLE' : 'BOOKED';
-            
-            btn.innerHTML = `
-                <div class="slot-time">${slot.startTime} - ${slot.endTime}</div>
-                <div class="slot-status">${statusText}</div>
-            `;
+            const btn = document.createElement('button');
+            btn.className = 'slot-btn';
             
             if (slot.isAvailable) {
-                btn.onclick = () => selectSlot(slot.slotNumber, btn);
+                btn.onclick = () => selectSlot(slot.slotNumber, btn, isSecondSlot);
+                btn.innerHTML = `
+                    <div class="slot-time">${slot.startTime} - ${slot.endTime}</div>
+                    <div class="slot-status available">${isEn ? 'AVAILABLE' : 'ว่าง'}</div>
+                `;
+            } else {
+                btn.classList.add('booked');
+                btn.disabled = true;
+                btn.innerHTML = `
+                    <div class="slot-time">${slot.startTime} - ${slot.endTime}</div>
+                    <div class="slot-status booked">${isEn ? 'FULL' : 'เต็ม'}</div>
+                `;
             }
-
             container.appendChild(btn);
         });
-
-    } catch (error) {
-        console.error(error);
-        const errText = isEn ? '❌ Cannot load time slots.' : '❌ ไม่สามารถโหลดข้อมูลรอบเวลาได้';
-        container.innerHTML = `<div class="loading-state" style="color:red;">${errText}</div>`;
+    } catch (err) {
+        console.error(err);
+        container.innerHTML = `<div class="loading-state" style="color:red">${isEn ? 'Error loading slots' : 'โหลดข้อมูลผิดพลาด'}</div>`;
     }
 }
 
-function selectSlot(slotNumber, btnElement) {
-    document.querySelectorAll('#slots-container .slot-btn').forEach(btn => {
-        btn.classList.remove('selected');
-        if(btn.classList.contains('available')) {
-            btn.querySelector('.slot-status').innerText = 'AVAILABLE';
+function loadSlotsForOption() {
+    if (currentOption === 'both') {
+        fetchSlots('male', 'slots-container', false);
+    } else {
+        fetchSlots(currentOption, 'slots-container', false);
+    }
+}
+
+function selectSlot(slotNumber, btnElement, isSecondSlot) {
+    const container = btnElement.parentElement;
+    container.querySelectorAll('.slot-btn').forEach(btn => {
+        if (!btn.classList.contains('booked')) {
+            btn.classList.remove('selected');
+            btn.querySelector('.slot-status').innerText = isEn ? 'AVAILABLE' : 'ว่าง';
         }
     });
     
     btnElement.classList.add('selected');
-    btnElement.querySelector('.slot-status').innerText = 'SELECTED';
+    btnElement.querySelector('.slot-status').innerText = isEn ? 'SELECTED' : 'เลือกแล้ว';
     
-    selectedSlot = slotNumber;
-    document.getElementById('btn-submit').disabled = false;
+    if (isSecondSlot) {
+        selectedSlot2 = slotNumber;
+        checkFormReady();
+    } else {
+        selectedSlot = slotNumber;
+        if (currentOption === 'both') {
+            // Load female slots
+            document.getElementById('slots-container-2').style.display = 'block';
+            document.getElementById('slots-container-2').innerHTML = `
+                <h4 style="margin-bottom:10px; color:#d53f8c;">${isEn ? '2. Select Time for Female' : '2. เลือกรอบเวลา (บ่อหญิง)'}</h4>
+                <div id="slots-container-female" class="slots-grid"></div>
+            `;
+            fetchSlots('female', 'slots-container-female', true);
+            selectedSlot2 = null;
+            checkFormReady();
+        } else {
+            checkFormReady();
+        }
+    }
 }
 
-async function submitBooking() {
-    if (!selectedSlot) return alert(isEn ? 'Please select a time slot' : 'กรุณาเลือกรอบเวลา');
+function checkFormReady() {
+    if (currentOption === 'both') {
+        document.getElementById('btn-submit').disabled = !(selectedSlot && selectedSlot2);
+    } else {
+        document.getElementById('btn-submit').disabled = !selectedSlot;
+    }
+}
+
+// ================= SUBMIT =================
+
+async function showCustomConfirmModal() {
+    return new Promise((resolve) => {
+        const modalHtml = `
+            <div id="custom-confirm-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 20px;">
+                <div style="background: white; border-radius: 12px; width: 100%; max-width: 400px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); text-align: center;">
+                    <div style="font-size: 40px; margin-bottom: 10px;">🧊</div>
+                    <h3 style="margin-bottom: 15px; color: #2d3748;">${isEn ? 'Payment Confirmation' : 'ยืนยันค่าบริการ'}</h3>
+                    <p style="margin-bottom: 25px; color: #4a5568; line-height: 1.5;">
+                        ${isEn ? 'Ice Bath service has a fee of <strong>50 THB</strong> per session.<br><br>Please pay at the counter.' : 'บริการแช่บ่อน้ำแข็งมีค่าบริการ <strong>50 บาท</strong> ต่อรอบการใช้งาน<br><br>กรุณาชำระเงินที่เคาน์เตอร์'}
+                    </p>
+                    <div style="display: flex; gap: 10px;">
+                        <button id="modal-btn-cancel" style="flex: 1; padding: 12px; border: 1px solid #cbd5e0; background: white; border-radius: 8px; color: #4a5568; font-weight: bold; cursor: pointer;">${isEn ? 'Cancel' : 'ยกเลิก'}</button>
+                        <button id="modal-btn-confirm" style="flex: 1; padding: 12px; border: none; background: #00bcd4; border-radius: 8px; color: white; font-weight: bold; cursor: pointer;">${isEn ? 'Acknowledge' : 'รับทราบ'}</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        const modal = document.getElementById('custom-confirm-modal');
+        
+        document.getElementById('modal-btn-cancel').onclick = () => {
+            modal.remove();
+            resolve(false);
+        };
+        
+        document.getElementById('modal-btn-confirm').onclick = () => {
+            modal.remove();
+            resolve(true);
+        };
+    });
+}
+
+async function submitBooking(e) {
+    e.preventDefault();
+    
+    if (currentFacility === 'ice_bath') {
+        const confirmed = await showCustomConfirmModal();
+        if (!confirmed) return;
+    }
 
     const roomNumber = document.getElementById('roomNumber').value;
     const displayName = document.getElementById('displayName').value;
-    const selectedDate = getSelectedDateString();
 
     const btn = document.getElementById('btn-submit');
     const originalText = btn.innerText;
@@ -230,70 +308,52 @@ async function submitBooking() {
     btn.disabled = true;
 
     try {
-        const res = await fetch('https://sibling-compacted-decrease.ngrok-free.dev/api/customer/bookings', {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'ngrok-skip-browser-warning': '69420'
-            },
-            body: JSON.stringify({
-                displayName, 
-                hotelRoomNumber: roomNumber, 
-                bookingDate: selectedDate, 
-                slotNumber: selectedSlot, 
-                facility: currentFacility,
-                facilityOption: document.getElementById('facilityOption').value
-            })
-        });
-        
-        const data = await res.json();
-        if (!res.ok) {
-            alert(data.message || 'Error');
-            btn.innerText = originalText;
-            btn.disabled = false;
-            return;
+        const bookingReqs = [];
+        if (currentOption === 'both') {
+            bookingReqs.push({
+                displayName, hotelRoomNumber: roomNumber, bookingDate: selectedDate, 
+                facility: 'ice_bath', facilityOption: 'male', slotNumber: selectedSlot
+            });
+            bookingReqs.push({
+                displayName, hotelRoomNumber: roomNumber, bookingDate: selectedDate, 
+                facility: 'ice_bath', facilityOption: 'female', slotNumber: selectedSlot2
+            });
+        } else {
+            bookingReqs.push({
+                displayName, hotelRoomNumber: roomNumber, bookingDate: selectedDate, 
+                facility: currentFacility, facilityOption: currentOption, slotNumber: selectedSlot
+            });
         }
 
-        localStorage.setItem('basecamp_room', roomNumber);
-        
-        checkMyBooking(roomNumber);
+        const results = [];
+        for (const reqData of bookingReqs) {
+            const res = await fetch('https://sibling-compacted-decrease.ngrok-free.dev/api/customer/bookings', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'ngrok-skip-browser-warning': '69420'
+                },
+                body: JSON.stringify(reqData)
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || 'Error');
+            results.push(data.booking);
+        }
 
+        showTicket(results);
     } catch (error) {
-        const connErr = isEn ? 'Cannot connect to server. Please try again.' : 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาลองใหม่';
-        alert(connErr);
+        alert(error.message);
         btn.innerText = originalText;
         btn.disabled = false;
     }
 }
 
-async function checkMyBooking(roomNumber) {
-    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
-    try {
-        const res = await fetch(`https://sibling-compacted-decrease.ngrok-free.dev/api/customer/bookings/my-booking?hotelRoomNumber=${roomNumber}&date=${today}`, {
-            headers: {
-                'ngrok-skip-browser-warning': '69420'
-            }
-        });
-        if (res.ok) {
-            const data = await res.json(); 
-            document.getElementById('facility-container').classList.add('hidden');
-            document.getElementById('consent-container').classList.add('hidden');
-            document.getElementById('booking-container').classList.add('hidden');
-            showTicket(data);
-        } else {
-            document.getElementById('roomNumber').value = roomNumber;
-        }
-    } catch (error) {
-        console.error(error);
-    }
-}
+// ================= TICKET =================
 
 function showTicket(bookings) {
     if (!Array.isArray(bookings)) bookings = [bookings];
     
-    document.getElementById('facility-container').classList.add('hidden');
-    document.getElementById('consent-container').classList.add('hidden');
-    document.getElementById('booking-container').classList.add('hidden');
+    hideAllSteps();
     document.getElementById('ticket-container').classList.remove('hidden');
 
     const wrapper = document.getElementById('tickets-wrapper');
@@ -308,10 +368,10 @@ function showTicket(bookings) {
         else if (booking.facilityOption === 'nintendo') optionLabel = ' (Nintendo)';
         else if (booking.facilityOption === 'male') optionLabel = isEn ? ' (Male)' : ' (ชาย)';
         else if (booking.facilityOption === 'female') optionLabel = isEn ? ' (Female)' : ' (หญิง)';
-        else if (booking.facilityOption === 'both') optionLabel = isEn ? ' (Both)' : ' (คู่)';
         
         const facilityLabel = (booking.facility === 'ice_bath' ? (isEn ? '🧊 ICE BATH' : '🧊 บ่อน้ำแข็ง') : (isEn ? '🎮 GAME ROOM' : '🎮 ห้องเกมส์')) + optionLabel;
-        const color = booking.facility === 'ice_bath' ? '#00bcd4' : 'var(--primary-color)';
+        const color = booking.facility === 'ice_bath' ? (booking.facilityOption === 'female' ? '#d53f8c' : '#00bcd4') : 'var(--primary-color)';
+        
         const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${booking.bookingRef}`;
 
         let feeAlertHtml = '';
@@ -330,44 +390,35 @@ function showTicket(bookings) {
                 </div>
                 <div class="ticket-body" style="padding: 20px;">
                     <div class="qr-box" style="margin-bottom: 20px; text-align: center;">
-                        <img src="${qrUrl}" alt="Booking QR Code" style="width: 150px; height: 150px; display:inline-block;">
-                        <p class="qr-hint" style="margin-top:10px; font-size:13px; color:var(--text-muted);">${isEn ? 'Please show this screen to staff' : 'โปรดแสดงหน้าจอนี้แก่พนักงาน'}</p>
+                        <img src="${qrUrl}" alt="QR Code" style="display: block; margin: 0 auto; width: 180px; height: 180px;">
+                        <p style="margin-top: 10px; font-weight: 600; font-size: 18px; color: #2d3748;">${booking.bookingRef}</p>
                     </div>
                     
-                    <div class="ticket-right-col" style="flex: 1; display: flex; flex-direction: column;">
-                        <div class="ticket-info">
-                            <div class="info-row">
-                                <span class="label">${isEn ? 'Booking Ref' : 'รหัสการจอง'}</span>
-                                <span class="value highlight">${booking.bookingRef}</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="label">${isEn ? 'Guest Name' : 'ชื่อผู้จอง'}</span>
-                                <span class="value">${name}</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="label">${isEn ? 'Room' : 'ห้องพัก'}</span>
-                                <span class="value">${booking.hotelRoomNumber}</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="label">${isEn ? 'Time Slot' : 'เวลารอบ'}</span>
-                                <span class="value highlight">${booking.bookingDate} | ${booking.startTime} - ${booking.endTime}</span>
-                            </div>
+                    <div style="border-top: 1px dashed #e2e8f0; padding-top: 15px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: #718096;">${isEn ? 'Date' : 'วันที่'}</span>
+                            <strong style="color: #2d3748;">${booking.bookingDate}</strong>
                         </div>
-
-                        ${feeAlertHtml}
-
-                        <div class="alert-box" style="margin-top: ${feeAlertHtml ? '10px' : '15px'};">
-                            ${isEn ? 'Please arrive 5 minutes before your session.' : 'กรุณามาถึงก่อนเวลา 5 นาที'}
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: #718096;">${isEn ? 'Time' : 'เวลา'}</span>
+                            <strong style="color: #2d3748;">${booking.startTime} - ${booking.endTime}</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: #718096;">${isEn ? 'Room' : 'หมายเลขห้อง'}</span>
+                            <strong style="color: #2d3748;">${booking.hotelRoomNumber}</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: #718096;">${isEn ? 'Name' : 'ชื่อผู้จอง'}</span>
+                            <strong style="color: #2d3748;">${name}</strong>
                         </div>
                     </div>
+                    
+                    ${feeAlertHtml}
                 </div>
             </div>
         `;
         wrapper.innerHTML += ticketHtml;
     });
 }
-
-function resetSession() {
-    localStorage.removeItem('basecamp_room');
-    window.location.reload();
-}
+f u n c t i o n   r e s e t S e s s i o n ( )   {   w i n d o w . l o c a t i o n . r e l o a d ( ) ;   }  
+ 

@@ -83,7 +83,77 @@ exports.getAvailableSlots = async (req, res) => {
 
         res.json(availableSlots);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+exports.getSlotSummary = async (req, res) => {
+    try {
+        const { date, facility } = req.query;
+        if (!date) return res.status(400).json({ message: 'กรุณาระบุวันที่ (date)' });
+        
+        const targetFacility = facility === 'ice_bath' ? 'ice_bath' : 'game_room';
+        const targetSlots = targetFacility === 'ice_bath' ? ICE_BATH_SLOTS : GAME_ROOM_SLOTS;
+
+        const bookedSlots = await Booking.find({ 
+            bookingDate: date,
+            facility: targetFacility,
+            status: { $ne: 'cancelled' }
+        });
+
+        const now = new Date();
+        const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+        
+        let currentMinutes = 0;
+        if (date === todayStr) {
+            const bkkTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Bangkok' }));
+            currentMinutes = bkkTime.getHours() * 60 + bkkTime.getMinutes();
+        }
+
+        const summary = {};
+
+        if (targetFacility === 'game_room') {
+            summary.ps5 = 0;
+            summary.nintendo = 0;
+            
+            targetSlots.forEach(slot => {
+                let isTimeValid = true;
+                if (date === todayStr) {
+                    const [startH, startM] = slot.startTime.split(':').map(Number);
+                    if (currentMinutes > (startH * 60 + startM)) isTimeValid = false;
+                }
+
+                if (isTimeValid) {
+                    const isPS5Booked = bookedSlots.some(b => b.slotNumber === slot.slotNumber && b.facilityOption === 'ps5');
+                    const isNinBooked = bookedSlots.some(b => b.slotNumber === slot.slotNumber && b.facilityOption === 'nintendo');
+                    if (!isPS5Booked) summary.ps5++;
+                    if (!isNinBooked) summary.nintendo++;
+                }
+            });
+        } else {
+            summary.male = 0;
+            summary.female = 0;
+            
+            targetSlots.forEach(slot => {
+                let isTimeValid = true;
+                if (date === todayStr) {
+                    const [startH, startM] = slot.startTime.split(':').map(Number);
+                    if (currentMinutes > (startH * 60 + startM - 60)) isTimeValid = false; // Ice bath 60 min advance
+                }
+
+                if (isTimeValid) {
+                    const isMaleBooked = bookedSlots.some(b => b.slotNumber === slot.slotNumber && (b.facilityOption === 'male' || b.facilityOption === 'both'));
+                    const isFemaleBooked = bookedSlots.some(b => b.slotNumber === slot.slotNumber && (b.facilityOption === 'female' || b.facilityOption === 'both'));
+                    
+                    if (!isMaleBooked) summary.male++;
+                    if (!isFemaleBooked) summary.female++;
+                }
+            });
+        }
+
+        res.json(summary);
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error' });
     }
 };
 

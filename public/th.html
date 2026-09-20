@@ -29,31 +29,58 @@
     </style>
 </head>
 <body>
+    
     <div class="app-wrapper">
         
-        <!-- Facility Selection Screen -->
-        <div id="facility-container" class="view-section">
+        <!-- Step 1: Date & Facility -->
+        <div id="step-1" class="view-section">
             <div class="hero-header">
                 <img src="images/logo.png" alt="Base Camp Hotel">
-                <p>เลือกบริการที่ต้องการจอง</p>
+                <p>เลือกวันที่และบริการ</p>
             </div>
             <div class="content-body" style="padding: 30px 20px;">
-                <button class="fac-btn fac-game" onclick="selectFacility('game_room')">
+                <div class="form-group" style="margin-bottom: 25px;">
+                    <label style="font-size: 16px; font-weight: 600;">วันที่จอง (Date)</label>
+                    <input type="date" id="globalDate" required class="form-input" style="padding: 15px; font-size: 16px;">
+                </div>
+                
+                <button class="fac-btn fac-game" onclick="goStep2('game_room')">
                     🎮 ห้องเกมส์ (Game Room)
                     <div class="price-tag">ฟรี (Free)</div>
                 </button>
-                <button class="fac-btn fac-ice" onclick="selectFacility('ice_bath')">
+                <button class="fac-btn fac-ice" onclick="goStep2('ice_bath')">
                     🧊 บ่อน้ำแข็ง (Ice Bath)
                     <div class="price-tag">ค่าบริการ 50 บาท (50 THB)</div>
                 </button>
+                
                 <div style="text-align: center; margin-top: 20px;">
                     <a href="index.html" style="color: #718096; font-size: 14px; text-decoration: underline;">ย้อนกลับ (Back)</a>
                 </div>
             </div>
         </div>
 
-        <!-- Consent Screen -->
-        <div id="consent-container" class="view-section hidden">
+        <!-- Step 2: Option Selection -->
+        <div id="step-2" class="view-section hidden">
+            <div class="hero-header">
+                <img src="images/logo.png" alt="Base Camp Hotel">
+                <p id="step2-title">เลือกตัวเลือก</p>
+            </div>
+            <div class="content-body" style="padding: 30px 20px;">
+                <div id="options-loading" style="text-align:center; padding:20px;">
+                    กำลังตรวจสอบคิวว่าง...
+                </div>
+                <div id="options-container" style="display:flex; flex-direction:column; gap:15px; display:none;">
+                    <!-- Buttons injected by JS -->
+                </div>
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="btn-cancel" onclick="goBackToStep1()" style="width: auto; padding: 10px 20px; font-size: 14px;">ย้อนกลับ</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Consent Screen -->
+        <div id="step-3" class="view-section hidden">
+            <!-- (Reused from previous consent) -->
             <div class="hero-header">
                 <img src="images/logo.png" alt="Base Camp Hotel">
                 <p id="consent-title">ข้อตกลงและเงื่อนไข</p>
@@ -62,7 +89,7 @@
                 
                 <!-- Game Room Terms -->
                 <div class="terms-box" id="terms-game_room" style="display: none;">
-                    <h4 style="color: var(--primary-color); margin-bottom: 10px;">🎮 ข้อกำหนดห้องเกมส์ (Game Room)</h4>
+                    <h4 style="color: var(--primary-color); margin-bottom: 10px;">🎮 ข้อกำหนดห้องเกมส์</h4>
                     <ol style="margin-bottom: 20px;">
                         <li>ท่านสามารถจองเวลาเข้าใช้บริการผ่านระบบคิวอาร์ออน์ไลน์ของโรงแรมที่จัดเตรียมไว้ให้</li>
                         <li>กำหนดระยะเวลาการเข้าใช้บริการ 1 ชั่วโมงต่อห้องพัก</li>
@@ -76,95 +103,90 @@
 
                 <!-- Ice Bath Terms -->
                 <div class="terms-box" id="terms-ice_bath" style="display: none;">
-                    <h4 style="color: #00bcd4; margin-bottom: 10px;">🧊 ข้อกำหนดบ่อน้ำแข็ง (Ice Bath)</h4>
+                    <h4 style="color: #00bcd4; margin-bottom: 10px;">🧊 ข้อกำหนดบ่อน้ำแข็ง</h4>
                     <ol>
-                        <li><strong>มีค่าบริการ 50 บาทต่อรอบ</strong> กรุณาชำระเงินและรับคำแนะนำที่เคาน์เตอร์ก่อนใช้บริการ</li>
-                        <li>ผู้ใช้บริการต้องมีสุขภาพแข็งแรง ไม่มีโรคประจำตัว ห้ามผู้ที่เป็นโรคหัวใจ ความดันโลหิตสูง โรคหอบหืด หรือโรคลมชัก เข้าใช้บริการเด็ดขาด</li>
-                        <li>สตรีมีครรภ์ ผู้ที่มีบาดแผลเปิด หรือผู้ที่อยู่ภายใต้ฤทธิ์แอลกอฮอล์/ยาเสพติด ห้ามใช้บริการเด็ดขาด</li>
-                        <li>กำหนดเวลาใช้บริการในห้อง 1 ชั่วโมงต่อรอบ แต่เพื่อความปลอดภัย <strong>ห้ามแช่น้ำแข็งต่อเนื่องเกิน 5-10 นาทีต่อครั้ง</strong></li>
-                        <li>หากมีอาการหน้ามืด หายใจไม่ออก หนาวสั่นรุนแรง หรือเจ็บหน้าอก ให้รีบขึ้นจากอ่างและแจ้งพนักงานทันที</li>
-                        <li>ห้ามแช่น้ำแข็งตามลำพัง ต้องมีผู้ดูแลหรือเพื่อนอยู่ด้วยเสมอ</li>
-                        <li>การลงและขึ้นจากอ่างต้องทำอย่างช้าๆ ระมัดระวังการลื่นล้ม</li>
-                        <li>ผู้ใช้บริการยอมรับความเสี่ยงด้วยตนเอง ทางโรงแรมจะไม่รับผิดชอบต่อปัญหาสุขภาพหรืออุบัติเหตุที่เกิดจากการฝ่าฝืนกฎ</li>
+                        <li>ผู้ใช้บริการต้องมีสุขภาพแข็งแรง ห้ามผู้ป่วยโรคหัวใจ, ความดันโลหิตสูง, หอบหืด, และโรคลมชัก เข้าใช้บริการ</li>
+                        <li>สตรีมีครรภ์, ผู้มีบาดแผลเปิด, หรือผู้ที่อยู่ภายใต้ฤทธิ์แอลกอฮอล์/สารเสพติด ห้ามเข้าใช้บริการเด็ดขาด</li>
+                        <li><strong>มีค่าบริการ 50 บาทต่อท่าน</strong> กรุณาชำระที่เคาน์เตอร์บริการ</li>
+                        <li>ระยะเวลาในห้องรวม 1 ชั่วโมง แต่เพื่อความปลอดภัย <strong>ห้ามแช่ในน้ำแข็งต่อเนื่องเกิน 5-10 นาที</strong></li>
+                        <li>หากมีอาการวิงเวียน หายใจไม่ออก หนาวสั่นรุนแรง หรือเจ็บหน้าอก ให้รีบขึ้นจากบ่อและแจ้งพนักงานทันที</li>
+                        <li>ห้ามลงแช่ตามลำพัง ต้องมีเพื่อนหรือพนักงานอยู่ใกล้เคียงเสมอ</li>
+                        <li>ขึ้นลงบ่ออย่างช้าๆ และระมัดระวัง เพื่อป้องกันการลื่นล้ม</li>
+                        <li>ผู้ใช้บริการต้องยอมรับความเสี่ยงด้วยตนเอง ทางโรงแรมไม่รับผิดชอบต่อปัญหาสุขภาพหรืออุบัติเหตุที่เกิดจากการฝ่าฝืนกฎ</li>
                     </ol>
                 </div>
-                
-                <label class="checkbox-container">
-                    ข้าพเจ้าได้อ่านและยอมรับข้อตกลงและเงื่อนไขด้านบนทั้งหมด
-                    <input type="checkbox" id="agreeCheckbox" onchange="toggleConsentBtn()">
-                    <span class="checkmark"></span>
-                </label>
-                
-                <button class="btn-primary" id="btn-consent" onclick="acceptConsent()" disabled>ยอมรับ (Accept)</button>
-                <div style="text-align: center; margin-top: 15px;">
-                    <a href="#" onclick="backToFacility()" style="color: #718096; font-size: 14px; text-decoration: underline;">กลับไปเลือกบริการ</a>
+
+                <div class="consent-action">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="agreeCheckbox" onchange="toggleConsentBtn()">
+                        <span class="checkmark"></span>
+                        <span class="label-text">ข้าพเจ้าได้อ่านและยอมรับข้อตกลงและเงื่อนไขข้างต้น</span>
+                    </label>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button class="btn-cancel" style="flex: 1;" onclick="goBackToStep2()">ไม่ยอมรับ</button>
+                        <button class="btn-submit" id="btn-consent" style="flex: 2;" disabled onclick="goStep4()">ยอมรับและดำเนินการต่อ</button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Booking Form Screen -->
-        <div id="booking-container" class="view-section hidden">
+        <!-- Step 4: Slots & Form -->
+        <div id="step-4" class="view-section hidden">
             <div class="hero-header" id="booking-header">
                 <img src="images/logo.png" alt="Base Camp Hotel">
-                <p>เลือกเวลาใช้บริการ</p>
-            </div>
-            <form id="booking-form" class="content-body">
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>หมายเลขห้องพัก (Room No.)</label>
-                        <input type="number" id="roomNumber" required placeholder="เช่น 201">
-                    </div>
-                    <div class="form-group">
-                        <label>ชื่อผู้จอง (Guest Name)</label>
-                        <input type="text" id="displayName" required placeholder="ชื่อของคุณ">
-                    </div>
-                </div>
-                
-                <div class="form-group" style="margin-top: 10px;" id="facilityOptionContainer">
-                    <label id="facilityOptionLabel">ตัวเลือกบริการ (Option)</label>
-                    <select id="facilityOption" required onchange="onOptionChange()" style="width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-family: 'Kanit';">
-                        <!-- Options generated dynamically -->
-                    </select>
-                </div>
-
-                <div class="form-group" style="margin-top: 10px;">
-                    <label>วันที่จอง (Date)</label>
-                    <input type="date" id="bookingDate" required onchange="onDateChange()">
-                </div>
-
-                <div style="margin-top: 20px;">
-                    <h3 class="section-title" id="slot-section-title">เลือกรอบเวลา</h3>
-                    <div class="slots-grid" id="slots-container">
-                        <div class="loading-state">กรุณาเลือกวันที่ก่อน</div>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn-primary" id="btn-submit" disabled>ยืนยันการจอง (Confirm)</button>
-                <div style="text-align: center; margin-top: 15px;">
-                    <a href="#" onclick="backToFacility()" style="color: #718096; font-size: 13px; text-decoration: underline;">ยกเลิก / เปลี่ยนบริการ</a>
-                </div>
-            </form>
-        </div>
-
-        <!-- Ticket Screen -->
-        <div id="ticket-container" class="view-section hidden">
-            <div class="hero-header success">
-                <h2>RESERVATION CONFIRMED</h2>
-                <p>การจองของท่านเสร็จสมบูรณ์</p>
+                <p>เลือกเวลาและกรอกข้อมูล</p>
             </div>
             
-            <div class="content-body" style="padding: 20px; overflow-y: auto;">
-                <div id="tickets-wrapper" style="display: flex; flex-direction: column; gap: 20px;">
-                    <!-- Tickets will be injected here -->
+            <div class="content-body" style="padding-bottom: 20px;">
+                <h3 class="section-title" id="slot-section-title">เลือกรอบเวลา</h3>
+                
+                <div id="slots-container" class="slots-grid">
+                    <!-- Slots dynamic -->
                 </div>
 
-                <div style="margin-top: 30px; text-align: center;">
-                    <a href="#" onclick="resetSession()" style="color: #718096; font-size: 14px; text-decoration: underline;">ทำรายการใหม่ (Clear Session)</a>
+                <div id="slots-container-2" class="slots-grid" style="display:none; margin-top:15px; border-top: 1px solid #e2e8f0; padding-top:15px;">
+                    <!-- Second Slots dynamic for Both -->
+                </div>
+
+                <div style="margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 20px;">
+                    <form id="booking-form" onsubmit="submitBooking(event)" style="display: flex; flex-direction: column; gap: 15px;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>หมายเลขห้องพัก</label>
+                                <input type="number" id="roomNumber" required placeholder="เช่น 201">
+                            </div>
+                            <div class="form-group">
+                                <label>ชื่อผู้จอง</label>
+                                <input type="text" id="displayName" required placeholder="ชื่อของคุณ">
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <button type="button" class="btn-cancel" style="flex: 1;" onclick="goBackToStep3()">ย้อนกลับ</button>
+                            <button type="submit" class="btn-submit" id="btn-submit" style="flex: 2;" disabled>ยืนยันการจอง</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
+
+        <!-- Step 5: Ticket Screen -->
+        <div id="ticket-container" class="view-section hidden" style="padding: 20px;">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h2 style="color: #4CAF50; margin-bottom: 10px;">✅ จองสำเร็จ!</h2>
+                <p style="color: #4a5568;">แคปเจอร์หน้าจอนี้เพื่อไปแสดงที่เคาน์เตอร์</p>
+            </div>
+
+            <div id="tickets-wrapper" style="display: flex; flex-direction: column; gap: 20px;">
+                <!-- Ticket injected by JS -->
+            </div>
+            
+            <button class="btn-submit" style="margin-top: 30px;" onclick="window.location.reload()">ทำรายการใหม่</button>
+        </div>
+
     </div>
+
 
     <script src="js/app.js"></script>
 </body>

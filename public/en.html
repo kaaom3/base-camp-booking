@@ -29,58 +29,85 @@
     </style>
 </head>
 <body>
+    
     <div class="app-wrapper">
         
-        <!-- Facility Selection Screen -->
-        <div id="facility-container" class="view-section">
+        <!-- Step 1: Date & Facility -->
+        <div id="step-1" class="view-section">
             <div class="hero-header">
                 <img src="images/logo.png" alt="Base Camp Hotel">
-                <p>Select Facility</p>
+                <p>Select Date & Facility</p>
             </div>
             <div class="content-body" style="padding: 30px 20px;">
-                <button class="fac-btn fac-game" onclick="selectFacility('game_room')">
+                <div class="form-group" style="margin-bottom: 25px;">
+                    <label style="font-size: 16px; font-weight: 600;">Date</label>
+                    <input type="date" id="globalDate" required class="form-input" style="padding: 15px; font-size: 16px;">
+                </div>
+                
+                <button class="fac-btn fac-game" onclick="goStep2('game_room')">
                     🎮 Game Room
                     <div class="price-tag">Free</div>
                 </button>
-                <button class="fac-btn fac-ice" onclick="selectFacility('ice_bath')">
+                <button class="fac-btn fac-ice" onclick="goStep2('ice_bath')">
                     🧊 Ice Bath
-                    <div class="price-tag">Fee: 50 THB</div>
+                    <div class="price-tag">Fee 50 THB</div>
                 </button>
+                
                 <div style="text-align: center; margin-top: 20px;">
-                    <a href="index.html" style="color: #718096; font-size: 14px; text-decoration: underline;">Back to Language</a>
+                    <a href="index.html" style="color: #718096; font-size: 14px; text-decoration: underline;">Back</a>
                 </div>
             </div>
         </div>
 
-        <!-- Consent Screen -->
-        <div id="consent-container" class="view-section hidden">
+        <!-- Step 2: Option Selection -->
+        <div id="step-2" class="view-section hidden">
             <div class="hero-header">
                 <img src="images/logo.png" alt="Base Camp Hotel">
-                <p id="consent-title">Terms and Conditions</p>
+                <p id="step2-title">Select Option</p>
+            </div>
+            <div class="content-body" style="padding: 30px 20px;">
+                <div id="options-loading" style="text-align:center; padding:20px;">
+                    Checking availability...
+                </div>
+                <div id="options-container" style="display:flex; flex-direction:column; gap:15px; display:none;">
+                    <!-- Buttons injected by JS -->
+                </div>
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="btn-cancel" onclick="goBackToStep1()" style="width: auto; padding: 10px 20px; font-size: 14px;">Back</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Consent Screen -->
+        <div id="step-3" class="view-section hidden">
+            <!-- (Reused from previous consent) -->
+            <div class="hero-header">
+                <img src="images/logo.png" alt="Base Camp Hotel">
+                <p id="consent-title">Terms & Conditions</p>
             </div>
             <div class="content-body" style="flex: 1; display: flex; flex-direction: column;">
                 
                 <!-- Game Room Terms -->
                 <div class="terms-box" id="terms-game_room" style="display: none;">
-                    <h4 style="color: var(--primary-color); margin-bottom: 10px;">🎮 Game Room Rules</h4>
+                    <h4 style="color: var(--primary-color); margin-bottom: 10px;">🎮 Game Room Terms</h4>
                     <ol style="margin-bottom: 20px;">
                         <li>Bookings must be made via the hotel's online QR system.</li>
                         <li>Service time is limited to 1 hour per room.</li>
                         <li>Keep volume at a moderate level to avoid disturbing other guests.</li>
                         <li>Choose age-appropriate games for players.</li>
-                        <li>Do not modify settings or unplug any equipment. Report issues to staff immediately.</li>
+                        <li>Do not modify settings or unplug any equipment. Notify staff immediately if there is an issue.</li>
                         <li>Food and drinks are strictly prohibited in the game room.</li>
-                        <li>Guests are liable for any damages caused by negligence and must compensate at full value.</li>
+                        <li>Users are liable for the full replacement cost of any equipment damaged due to negligence.</li>
                     </ol>
                 </div>
 
                 <!-- Ice Bath Terms -->
                 <div class="terms-box" id="terms-ice_bath" style="display: none;">
-                    <h4 style="color: #00bcd4; margin-bottom: 10px;">🧊 Ice Bath Rules</h4>
+                    <h4 style="color: #00bcd4; margin-bottom: 10px;">🧊 Ice Bath Terms</h4>
                     <ol>
-                        <li><strong>There is a 50 THB fee per session.</strong> Please pay and receive instructions at the counter before use.</li>
                         <li>Users must be in good health. Individuals with heart conditions, high blood pressure, asthma, or epilepsy are prohibited.</li>
                         <li>Pregnant women, individuals with open wounds, or those under the influence of alcohol/drugs are strictly prohibited.</li>
+                        <li><strong>There is a 50 THB fee per session.</strong> Please pay at the counter.</li>
                         <li>Session time in the room is 1 hour, but for safety, <strong>do not immerse in ice water for more than 5-10 continuous minutes.</strong></li>
                         <li>Exit immediately and notify staff if you experience dizziness, shortness of breath, severe shivering, or chest pain.</li>
                         <li>Never plunge alone. Always have a companion or staff member nearby.</li>
@@ -88,83 +115,78 @@
                         <li>Users assume all risks. The hotel is not liable for any health issues or injuries resulting from rule violations.</li>
                     </ol>
                 </div>
-                
-                <label class="checkbox-container">
-                    I have read and accept all terms and conditions above
-                    <input type="checkbox" id="agreeCheckbox" onchange="toggleConsentBtn()">
-                    <span class="checkmark"></span>
-                </label>
-                
-                <button class="btn-primary" id="btn-consent" onclick="acceptConsent()" disabled>Accept</button>
-                <div style="text-align: center; margin-top: 15px;">
-                    <a href="#" onclick="backToFacility()" style="color: #718096; font-size: 14px; text-decoration: underline;">Back to Selection</a>
+
+                <div class="consent-action">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="agreeCheckbox" onchange="toggleConsentBtn()">
+                        <span class="checkmark"></span>
+                        <span class="label-text">I have read and agree to the terms and conditions</span>
+                    </label>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button class="btn-cancel" style="flex: 1;" onclick="goBackToStep2()">Decline</button>
+                        <button class="btn-submit" id="btn-consent" style="flex: 2;" disabled onclick="goStep4()">Accept & Continue</button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Booking Form Screen -->
-        <div id="booking-container" class="view-section hidden">
+        <!-- Step 4: Slots & Form -->
+        <div id="step-4" class="view-section hidden">
             <div class="hero-header" id="booking-header">
                 <img src="images/logo.png" alt="Base Camp Hotel">
-                <p>Select Time Slot</p>
-            </div>
-            <form id="booking-form" class="content-body">
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Room No.</label>
-                        <input type="number" id="roomNumber" required placeholder="e.g. 201">
-                    </div>
-                    <div class="form-group">
-                        <label>Guest Name</label>
-                        <input type="text" id="displayName" required placeholder="Your Name">
-                    </div>
-                </div>
-                
-                <div class="form-group" style="margin-top: 10px;" id="facilityOptionContainer">
-                    <label id="facilityOptionLabel">Select Option</label>
-                    <select id="facilityOption" required onchange="onOptionChange()" style="width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-family: 'Kanit';">
-                        <!-- Options generated dynamically -->
-                    </select>
-                </div>
-
-                <div class="form-group" style="margin-top: 10px;">
-                    <label>Date</label>
-                    <input type="date" id="bookingDate" required onchange="onDateChange()">
-                </div>
-
-                <div style="margin-top: 20px;">
-                    <h3 class="section-title" id="slot-section-title">Select Time Slot</h3>
-                    <div class="slots-grid" id="slots-container">
-                        <div class="loading-state">Please select a date first</div>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn-primary" id="btn-submit" disabled>CONFIRM BOOKING</button>
-                <div style="text-align: center; margin-top: 15px;">
-                    <a href="#" onclick="backToFacility()" style="color: #718096; font-size: 13px; text-decoration: underline;">Cancel / Back</a>
-                </div>
-            </form>
-        </div>
-
-        <!-- Ticket Screen -->
-        <div id="ticket-container" class="view-section hidden">
-            <div class="hero-header success">
-                <h2>RESERVATION CONFIRMED</h2>
-                <p>Your booking is complete</p>
+                <p>Select Time & Details</p>
             </div>
             
-            <div class="content-body" style="padding: 20px; overflow-y: auto;">
-                <div id="tickets-wrapper" style="display: flex; flex-direction: column; gap: 20px;">
-                    <!-- Tickets will be injected here -->
+            <div class="content-body" style="padding-bottom: 20px;">
+                <h3 class="section-title" id="slot-section-title">Select Time Slot</h3>
+                
+                <div id="slots-container" class="slots-grid">
+                    <!-- Slots dynamic -->
                 </div>
 
-                <div style="margin-top: 30px; text-align: center;">
-                    <a href="#" onclick="resetSession()" style="color: #718096; font-size: 14px; text-decoration: underline;">Book another session</a>
+                <div id="slots-container-2" class="slots-grid" style="display:none; margin-top:15px; border-top: 1px solid #e2e8f0; padding-top:15px;">
+                    <!-- Second Slots dynamic for Both -->
+                </div>
+
+                <div style="margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 20px;">
+                    <form id="booking-form" onsubmit="submitBooking(event)" style="display: flex; flex-direction: column; gap: 15px;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Room No.</label>
+                                <input type="number" id="roomNumber" required placeholder="e.g. 201">
+                            </div>
+                            <div class="form-group">
+                                <label>Guest Name</label>
+                                <input type="text" id="displayName" required placeholder="Your Name">
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <button type="button" class="btn-cancel" style="flex: 1;" onclick="goBackToStep3()">Back</button>
+                            <button type="submit" class="btn-submit" id="btn-submit" style="flex: 2;" disabled>Confirm Booking</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
+
+        <!-- Step 5: Ticket Screen -->
+        <div id="ticket-container" class="view-section hidden" style="padding: 20px;">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h2 style="color: #4CAF50; margin-bottom: 10px;">✅ Booking Successful!</h2>
+                <p style="color: #4a5568;">Please screenshot this ticket to check-in at the counter.</p>
+            </div>
+
+            <div id="tickets-wrapper" style="display: flex; flex-direction: column; gap: 20px;">
+                <!-- Ticket injected by JS -->
+            </div>
+            
+            <button class="btn-submit" style="margin-top: 30px;" onclick="window.location.reload()">Make Another Booking</button>
+        </div>
+
     </div>
+
 
     <script src="js/app.js"></script>
 </body>
