@@ -109,19 +109,42 @@ function acceptConsent() {
     // Set headers dynamically
     const headerEl = document.querySelector('#booking-header p');
     const titleEl = document.getElementById('slot-section-title');
+    const optionSelect = document.getElementById('facilityOption');
+    const optionLabel = document.getElementById('facilityOptionLabel');
+    
+    optionSelect.innerHTML = '';
     
     if (currentFacility === 'game_room') {
         headerEl.innerText = isEn ? 'Select Game Room Time' : 'เลือกเวลาเข้าใช้ห้องเกมส์';
         titleEl.innerText = isEn ? '🎮 Game Room Slots (1 hr)' : '🎮 เลือกรอบ Game Room (1 ชม.)';
         titleEl.style.color = 'var(--primary-color)';
         titleEl.style.borderColor = 'var(--primary-color)';
+        
+        optionLabel.innerText = isEn ? 'Select Console' : 'เลือกเครื่องเล่น';
+        optionSelect.innerHTML = `
+            <option value="ps5">PlayStation 5</option>
+            <option value="nintendo">Nintendo Switch</option>
+        `;
     } else {
         headerEl.innerText = isEn ? 'Select Ice Bath Time' : 'เลือกเวลาแช่บ่อน้ำแข็ง';
         titleEl.innerText = isEn ? '🧊 Ice Bath Slots (1 hr)' : '🧊 เลือกรอบ Ice Bath (1 ชม.)';
         titleEl.style.color = '#00bcd4';
         titleEl.style.borderColor = '#00bcd4';
+        
+        optionLabel.innerText = isEn ? 'Select Gender' : 'เลือกผู้ใช้บริการ';
+        optionSelect.innerHTML = `
+            <option value="male">${isEn ? 'Male (ชาย)' : 'บ่อชาย (Male)'}</option>
+            <option value="female">${isEn ? 'Female (หญิง)' : 'บ่อหญิง (Female)'}</option>
+            <option value="both">${isEn ? 'Both (ชายและหญิง)' : 'จองทั้งคู่ ชายและหญิง (Both)'}</option>
+        `;
     }
     
+    loadSlots();
+}
+
+function onOptionChange() {
+    selectedSlot = null;
+    document.getElementById('btn-submit').disabled = true;
     loadSlots();
 }
 
@@ -143,7 +166,8 @@ async function loadSlots() {
     container.innerHTML = `<div class="loading-state">${loadingText}</div>`;
 
     try {
-        const res = await fetch(`https://sibling-compacted-decrease.ngrok-free.dev/api/customer/slots/available?date=${selectedDate}&facility=${currentFacility}`, {
+        const selectedOption = document.getElementById('facilityOption').value;
+        const res = await fetch(`https://sibling-compacted-decrease.ngrok-free.dev/api/customer/slots/available?date=${selectedDate}&facility=${currentFacility}&option=${selectedOption}`, {
             headers: {
                 'ngrok-skip-browser-warning': '69420'
             }
@@ -217,7 +241,8 @@ async function submitBooking() {
                 hotelRoomNumber: roomNumber, 
                 bookingDate: selectedDate, 
                 slotNumber: selectedSlot, 
-                facility: currentFacility
+                facility: currentFacility,
+                facilityOption: document.getElementById('facilityOption').value
             })
         });
         
@@ -278,7 +303,14 @@ function showTicket(bookings) {
         let name = "-";
         if (booking.userId && booking.userId.displayName) name = booking.userId.displayName;
         
-        const facilityLabel = booking.facility === 'ice_bath' ? (isEn ? '🧊 ICE BATH' : '🧊 บ่อน้ำแข็ง (ICE BATH)') : (isEn ? '🎮 GAME ROOM' : '🎮 ห้องเกมส์ (GAME ROOM)');
+        let optionLabel = '';
+        if (booking.facilityOption === 'ps5') optionLabel = ' (PS5)';
+        else if (booking.facilityOption === 'nintendo') optionLabel = ' (Nintendo)';
+        else if (booking.facilityOption === 'male') optionLabel = isEn ? ' (Male)' : ' (ชาย)';
+        else if (booking.facilityOption === 'female') optionLabel = isEn ? ' (Female)' : ' (หญิง)';
+        else if (booking.facilityOption === 'both') optionLabel = isEn ? ' (Both)' : ' (คู่)';
+        
+        const facilityLabel = (booking.facility === 'ice_bath' ? (isEn ? '🧊 ICE BATH' : '🧊 บ่อน้ำแข็ง') : (isEn ? '🎮 GAME ROOM' : '🎮 ห้องเกมส์')) + optionLabel;
         const color = booking.facility === 'ice_bath' ? '#00bcd4' : 'var(--primary-color)';
         const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${booking.bookingRef}`;
 

@@ -22,6 +22,11 @@ const bookingSchema = new mongoose.Schema({
     default: 'game_room' 
   },
   
+  facilityOption: {
+    type: String,
+    required: false
+  },
+  
   agreedToTerms: { type: Boolean, default: true },
   
   createdAt: { type: Date, default: Date.now }

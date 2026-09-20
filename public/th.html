@@ -120,6 +120,13 @@
                         <input type="text" id="displayName" required placeholder="ชื่อของคุณ">
                     </div>
                 </div>
+                
+                <div class="form-group" style="margin-top: 10px;" id="facilityOptionContainer">
+                    <label id="facilityOptionLabel">ตัวเลือกบริการ (Option)</label>
+                    <select id="facilityOption" required onchange="onOptionChange()" style="width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-family: 'Kanit';">
+                        <!-- Options generated dynamically -->
+                    </select>
+                </div>
 
                 <div class="form-group" style="margin-top: 10px;">
                     <label>วันที่จอง (Date)</label>

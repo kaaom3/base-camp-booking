@@ -67,8 +67,8 @@ async function loadSchedule() {
                 actionHtml = `
                     <div style="display:flex; flex-direction:column; gap: 5px;">
                         <div style="display:flex; gap: 5px;">
-                            <button class="btn-sm-doc" style="background:#3182ce; flex:1;" onclick="openDocument('${b.bookingRef}', '${b.hotelRoomNumber}', '${name}', '${b.bookingDate}', '${b.startTime}', 'th', '${b.facility}')">📄 พิมพ์ (TH)</button>
-                            <button class="btn-sm-doc" style="background:#4a5568; flex:1;" onclick="openDocument('${b.bookingRef}', '${b.hotelRoomNumber}', '${name}', '${b.bookingDate}', '${b.startTime}', 'en', '${b.facility}')">📄 Print (EN)</button>
+                            <button class="btn-sm-doc" style="background:#3182ce; flex:1;" onclick="openDocument('${b.bookingRef}', '${b.hotelRoomNumber}', '${name}', '${b.bookingDate}', '${b.startTime}', 'th', '${b.facility}', '${b.facilityOption || ''}')">📄 พิมพ์ (TH)</button>
+                            <button class="btn-sm-doc" style="background:#4a5568; flex:1;" onclick="openDocument('${b.bookingRef}', '${b.hotelRoomNumber}', '${name}', '${b.bookingDate}', '${b.startTime}', 'en', '${b.facility}', '${b.facilityOption || ''}')">📄 Print (EN)</button>
                         </div>
                         <div style="display:flex; gap: 5px;">
                             <button class="btn-sm-checkin" style="flex:1;" onclick="checkIn('${b.bookingRef}')">Check-in</button>
@@ -78,8 +78,15 @@ async function loadSchedule() {
                 `;
             }
 
+            let optLabel = '';
+            if (b.facilityOption === 'ps5') optLabel = ' (PS5)';
+            if (b.facilityOption === 'nintendo') optLabel = ' (Switch)';
+            if (b.facilityOption === 'male') optLabel = ' (ชาย)';
+            if (b.facilityOption === 'female') optLabel = ' (หญิง)';
+            if (b.facilityOption === 'both') optLabel = ' (คู่)';
+
             tr.innerHTML = `
-                <td><strong style="color:var(--primary-color)">${b.bookingRef}</strong><br><span style="font-size:11px; background:${b.facility === 'ice_bath' ? '#00bcd4' : '#e2e8f0'}; color:${b.facility === 'ice_bath' ? 'white' : '#4a5568'}; padding:2px 6px; border-radius:4px;">${b.facility === 'ice_bath' ? 'ICE BATH' : 'GAME ROOM'}</span></td>
+                <td><strong style="color:var(--primary-color)">${b.bookingRef}</strong><br><span style="font-size:11px; background:${b.facility === 'ice_bath' ? '#00bcd4' : '#e2e8f0'}; color:${b.facility === 'ice_bath' ? 'white' : '#4a5568'}; padding:2px 6px; border-radius:4px;">${b.facility === 'ice_bath' ? 'ICE BATH' : 'GAME ROOM'}${optLabel}</span></td>
                 <td>${b.slotNumber}</td>
                 <td>${b.startTime} - ${b.endTime}</td>
                 <td><strong>${b.hotelRoomNumber}</strong></td>
@@ -123,16 +130,23 @@ async function loadHistory() {
             let name = "-";
             if(b.userId && b.userId.displayName) name = b.userId.displayName;
 
+            let optLabel = '';
+            if (b.facilityOption === 'ps5') optLabel = ' (PS5)';
+            if (b.facilityOption === 'nintendo') optLabel = ' (Switch)';
+            if (b.facilityOption === 'male') optLabel = ' (ชาย)';
+            if (b.facilityOption === 'female') optLabel = ' (หญิง)';
+            if (b.facilityOption === 'both') optLabel = ' (คู่)';
+
             tr.innerHTML = `
-                <td><strong>${b.bookingRef}</strong></td>
+                <td><strong style="color:var(--primary-color)">${b.bookingRef}</strong><br><span style="font-size:11px; background:${b.facility === 'ice_bath' ? '#00bcd4' : '#e2e8f0'}; color:${b.facility === 'ice_bath' ? 'white' : '#4a5568'}; padding:2px 6px; border-radius:4px;">${b.facility === 'ice_bath' ? 'ICE BATH' : 'GAME ROOM'}${optLabel}</span></td>
                 <td>${b.startTime} - ${b.endTime}</td>
                 <td>${b.hotelRoomNumber}</td>
                 <td>${name}</td>
                 <td><span class="badge ${st.color}">${st.label}</span></td>
                 <td>
                     <div style="display:flex; gap: 5px;">
-                        <button class="btn-sm-doc" style="background:#3182ce;" onclick="openDocument('${b.bookingRef}', '${b.hotelRoomNumber}', '${name}', '${b.bookingDate}', '${b.startTime}', 'th', '${b.facility}')">📄 พิมพ์ (TH)</button>
-                        <button class="btn-sm-doc" style="background:#4a5568;" onclick="openDocument('${b.bookingRef}', '${b.hotelRoomNumber}', '${name}', '${b.bookingDate}', '${b.startTime}', 'en', '${b.facility}')">📄 Print (EN)</button>
+                        <button class="btn-sm-doc" style="background:#3182ce;" onclick="openDocument('${b.bookingRef}', '${b.hotelRoomNumber}', '${name}', '${b.bookingDate}', '${b.startTime}', 'th', '${b.facility}', '${b.facilityOption || ''}')">📄 พิมพ์ (TH)</button>
+                        <button class="btn-sm-doc" style="background:#4a5568;" onclick="openDocument('${b.bookingRef}', '${b.hotelRoomNumber}', '${name}', '${b.bookingDate}', '${b.startTime}', 'en', '${b.facility}', '${b.facilityOption || ''}')">📄 Print (EN)</button>
                     </div>
                 </td>
             `;
@@ -203,12 +217,20 @@ async function cancelBooking(id) {
     }
 }
 
-function openDocument(ref, room, name, date, time, lang, facility = 'game_room') {
+function openDocument(ref, room, name, date, time, lang, facility = 'game_room', facilityOption = '') {
     let title, header, printBtn, refLabel, dateLabel, timeLabel, ackText, listItems, generatedText, signatureLabel;
+
+    let optLabelEn = '';
+    let optLabelTh = '';
+    if (facilityOption === 'ps5') { optLabelEn = ' (PS5)'; optLabelTh = ' (PS5)'; }
+    if (facilityOption === 'nintendo') { optLabelEn = ' (Switch)'; optLabelTh = ' (Switch)'; }
+    if (facilityOption === 'male') { optLabelEn = ' (Male)'; optLabelTh = ' (ชาย)'; }
+    if (facilityOption === 'female') { optLabelEn = ' (Female)'; optLabelTh = ' (หญิง)'; }
+    if (facilityOption === 'both') { optLabelEn = ' (Couple)'; optLabelTh = ' (คู่รัก)'; }
 
     if (lang === 'en') {
         title = facility === 'ice_bath' ? "Ice Bath Agreement" : "Game Room Agreement";
-        header = facility === 'ice_bath' ? "ICE BATH USAGE AGREEMENT" : "GAME ROOM USAGE AGREEMENT";
+        header = (facility === 'ice_bath' ? "ICE BATH USAGE AGREEMENT" : "GAME ROOM USAGE AGREEMENT") + optLabelEn.toUpperCase();
         printBtn = "Print Document";
         refLabel = "Booking Ref:";
         dateLabel = "Date:";
@@ -241,7 +263,7 @@ function openDocument(ref, room, name, date, time, lang, facility = 'game_room')
         }
     } else {
         title = facility === 'ice_bath' ? "เอกสารยินยอม - บ่อน้ำแข็ง" : "เอกสารยินยอม - ห้องเกมส์";
-        header = facility === 'ice_bath' ? "ข้อตกลงการใช้บริการบ่อน้ำแข็ง (ICE BATH)" : "ข้อตกลงการใช้บริการห้องเกมส์ (GAME ROOM)";
+        header = (facility === 'ice_bath' ? "เอกสารยินยอมการใช้บริการ บ่อน้ำแข็ง" : "เอกสารยินยอมการใช้บริการ ห้องเกมส์") + optLabelTh;
         printBtn = "พิมพ์เอกสาร";
         refLabel = "รหัสการจอง:";
         dateLabel = "วันที่:";
