@@ -16,13 +16,9 @@ const GAME_ROOM_SLOTS = [
 const ICE_BATH_SLOTS = [
     { slotNumber: 1, startTime: "09:00", endTime: "10:00" },
     { slotNumber: 2, startTime: "10:30", endTime: "11:30" },
-    { slotNumber: 3, startTime: "12:00", endTime: "13:00" },
-    { slotNumber: 4, startTime: "13:30", endTime: "14:30" },
-    { slotNumber: 5, startTime: "15:00", endTime: "16:00" },
-    { slotNumber: 6, startTime: "16:30", endTime: "17:30" },
-    { slotNumber: 7, startTime: "18:00", endTime: "19:00" },
-    { slotNumber: 8, startTime: "19:30", endTime: "20:30" },
-    { slotNumber: 9, startTime: "21:00", endTime: "22:00" }
+    { slotNumber: 3, startTime: "16:00", endTime: "17:00" },
+    { slotNumber: 4, startTime: "17:30", endTime: "18:30" },
+    { slotNumber: 5, startTime: "19:00", endTime: "20:00" }
 ];
 
 exports.getAvailableSlots = async (req, res) => {
@@ -56,7 +52,9 @@ exports.getAvailableSlots = async (req, res) => {
             if (date === todayStr && isAvailable) {
                 const [startH, startM] = slot.startTime.split(':').map(Number);
                 const startMinutes = startH * 60 + startM;
-                if (currentMinutes >= startMinutes) {
+                const advanceRequired = targetFacility === 'ice_bath' ? 60 : 0;
+                
+                if (currentMinutes > startMinutes - advanceRequired) {
                     isAvailable = false;
                 }
             }
