@@ -420,5 +420,5 @@ function showTicket(bookings) {
         wrapper.innerHTML += ticketHtml;
     });
 }
-f u n c t i o n   r e s e t S e s s i o n ( )   {   w i n d o w . l o c a t i o n . r e l o a d ( ) ;   }  
- 
+
+function resetSession() { window.location.reload(); }
