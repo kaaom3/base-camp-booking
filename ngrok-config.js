@@ -1,0 +1,7 @@
+module.exports = {
+  apps: [{
+    name: "ngrok-basecamp",
+    script: "ngrok.exe",
+    args: "http --authtoken 3JXYrYchYzyScmfL3Sufv5iOoRo_4LKtXQHvC7xtNbZmCj4ug --domain=sibling-compacted-decrease.ngrok-free.dev 5050"
+  }]
+};

@@ -10,7 +10,7 @@ ngrok config add-authtoken 3JXYrYchYzyScmfL3Sufv5iOoRo_4LKtXQHvC7xtNbZmCj4ug
 3. สั่งรันระบบทั้ง 2 ตัว
 เข้าไปที่โฟลเดอร์โปรเจกต์ (ที่มีไฟล์ server.js) แล้วพิมพ์ทีละบรรทัด:
 pm2 start server.js --name "basecamp-server"
-pm2 start ngrok.exe --name "ngrok-tunnel" -- http --domain=sibling-compacted-decrease.ngrok-free.dev 5050
+pm2 start ngrok-config.js
 
 4. บันทึกการตั้งค่า
 pm2 save

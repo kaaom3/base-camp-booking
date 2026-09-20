@@ -143,7 +143,11 @@ async function loadSlots() {
     container.innerHTML = `<div class="loading-state">${loadingText}</div>`;
 
     try {
-        const res = await fetch(`/api/customer/slots/available?date=${selectedDate}&facility=${currentFacility}`);
+        const res = await fetch(`/api/customer/slots/available?date=${selectedDate}&facility=${currentFacility}`, {
+            headers: {
+                'ngrok-skip-browser-warning': '69420'
+            }
+        });
         if (!res.ok) throw new Error('Network response was not ok');
         
         const slots = await res.json();
@@ -204,7 +208,10 @@ async function submitBooking() {
     try {
         const res = await fetch('/api/customer/bookings', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'ngrok-skip-browser-warning': '69420'
+            },
             body: JSON.stringify({
                 displayName, 
                 hotelRoomNumber: roomNumber, 
