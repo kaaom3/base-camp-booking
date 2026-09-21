@@ -88,12 +88,12 @@ async function goStep2(facility) {
             
             html += `
                 <button class="fac-btn fac-game" ${ps5Avail ? 'onclick="goStep3(\'ps5\')"' : 'disabled'}>
-                    <img src="images/ps5.png" alt="PS5" style="width: 70px; height: 70px; object-fit: contain; margin-bottom: 15px;">
+                    <img src="images/ps5.png" alt="PS5" style="width: 130px; height: 130px; object-fit: contain; margin-bottom: 15px;">
                     <div class="fac-title">PlayStation 5</div>
                     <div class="price-tag">${ps5Avail ? (isEn ? 'Available' : 'ว่าง') : (isEn ? 'FULLY BOOKED' : 'คิวเต็มแล้ว')}</div>
                 </button>
                 <button class="fac-btn fac-nintendo" ${ninAvail ? 'onclick="goStep3(\'nintendo\')"' : 'disabled'}>
-                    <img src="images/nintendo.png" alt="Nintendo" style="width: 70px; height: 70px; object-fit: contain; margin-bottom: 15px;">
+                    <img src="images/nintendo.png" alt="Nintendo" style="width: 130px; height: 130px; object-fit: contain; margin-bottom: 15px;">
                     <div class="fac-title">Nintendo Switch</div>
                     <div class="price-tag">${ninAvail ? (isEn ? 'Available' : 'ว่าง') : (isEn ? 'FULLY BOOKED' : 'คิวเต็มแล้ว')}</div>
                 </button>
@@ -107,17 +107,17 @@ async function goStep2(facility) {
             
             html += `
                 <button class="fac-btn fac-game" ${maleAvail ? 'onclick="goStep3(\'male\')"' : 'disabled'}>
-                    <img src="images/male.png" alt="Male" style="width: 70px; height: 70px; object-fit: contain; margin-bottom: 15px;">
+                    <img src="images/male.png" alt="Male" style="width: 130px; height: 130px; object-fit: contain; margin-bottom: 15px;">
                     <div class="fac-title">${isEn ? 'Male Bath' : 'บ่อผู้ชาย (Male)'}</div>
                     <div class="price-tag">${maleAvail ? (isEn ? 'Available' : 'ว่าง') : (isEn ? 'FULLY BOOKED' : 'คิวเต็มแล้ว')}</div>
                 </button>
                 <button class="fac-btn fac-female" ${femaleAvail ? 'onclick="goStep3(\'female\')"' : 'disabled'}>
-                    <img src="images/female.png" alt="Female" style="width: 70px; height: 70px; object-fit: contain; margin-bottom: 15px;">
+                    <img src="images/female.png" alt="Female" style="width: 130px; height: 130px; object-fit: contain; margin-bottom: 15px;">
                     <div class="fac-title">${isEn ? 'Female Bath' : 'บ่อผู้หญิง (Female)'}</div>
                     <div class="price-tag">${femaleAvail ? (isEn ? 'Available' : 'ว่าง') : (isEn ? 'FULLY BOOKED' : 'คิวเต็มแล้ว')}</div>
                 </button>
                 <button class="fac-btn fac-both" ${bothAvail ? 'onclick="goStep3(\'both\')"' : 'disabled'}>
-                    <img src="images/couple.png" alt="Couple" style="width: 70px; height: 70px; object-fit: contain; margin-bottom: 15px;">
+                    <img src="images/couple.png" alt="Couple" style="width: 130px; height: 130px; object-fit: contain; margin-bottom: 15px;">
                     <div class="fac-title">${isEn ? 'Couples (Both)' : 'จองทั้งคู่ ชายและหญิง'}</div>
                     <div class="price-tag">${bothAvail ? (isEn ? 'Available' : 'ว่าง') : (isEn ? 'FULLY BOOKED' : 'คิวเต็มแล้ว')}</div>
                 </button>
