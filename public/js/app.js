@@ -447,6 +447,10 @@ function showTicket(bookings) {
                     </div>
                     
                     ${feeAlertHtml}
+                    
+                    <div style="margin-top: 15px; text-align: center; font-size: 13px; color: #718096; background: #f8fafc; padding: 10px; border-radius: 6px;">
+                        ${isEn ? '💡 Please present this screen to the staff at the counter to access the service.' : '💡 กรุณาแสดงหน้าจอนี้แก่พนักงานที่เคาน์เตอร์เพื่อเข้าใช้บริการ'}
+                    </div>
                 </div>
             </div>
         `;
