@@ -88,12 +88,12 @@ async function goStep2(facility) {
             
             html += `
                 <button class="fac-btn fac-game" ${ps5Avail ? 'onclick="goStep3(\'ps5\')"' : 'disabled'}>
-                    <img src="images/ps5.png" alt="PS5" style="width: 200px; height: 150px; object-fit: contain; margin-bottom: 15px;">
+                    <img src="images/ps5.png" alt="PS5" style="width: auto; height: 75px; max-width: 90%; object-fit: contain; margin-bottom: 15px;">
                     <div class="fac-title">PlayStation 5</div>
                     <div class="price-tag">${ps5Avail ? (isEn ? 'Available' : 'ว่าง') : (isEn ? 'FULLY BOOKED' : 'คิวเต็มแล้ว')}</div>
                 </button>
                 <button class="fac-btn fac-nintendo" ${ninAvail ? 'onclick="goStep3(\'nintendo\')"' : 'disabled'}>
-                    <img src="images/nintendo.png" alt="Nintendo" style="width: 200px; height: 150px; object-fit: contain; margin-bottom: 15px;">
+                    <img src="images/nintendo.png" alt="Nintendo" style="width: auto; height: 75px; max-width: 90%; object-fit: contain; margin-bottom: 15px;">
                     <div class="fac-title">Nintendo Switch</div>
                     <div class="price-tag">${ninAvail ? (isEn ? 'Available' : 'ว่าง') : (isEn ? 'FULLY BOOKED' : 'คิวเต็มแล้ว')}</div>
                 </button>
