@@ -472,19 +472,75 @@ async function downloadTicket(elementId, ref, event) {
         btn.disabled = true;
         
         const canvas = await html2canvas(el, { useCORS: true, scale: 2, backgroundColor: '#ffffff' });
-        const link = document.createElement('a');
-        link.download = `BaseCamp-Ticket-${ref}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
+        const imgData = canvas.toDataURL('image/png');
+        
+        // Show Image Modal for LINE/In-App Browsers
+        showImageModal(imgData, ref);
         
         btn.innerHTML = originalText;
         btn.disabled = false;
     } catch (err) {
         console.error(err);
-        alert('Failed to save ticket. Please take a screenshot instead. / ไม่สามารถบันทึกได้ กรุณาแคปหน้าจอแทนครับ');
+        alert('Failed to generate ticket. Please take a screenshot instead. / ไม่สามารถสร้างรูปได้ กรุณาแคปหน้าจอแทนครับ');
         event.currentTarget.innerHTML = '💾 Save Ticket';
         event.currentTarget.disabled = false;
     }
+}
+
+function showImageModal(imgData, ref) {
+    // Create modal overlay
+    const overlay = document.createElement('div');
+    overlay.style.position = 'fixed';
+    overlay.style.top = '0';
+    overlay.style.left = '0';
+    overlay.style.width = '100vw';
+    overlay.style.height = '100vh';
+    overlay.style.backgroundColor = 'rgba(0,0,0,0.85)';
+    overlay.style.zIndex = '9999';
+    overlay.style.display = 'flex';
+    overlay.style.flexDirection = 'column';
+    overlay.style.justifyContent = 'center';
+    overlay.style.alignItems = 'center';
+    overlay.style.padding = '20px';
+    
+    // Instruction text
+    const text = document.createElement('div');
+    text.innerHTML = isEn ? '👇 <b>Long press</b> the image below to save it' : '👇 <b>แตะค้าง</b> ที่รูปภาพด้านล่างเพื่อบันทึก';
+    text.style.color = 'white';
+    text.style.fontSize = '18px';
+    text.style.marginBottom = '20px';
+    text.style.textAlign = 'center';
+    
+    // The Image
+    const img = document.createElement('img');
+    img.src = imgData;
+    img.style.maxWidth = '100%';
+    img.style.maxHeight = '70vh';
+    img.style.borderRadius = '10px';
+    img.style.boxShadow = '0 10px 25px rgba(0,0,0,0.5)';
+    
+    // Close button
+    const closeBtn = document.createElement('button');
+    closeBtn.innerHTML = isEn ? 'Close (ปิด)' : 'ปิดหน้าต่างนี้ (Close)';
+    closeBtn.style.marginTop = '25px';
+    closeBtn.style.padding = '12px 30px';
+    closeBtn.style.backgroundColor = 'white';
+    closeBtn.style.color = 'black';
+    closeBtn.style.border = 'none';
+    closeBtn.style.borderRadius = '25px';
+    closeBtn.style.fontSize = '16px';
+    closeBtn.style.fontWeight = 'bold';
+    closeBtn.style.cursor = 'pointer';
+    
+    closeBtn.onclick = () => {
+        document.body.removeChild(overlay);
+    };
+    
+    overlay.appendChild(text);
+    overlay.appendChild(img);
+    overlay.appendChild(closeBtn);
+    
+    document.body.appendChild(overlay);
 }
 
 function resetSession() { window.location.reload(); }
