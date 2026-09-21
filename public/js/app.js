@@ -416,8 +416,9 @@ function showTicket(bookings) {
             `;
         }
 
+        const ticketId = `ticket-${booking.bookingRef}`;
         const ticketHtml = `
-            <div style="border: 1px solid var(--border-color); border-radius: 12px; background: white; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden;">
+            <div id="${ticketId}" style="border: 1px solid var(--border-color); border-radius: 12px; background: white; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden;">
                 <div style="background: ${color}; color: white; padding: 10px; text-align: center; font-weight: 600; font-size: 16px;">
                     ${facilityLabel}
                 </div>
@@ -453,9 +454,37 @@ function showTicket(bookings) {
                     </div>
                 </div>
             </div>
+            <button type="button" class="btn-submit" style="margin-top: 10px; background: #4a5568; padding: 12px; font-size: 16px;" onclick="downloadTicket('${ticketId}', '${booking.bookingRef}', event)">
+                ${isEn ? '💾 Save Ticket to Device' : '💾 บันทึกตั๋วรูปลงเครื่อง'}
+            </button>
         `;
         wrapper.innerHTML += ticketHtml;
     });
+}
+
+async function downloadTicket(elementId, ref, event) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    try {
+        const btn = event.currentTarget;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '⏳ Processing...';
+        btn.disabled = true;
+        
+        const canvas = await html2canvas(el, { useCORS: true, scale: 2, backgroundColor: '#ffffff' });
+        const link = document.createElement('a');
+        link.download = `BaseCamp-Ticket-${ref}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    } catch (err) {
+        console.error(err);
+        alert('Failed to save ticket. Please take a screenshot instead. / ไม่สามารถบันทึกได้ กรุณาแคปหน้าจอแทนครับ');
+        event.currentTarget.innerHTML = '💾 Save Ticket';
+        event.currentTarget.disabled = false;
+    }
 }
 
 function resetSession() { window.location.reload(); }
