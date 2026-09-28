@@ -142,11 +142,11 @@ exports.getSlotSummary = async (req, res) => {
                 }
 
                 if (isTimeValid) {
-                    const isMaleBooked = bookedSlots.some(b => b.slotNumber === slot.slotNumber && (b.facilityOption === 'male' || b.facilityOption === 'both'));
-                    const isFemaleBooked = bookedSlots.some(b => b.slotNumber === slot.slotNumber && (b.facilityOption === 'female' || b.facilityOption === 'both'));
+                    const maleBookedCount = bookedSlots.filter(b => b.slotNumber === slot.slotNumber && (b.facilityOption === 'male' || b.facilityOption === 'both')).length;
+                    const femaleBookedCount = bookedSlots.filter(b => b.slotNumber === slot.slotNumber && (b.facilityOption === 'female' || b.facilityOption === 'both')).length;
                     
-                    if (!isMaleBooked) summary.male++;
-                    if (!isFemaleBooked) summary.female++;
+                    if (maleBookedCount < 2) summary.male++;
+                    if (femaleBookedCount < 2) summary.female++;
                 }
             });
         }
@@ -206,12 +206,12 @@ exports.createBooking = async (req, res) => {
             const isOptionBooked = existingSlotBookings.some(b => b.facilityOption === facilityOption);
             if (isOptionBooked) return res.status(400).json({ message: 'รอบเวลานี้ถูกจองเครื่องเล่นนี้ไปแล้ว' });
         } else if (targetFacility === 'ice_bath') {
-            const isMaleBooked = existingSlotBookings.some(b => b.facilityOption === 'male' || b.facilityOption === 'both');
-            const isFemaleBooked = existingSlotBookings.some(b => b.facilityOption === 'female' || b.facilityOption === 'both');
+            const maleBookedCount = existingSlotBookings.filter(b => b.facilityOption === 'male' || b.facilityOption === 'both').length;
+            const femaleBookedCount = existingSlotBookings.filter(b => b.facilityOption === 'female' || b.facilityOption === 'both').length;
             
-            if (facilityOption === 'male' && isMaleBooked) return res.status(400).json({ message: 'รอบเวลานี้บ่อชายเต็มแล้ว' });
-            if (facilityOption === 'female' && isFemaleBooked) return res.status(400).json({ message: 'รอบเวลานี้บ่อหญิงเต็มแล้ว' });
-            if (facilityOption === 'both' && (isMaleBooked || isFemaleBooked)) return res.status(400).json({ message: 'รอบเวลานี้ไม่ว่างพอสำหรับ 2 ท่าน' });
+            if (facilityOption === 'male' && maleBookedCount >= 2) return res.status(400).json({ message: 'รอบเวลานี้บ่อชายเต็มแล้ว' });
+            if (facilityOption === 'female' && femaleBookedCount >= 2) return res.status(400).json({ message: 'รอบเวลานี้บ่อหญิงเต็มแล้ว' });
+            if (facilityOption === 'both' && (maleBookedCount >= 2 || femaleBookedCount >= 2)) return res.status(400).json({ message: 'รอบเวลานี้ไม่ว่างพอสำหรับ 2 ท่าน' });
         }
 
         // Find start time and end time for this slot
