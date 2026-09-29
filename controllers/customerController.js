@@ -53,15 +53,15 @@ exports.getAvailableSlots = async (req, res) => {
                 const isOptionBooked = bookedSlots.some(b => b.slotNumber === slot.slotNumber && b.facilityOption === option);
                 isAvailable = !isOptionBooked;
             } else if (targetFacility === 'ice_bath') {
-                const isMaleBooked = bookedSlots.some(b => b.slotNumber === slot.slotNumber && (b.facilityOption === 'male' || b.facilityOption === 'both'));
-                const isFemaleBooked = bookedSlots.some(b => b.slotNumber === slot.slotNumber && (b.facilityOption === 'female' || b.facilityOption === 'both'));
+                const maleBookedCount = bookedSlots.filter(b => b.slotNumber === slot.slotNumber && (b.facilityOption === 'male' || b.facilityOption === 'both')).length;
+                const femaleBookedCount = bookedSlots.filter(b => b.slotNumber === slot.slotNumber && (b.facilityOption === 'female' || b.facilityOption === 'both')).length;
                 
                 if (option === 'male') {
-                    isAvailable = !isMaleBooked;
+                    isAvailable = maleBookedCount < 2;
                 } else if (option === 'female') {
-                    isAvailable = !isFemaleBooked;
+                    isAvailable = femaleBookedCount < 2;
                 } else if (option === 'both') {
-                    isAvailable = !isMaleBooked && !isFemaleBooked;
+                    isAvailable = maleBookedCount < 2 && femaleBookedCount < 2;
                 }
             }
             
