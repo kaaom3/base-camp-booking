@@ -216,10 +216,16 @@ async function fetchSlots(option, containerId, isSecondSlot = false) {
             btn.className = 'slot-btn';
             
             if (slot.isAvailable) {
+                let availText = isEn ? 'AVAILABLE' : 'ว่าง';
+                if (slot.remainingSpots !== undefined && slot.remainingSpots > 0) {
+                    if (currentFacility === 'ice_bath') {
+                        availText = isEn ? `AVAILABLE (${slot.remainingSpots} Left)` : `ว่าง (รับได้อีก ${slot.remainingSpots} คน)`;
+                    }
+                }
                 btn.onclick = () => selectSlot(slot.slotNumber, btn, isSecondSlot);
                 btn.innerHTML = `
                     <div class="slot-time">${slot.startTime} - ${slot.endTime}</div>
-                    <div class="slot-status available">${isEn ? 'AVAILABLE' : 'ว่าง'}</div>
+                    <div class="slot-status available">${availText}</div>
                 `;
             } else {
                 btn.classList.add('booked');

@@ -47,21 +47,28 @@ exports.getAvailableSlots = async (req, res) => {
 
         const availableSlots = targetSlots.map(slot => {
             let isAvailable = true;
+            let remainingSpots = 1;
             
             // Check capacity based on option
             if (targetFacility === 'game_room') {
                 const isOptionBooked = bookedSlots.some(b => b.slotNumber === slot.slotNumber && b.facilityOption === option);
                 isAvailable = !isOptionBooked;
+                remainingSpots = isAvailable ? 1 : 0;
             } else if (targetFacility === 'ice_bath') {
                 const maleBookedCount = bookedSlots.filter(b => b.slotNumber === slot.slotNumber && (b.facilityOption === 'male' || b.facilityOption === 'both')).length;
                 const femaleBookedCount = bookedSlots.filter(b => b.slotNumber === slot.slotNumber && (b.facilityOption === 'female' || b.facilityOption === 'both')).length;
                 
                 if (option === 'male') {
-                    isAvailable = maleBookedCount < 2;
+                    remainingSpots = Math.max(0, 2 - maleBookedCount);
+                    isAvailable = remainingSpots > 0;
                 } else if (option === 'female') {
-                    isAvailable = femaleBookedCount < 2;
+                    remainingSpots = Math.max(0, 2 - femaleBookedCount);
+                    isAvailable = remainingSpots > 0;
                 } else if (option === 'both') {
-                    isAvailable = maleBookedCount < 2 && femaleBookedCount < 2;
+                    const remainingMale = Math.max(0, 2 - maleBookedCount);
+                    const remainingFemale = Math.max(0, 2 - femaleBookedCount);
+                    remainingSpots = Math.min(remainingMale, remainingFemale);
+                    isAvailable = remainingSpots > 0;
                 }
             }
             
@@ -72,12 +79,14 @@ exports.getAvailableSlots = async (req, res) => {
                 
                 if (currentMinutes > startMinutes - advanceRequired) {
                     isAvailable = false;
+                    remainingSpots = 0;
                 }
             }
 
             return {
                 ...slot,
-                isAvailable
+                isAvailable,
+                remainingSpots
             };
         });
 
