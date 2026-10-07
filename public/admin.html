@@ -290,38 +290,15 @@
                 <div class="table-responsive">
                     <table class="schedule-table">
                         <thead>
-                            <tr>
-                                <th>Time / Slot</th>
-                                <th>Facility</th>
-                                <th>Player Info</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="schedule-body">
-                            <!-- Populated via JS -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div id="tab-history" class="tab-content">
-            <div class="card">
-                <h2 class="section-title">ARCHIVES / HISTORY</h2>
-                <p style="margin-bottom: 20px; color: #aaa;">รายการการจองทั้งหมดที่เกิดขึ้น (ไม่รวมที่ยกเลิกแล้ว)</p>
-                
-                <div class="table-responsive">
-                    <table class="schedule-table">
-                        <thead>
-                            <tr>
-                                <th>Ref</th>
-                                <th>Date/Time</th>
-                                <th>Facility</th>
-                                <th>Player Info</th>
-                                <th>Timestamp</th>
-                            </tr>
-                        </thead>
+    <tr>
+        <th style="white-space: nowrap;">Ref & Facility</th>
+        <th style="white-space: nowrap;">Time</th>
+        <th style="white-space: nowrap;">Room Number</th>
+        <th style="white-space: nowrap;">Player Name</th>
+        <th style="white-space: nowrap;">Status</th>
+        <th style="white-space: nowrap;">Actions</th>
+    </tr>
+</thead>
                         <tbody id="history-body">
                             <!-- Populated via JS -->
                         </tbody>
@@ -359,6 +336,6 @@
             return originalConfirm(msg);
         };
     </script>
-<script src="js/admin.js?v=1791369139868"></script>
+<script src="js/admin.js?v=1791369398121"></script>
 </body>
 </html>
