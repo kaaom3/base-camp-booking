@@ -3,12 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Select Language / เลือกภาษา</title>
+    <title>Base Camp Hotel - Select Language</title>
     
-    
-    
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
+    
     <style>
+        /* === SPLASH SCREEN STYLES === */
+        #splash-screen {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: #0a0a10;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            transition: opacity 1s ease-in-out;
+        }
+
+        /* The container holding the sliced logo */
+        .logo-assembly {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            perspective: 1000px;
+        }
+
+        /* Each slice of the logo */
+        .logo-slice {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-image: url('images/logo.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            opacity: 0;
+        }
+
+        /* Slice 1: Top */
+        .slice-1 {
+            clip-path: inset(0 0 66% 0);
+            animation: assembleSlice1 1.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+            animation-delay: 0.2s;
+        }
+        @keyframes assembleSlice1 {
+            0% { transform: translateY(-100px) translateZ(200px) rotateX(45deg); opacity: 0; filter: blur(10px); }
+            100% { transform: translateY(0) translateZ(0) rotateX(0); opacity: 1; filter: blur(0); }
+        }
+
+        /* Slice 2: Middle */
+        .slice-2 {
+            clip-path: inset(34% 0 34% 0);
+            animation: assembleSlice2 1.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+            animation-delay: 0.5s;
+        }
+        @keyframes assembleSlice2 {
+            0% { transform: translateX(150px) translateZ(100px) rotateY(45deg); opacity: 0; filter: blur(10px); }
+            100% { transform: translateX(0) translateZ(0) rotateY(0); opacity: 1; filter: blur(0); }
+        }
+
+        /* Slice 3: Bottom */
+        .slice-3 {
+            clip-path: inset(66% 0 0 0);
+            animation: assembleSlice3 1.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+            animation-delay: 0.8s;
+        }
+        @keyframes assembleSlice3 {
+            0% { transform: translateY(100px) translateX(-100px) translateZ(150px) rotateZ(-20deg); opacity: 0; filter: blur(10px); }
+            100% { transform: translateY(0) translateX(0) translateZ(0) rotateZ(0); opacity: 1; filter: blur(0); }
+        }
+
+        /* The full glowing logo that appears after assembly */
+        .logo-full {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-image: url('images/logo.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            opacity: 0;
+            animation: glowReveal 2s ease-in-out forwards;
+            animation-delay: 2.2s;
+        }
+        @keyframes glowReveal {
+            0% { opacity: 0; filter: drop-shadow(0 0 0px #00f3ff) brightness(1); }
+            50% { opacity: 1; filter: drop-shadow(0 0 30px #00f3ff) brightness(1.5); }
+            100% { opacity: 1; filter: drop-shadow(0 0 10px #00f3ff) brightness(1); }
+        }
+
+        /* Loading / Enter text */
+        .enter-text {
+            margin-top: 40px;
+            font-family: 'Orbitron', sans-serif;
+            color: #00f3ff;
+            font-size: 18px;
+            letter-spacing: 4px;
+            opacity: 0;
+            cursor: pointer;
+            animation: textFadeIn 1s ease forwards, pulseText 2s infinite alternate;
+            animation-delay: 2.8s, 3.8s;
+            padding: 10px 30px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+        .enter-text:hover {
+            background: rgba(0, 243, 255, 0.1);
+            border-color: #00f3ff;
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.5);
+        }
+
+        @keyframes textFadeIn {
+            to { opacity: 1; }
+        }
+        @keyframes pulseText {
+            from { text-shadow: 0 0 5px #00f3ff; }
+            to { text-shadow: 0 0 20px #00f3ff, 0 0 30px #bc13fe; }
+        }
+
+
+        /* === MAIN PAGE STYLES === */
         .lang-container {
             padding: 50px 30px;
             text-align: center;
@@ -38,10 +157,28 @@
             box-shadow: 0 10px 20px rgba(0,0,0,0.1);
         }
         .flag { font-size: 24px; font-weight: bold; color: var(--accent-color); }
+        
+        #main-content {
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
     </style>
 </head>
 <body>
-    <div class="app-wrapper" style="max-width: 500px;">
+
+    <!-- SPLASH SCREEN -->
+    <div id="splash-screen" onclick="enterApp()">
+        <div class="logo-assembly">
+            <div class="logo-slice slice-1"></div>
+            <div class="logo-slice slice-2"></div>
+            <div class="logo-slice slice-3"></div>
+            <div class="logo-full"></div>
+        </div>
+        <div class="enter-text" id="enter-btn">TAP TO INITIALIZE</div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="app-wrapper" style="max-width: 500px;" id="main-content">
         <div class="hero-header">
             <img src="images/logo.png" alt="Base Camp Hotel" style="max-height: 100px; width: auto; margin-bottom: 10px;">
             <p>Welcome / ยินดีต้อนรับ</p>
@@ -57,5 +194,24 @@
             </a>
         </div>
     </div>
+
+    <script>
+        // Automatic fallback: if user doesn't tap, enter app automatically after 6 seconds
+        let autoEnterTimer = setTimeout(() => {
+            enterApp();
+        }, 6000);
+
+        function enterApp() {
+            clearTimeout(autoEnterTimer);
+            const splash = document.getElementById('splash-screen');
+            const mainContent = document.getElementById('main-content');
+            
+            splash.style.opacity = '0';
+            setTimeout(() => {
+                splash.style.display = 'none';
+                mainContent.style.opacity = '1';
+            }, 1000);
+        }
+    </script>
 </body>
 </html>
