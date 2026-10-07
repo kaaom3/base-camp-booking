@@ -4,7 +4,7 @@ function customAlert(msg) {
         const modal = document.createElement('div');
         modal.className = 'modal-overlay';
         modal.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; display:flex; justify-content:center; align-items:center; backdrop-filter: blur(5px);';
-        modal.innerHTML = "<div class='modal-box' style='background: var(--panel-bg); border: 1px solid var(--neon-blue); box-shadow: 0 0 30px rgba(0,243,255,0.4); color: #fff; padding: 30px; border-radius: 8px; width: 400px; max-width: 90%; text-align: center;'><h3 style='color: var(--neon-blue); font-family: Orbitron, sans-serif; margin-top: 0; letter-spacing: 2px;'>SYSTEM ALERT</h3><p style='color: #eee; margin: 20px 0; font-family: Kanit, sans-serif; font-size: 16px; line-height: 1.5;'>" + msg + "</p><div style='margin-top: 25px; display: flex; justify-content: center;'><button id='alertOkBtn' style='background: var(--neon-blue); color: #000; border: none; padding: 10px 30px; border-radius: 4px; box-shadow: 0 0 15px rgba(0,243,255,0.6); font-family: Orbitron, sans-serif; cursor: pointer; font-weight: bold; letter-spacing: 1px;'>ACKNOWLEDGE</button></div></div>";
+        modal.innerHTML = "<div class='modal-box' style='background: var(--panel-bg); border: 1px solid var(--neon-blue); box-shadow: 0 0 30px rgba(0,243,255,0.4); color: #fff; padding: 30px; border-radius: 8px; width: 400px; max-width: 90%; text-align: center;'><h3 style='color: var(--neon-blue); font-family: Orbitron, sans-serif; margin-top: 0; letter-spacing: 2px;'>SYSTEM ALERT</h3><p style='color: #eee; margin: 20px 0; font-family: Kanit, sans-serif; font-size: 16px; line-height: 1.5;'>" + msg.replace(/\n/g, '<br>') + "</p><div style='margin-top: 25px; display: flex; justify-content: center;'><button id='alertOkBtn' style='background: var(--neon-blue); color: #000; border: none; padding: 10px 30px; border-radius: 4px; box-shadow: 0 0 15px rgba(0,243,255,0.6); font-family: Orbitron, sans-serif; cursor: pointer; font-weight: bold; letter-spacing: 1px;'>ACKNOWLEDGE</button></div></div>";
         document.body.appendChild(modal);
         document.getElementById('alertOkBtn').onclick = () => { document.body.removeChild(modal); resolve(); };
     });
@@ -15,7 +15,7 @@ function customConfirm(msg) {
         const modal = document.createElement('div');
         modal.className = 'modal-overlay';
         modal.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; display:flex; justify-content:center; align-items:center; backdrop-filter: blur(5px);';
-        modal.innerHTML = "<div class='modal-box' style='background: var(--panel-bg); border: 1px solid var(--neon-pink); box-shadow: 0 0 30px rgba(255,0,127,0.4); color: #fff; padding: 30px; border-radius: 8px; width: 400px; max-width: 90%; text-align: center;'><h3 style='color: var(--neon-pink); font-family: Orbitron, sans-serif; margin-top: 0; letter-spacing: 2px;'>SYSTEM WARNING</h3><p style='color: #eee; margin: 20px 0; font-family: Kanit, sans-serif; font-size: 16px; line-height: 1.5;'>" + msg + "</p><div style='margin-top: 25px; display: flex; gap: 15px; justify-content: center;'><button id='confirmNoBtn' style='background: transparent; color: #ccc; border: 1px solid #666; padding: 10px 20px; border-radius: 4px; font-family: Orbitron, sans-serif; cursor: pointer; letter-spacing: 1px; transition: 0.3s;'>[ ABORT ]</button><button id='confirmYesBtn' style='background: var(--neon-pink); color: #fff; border: none; padding: 10px 20px; border-radius: 4px; box-shadow: 0 0 15px rgba(255,0,127,0.6); font-family: Orbitron, sans-serif; cursor: pointer; font-weight: bold; letter-spacing: 1px;'>[ EXECUTE ]</button></div></div>";
+        modal.innerHTML = "<div class='modal-box' style='background: var(--panel-bg); border: 1px solid var(--neon-pink); box-shadow: 0 0 30px rgba(255,0,127,0.4); color: #fff; padding: 30px; border-radius: 8px; width: 400px; max-width: 90%; text-align: center;'><h3 style='color: var(--neon-pink); font-family: Orbitron, sans-serif; margin-top: 0; letter-spacing: 2px;'>SYSTEM WARNING</h3><p style='color: #eee; margin: 20px 0; font-family: Kanit, sans-serif; font-size: 16px; line-height: 1.5;'>" + msg.replace(/\n/g, '<br>') + "</p><div style='margin-top: 25px; display: flex; gap: 15px; justify-content: center;'><button id='confirmNoBtn' style='background: transparent; color: #ccc; border: 1px solid #666; padding: 10px 20px; border-radius: 4px; font-family: Orbitron, sans-serif; cursor: pointer; letter-spacing: 1px; transition: 0.3s;'>[ ABORT ]</button><button id='confirmYesBtn' style='background: var(--neon-pink); color: #fff; border: none; padding: 10px 20px; border-radius: 4px; box-shadow: 0 0 15px rgba(255,0,127,0.6); font-family: Orbitron, sans-serif; cursor: pointer; font-weight: bold; letter-spacing: 1px;'>[ EXECUTE ]</button></div></div>";
         document.body.appendChild(modal);
         document.getElementById('confirmNoBtn').onclick = () => { document.body.removeChild(modal); resolve(false); };
         document.getElementById('confirmNoBtn').onmouseover = function() { this.style.borderColor = 'var(--neon-blue)'; this.style.color = 'var(--neon-blue)'; };
@@ -196,7 +196,7 @@ async function checkInManual() {
 }
 
 async function checkIn(bookingRef) {
-    if(!(await customConfirm())) return;
+    if(!(await customConfirm(`ยืนยันการ Check-in ให้กับรหัส: ${bookingRef} ใช่หรือไม่?`))) return;
 
     try {
         const res = await fetch('https://sibling-compacted-decrease.ngrok-free.dev/api/admin/bookings/check-in', {
@@ -223,7 +223,7 @@ async function checkIn(bookingRef) {
 }
 
 async function cancelBooking(id) {
-    if(!(await customConfirm())) return;
+    if(!(await customConfirm('คุณแน่ใจหรือไม่ว่าต้องการยกเลิกการจองนี้? รอบเวลาจะว่างให้คนอื่นจองทันที'))) return;
 
     try {
         const res = await fetch(`https://sibling-compacted-decrease.ngrok-free.dev/api/admin/bookings/${id}/cancel`, {
