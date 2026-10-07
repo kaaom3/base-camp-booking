@@ -302,7 +302,7 @@ async function showCustomConfirmModal() {
                     <div style="font-size: 40px; margin-bottom: 10px;">🧊</div>
                     <h3 style="margin-bottom: 15px; color: #2d3748;">${isEn ? 'Payment Confirmation' : 'ยืนยันค่าบริการ'}</h3>
                     <p style="margin-bottom: 25px; color: #4a5568; line-height: 1.5;">
-                        ${isEn ? 'Ice Bath service has a fee of <strong>50 THB</strong> per session.<br><br>Please pay at the counter.' : 'บริการแช่บ่อน้ำแข็งมีค่าบริการ <strong>50 บาท</strong> ต่อรอบการใช้งาน<br><br>กรุณาชำระเงินที่เคาน์เตอร์'}
+                        ${isEn ? 'Ice Bath service has a fee of <strong>150 THB</strong> per session.<br><br>Please pay at the counter.' : 'บริการแช่บ่อน้ำแข็งมีค่าบริการ <strong>150 บาท</strong> ต่อรอบการใช้งาน<br><br>กรุณาชำระเงินที่เคาน์เตอร์'}
                     </p>
                     <div style="display: flex; gap: 10px;">
                         <button id="modal-btn-cancel" style="flex: 1; padding: 12px; border: 1px solid #cbd5e0; background: white; border-radius: 8px; color: #4a5568; font-weight: bold; cursor: pointer;">${isEn ? 'Cancel' : 'ยกเลิก'}</button>
@@ -417,7 +417,7 @@ function showTicket(bookings) {
         if (booking.facility === 'ice_bath') {
             feeAlertHtml = `
                 <div style="margin-top: 15px; padding: 10px; background: #fff5f5; color: #c53030; border: 1px solid #feb2b2; border-radius: 8px; text-align: center; font-size: 14px; font-weight: bold;">
-                    ${isEn ? '⚠️ Fee: 50 THB. Please pay at the counter.' : '⚠️ ค่าบริการ 50 บาท กรุณาชำระที่เคาน์เตอร์'}
+                    ${isEn ? '⚠️ Fee: 150 THB. Please pay at the counter.' : '⚠️ ค่าบริการ 150 บาท กรุณาชำระที่เคาน์เตอร์'}
                 </div>
             `;
         }
