@@ -196,7 +196,7 @@ async function checkInManual() {
 }
 
 async function checkIn(bookingRef) {
-    if(!(await customConfirm(`ยืนยันการ Check-in ให้กับรหัส: ${bookingRef} ใช่หรือไม่?`)) return;
+    if(!(await customConfirm())) return;
 
     try {
         const res = await fetch('https://sibling-compacted-decrease.ngrok-free.dev/api/admin/bookings/check-in', {
@@ -223,7 +223,7 @@ async function checkIn(bookingRef) {
 }
 
 async function cancelBooking(id) {
-    if(!(await customConfirm('คุณแน่ใจหรือไม่ว่าต้องการยกเลิกการจองนี้? รอบเวลาจะว่างให้คนอื่นจองทันที')) return;
+    if(!(await customConfirm())) return;
 
     try {
         const res = await fetch(`https://sibling-compacted-decrease.ngrok-free.dev/api/admin/bookings/${id}/cancel`, {
