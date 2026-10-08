@@ -304,7 +304,10 @@
 
         <div id="tab-history" class="tab-content">
             <div class="card">
-                <h2 class="section-title">ARCHIVES / HISTORY</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                    <h2 class="section-title" style="margin: 0; border: none; padding: 0;">LOG DATE: <input type="date" id="historyDate" class="admin-input" style="width:auto; padding: 5px 15px; margin-left: 10px;" onchange="loadHistory()"></h2>
+                    <button class="btn-refresh" onclick="loadHistory()">[ RELOAD DATABANKS ]</button>
+                </div>
                 <p style="margin-bottom: 20px; color: #aaa;">รายการการจองทั้งหมดที่เกิดขึ้น (ไม่รวมที่ยกเลิกแล้ว)</p>
                 
                 <div class="table-responsive">
@@ -351,6 +354,6 @@
             return originalConfirm(msg);
         };
     </script>
-<script src="js/admin.js?v=1791432546270"></script>
+<script src="js/admin.js?v=1791439719000"></script>
 </body>
 </html>
