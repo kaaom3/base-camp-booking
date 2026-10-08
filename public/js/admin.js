@@ -329,7 +329,7 @@ function openDocument(ref, room, name, date, time, lang, facility = 'game_room',
             <title>${title}</title>
             <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
             <style>
-                body { font-family: 'Kanit', sans-serif; padding: 40px; color: #1a202c; line-height: 1.6; }
+                body { font-family: 'Kanit', sans-serif; padding: 20px; color: #1a202c; line-height: 1.5; font-size: 14px; }
                 .header-box { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; }
                 .header-box img { max-height: 80px; width: auto; margin-bottom: 15px; }
                 .header-box h2 { margin: 0; color: #2d3748; letter-spacing: 1px; font-size: 24px; }
@@ -337,17 +337,18 @@ function openDocument(ref, room, name, date, time, lang, facility = 'game_room',
                 .info-item { font-size: 15px; }
                 .info-label { color: #718096; font-size: 13px; text-transform: uppercase; margin-bottom: 5px; }
                 .info-value { font-weight: 500; font-size: 16px; }
-                .terms-section { margin-bottom: 50px; }
+                .terms-section { margin-bottom: 20px; }
                 .terms-section h3 { font-size: 18px; color: #2d3748; margin-bottom: 15px; }
                 .terms-list { padding-left: 20px; font-size: 15px; }
                 .terms-list li { margin-bottom: 12px; }
-                .signature-section { display: flex; justify-content: flex-end; margin-top: 60px; }
+                .signature-section { display: flex; justify-content: flex-end; margin-top: 30px; }
                 .signature-box { text-align: center; width: 250px; }
                 .signature-line { border-bottom: 1px solid #718096; margin-bottom: 10px; height: 40px; }
                 .signature-name { font-size: 14px; color: #4a5568; }
-                .footer { margin-top: 60px; text-align: center; font-size: 12px; color: #a0aec0; border-top: 1px solid #e2e8f0; padding-top: 20px; }
+                .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #a0aec0; border-top: 1px solid #e2e8f0; padding-top: 20px; }
                 
-                @media print {
+                @page { size: A4; margin: 15mm; }
+                  @media print {
                     .no-print { display: none !important; }
                     body { padding: 0; }
                     .info-grid { background: white; border: 1px solid #cbd5e0; }
