@@ -269,7 +269,7 @@ function openDocument(ref, room, name, date, time, lang, facility = 'game_room',
             listItems = `
                 <li>Users must be in good health. Individuals with heart conditions, high blood pressure, asthma, or epilepsy are prohibited.</li>
                 <li>Pregnant women, individuals with open wounds, or those under the influence of alcohol/drugs are strictly prohibited.</li>
-                <li><strong>There is a 50 THB fee per session.</strong> Please pay at the counter.</li>
+                <li><strong>There is a 150 THB fee per session.</strong> Please pay at the counter.</li>
                 <li>Session time in the room is 1 hour, but for safety, <strong>do not immerse in ice water for more than 5-10 continuous minutes.</strong></li>
                 <li>Exit immediately and notify staff if you experience dizziness, shortness of breath, severe shivering, or chest pain.</li>
                 <li>Never plunge alone. Always have a companion or staff member nearby.</li>
@@ -302,7 +302,7 @@ function openDocument(ref, room, name, date, time, lang, facility = 'game_room',
             listItems = `
                 <li>ผู้ใช้บริการต้องมีสุขภาพแข็งแรง ไม่มีโรคประจำตัว ห้ามผู้ที่เป็นโรคหัวใจ ความดันโลหิตสูง โรคหอบหืด หรือโรคลมชัก เข้าใช้บริการเด็ดขาด</li>
                 <li>สตรีมีครรภ์ ผู้ที่มีบาดแผลเปิด หรือผู้ที่อยู่ภายใต้ฤทธิ์แอลกอฮอล์/ยาเสพติด ห้ามใช้บริการเด็ดขาด</li>
-                <li><strong>มีค่าบริการ 50 บาทต่อรอบ</strong> กรุณาชำระเงินและรับคำแนะนำที่เคาน์เตอร์ก่อนใช้บริการ</li>
+                <li><strong>มีค่าบริการ 150 บาทต่อรอบ</strong> กรุณาชำระเงินและรับคำแนะนำที่เคาน์เตอร์ก่อนใช้บริการ</li>
                 <li>กำหนดเวลาใช้บริการในห้อง 1 ชั่วโมงต่อรอบ แต่เพื่อความปลอดภัย <strong>ห้ามแช่น้ำแข็งต่อเนื่องเกิน 5-10 นาทีต่อครั้ง</strong></li>
                 <li>หากมีอาการหน้ามืด หายใจไม่ออก หนาวสั่นรุนแรง หรือเจ็บหน้าอก ให้รีบขึ้นจากอ่างและแจ้งพนักงานทันที</li>
                 <li>ห้ามแช่น้ำแข็งตามลำพัง ต้องมีผู้ดูแลหรือเพื่อนอยู่ด้วยเสมอ</li>
