@@ -471,7 +471,7 @@ async function loadFacilityStatus() {
 
     } catch (error) {
         console.error(error);
-        await customAlert('เกิดข้อผิดพลาดในการโหลดสถานะบริการ');
+        await customAlert('⚠️ เซิร์ฟเวอร์หลังบ้านยังไม่ได้อัปเดตโค้ดใหม่ (API 404)\n\nกรุณาไปที่เครื่องเซิร์ฟเวอร์ สั่ง git pull origin main และรีสตาร์ทเซิร์ฟเวอร์ครับ');
     }
 }
 
@@ -486,7 +486,10 @@ function updateStatusBtn(btn, isOpen) {
 }
 
 async function toggleUnit(facilityKey, unitKey) {
-    if (!currentFacilitySettings) return;
+    if (!currentFacilitySettings) {
+        await customAlert('⚠️ ยังโหลดสถานะจากเซิร์ฟเวอร์ไม่สำเร็จ กรุณากด [ RELOAD STATUS ] หรือตรวจสอบเซิร์ฟเวอร์หลังบ้าน');
+        return;
+    }
     const currentVal = currentFacilitySettings[facilityKey][unitKey];
     const targetVal = !currentVal;
     const actionText = targetVal ? 'เปิดให้บริการ' : 'ปิดปรับปรุง (ห้ามจอง)';
@@ -532,7 +535,10 @@ async function toggleUnit(facilityKey, unitKey) {
 }
 
 async function toggleMainFacility(facilityKey) {
-    if (!currentFacilitySettings) return;
+    if (!currentFacilitySettings) {
+        await customAlert('⚠️ ยังโหลดสถานะจากเซิร์ฟเวอร์ไม่สำเร็จ กรุณากด [ RELOAD STATUS ] หรือตรวจสอบเซิร์ฟเวอร์หลังบ้าน');
+        return;
+    }
     const currentVal = currentFacilitySettings[facilityKey].isOpen;
     const targetVal = !currentVal;
     const actionText = targetVal ? 'เปิดให้บริการทั้งหมด' : 'ปิดบริการทั้งระบบ';
