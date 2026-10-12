@@ -25,7 +25,10 @@ const ICE_BATH_SLOTS = [
 // ดึงสถานะเปิด-ปิด บริการสำหรับหน้าลูกค้า
 exports.getFacilityStatus = async (req, res) => {
     try {
-        const settings = await SystemSetting.getSettings();
+        const { date } = req.query;
+        const now = new Date();
+        const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+        const settings = await SystemSetting.getSettingsForDate(date || todayStr);
         res.json(settings);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -38,7 +41,7 @@ exports.getAvailableSlots = async (req, res) => {
         if (!date) return res.status(400).json({ message: 'กรุณาระบุวันที่ (date)' });
         if (!option) return res.status(400).json({ message: 'กรุณาระบุตัวเลือก (option)' });
         
-        const settings = await SystemSetting.getSettings();
+        const settings = await SystemSetting.getSettingsForDate(date);
         const gameRoomOpen = settings.gameRoom.isOpen;
         const ps5Active = gameRoomOpen && settings.gameRoom.ps5;
         const nintendoActive = gameRoomOpen && settings.gameRoom.nintendo;
@@ -145,7 +148,7 @@ exports.getSlotSummary = async (req, res) => {
         const { date, facility } = req.query;
         if (!date) return res.status(400).json({ message: 'กรุณาระบุวันที่ (date)' });
         
-        const settings = await SystemSetting.getSettings();
+        const settings = await SystemSetting.getSettingsForDate(date);
         const gameRoomOpen = settings.gameRoom.isOpen;
         const ps5Active = gameRoomOpen && settings.gameRoom.ps5;
         const nintendoActive = gameRoomOpen && settings.gameRoom.nintendo;
@@ -238,7 +241,7 @@ exports.createBooking = async (req, res) => {
         }
 
         // ตรวจสอบสถานะเปิด-ปิด บริการและเครื่องเล่น
-        const settings = await SystemSetting.getSettings();
+        const settings = await SystemSetting.getSettingsForDate(bookingDate);
         const gameRoomOpen = settings.gameRoom.isOpen;
         const ps5Active = gameRoomOpen && settings.gameRoom.ps5;
         const nintendoActive = gameRoomOpen && settings.gameRoom.nintendo;

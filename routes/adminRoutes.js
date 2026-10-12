@@ -7,5 +7,6 @@ router.post('/bookings/check-in', adminController.checkIn);
 router.put('/bookings/:id/cancel', adminController.cancelBooking);
 router.get('/facility-status', adminController.getFacilityStatus);
 router.put('/facility-status', adminController.updateFacilityStatus);
+router.delete('/facility-status/reset', adminController.resetFacilityStatus);
 
 module.exports = router;

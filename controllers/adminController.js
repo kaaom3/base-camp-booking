@@ -80,21 +80,46 @@ exports.cancelBooking = async (req, res) => {
     }
 };
 
-// ดึงสถานะเปิด-ปิด บริการและเครื่องเล่น
+// ดึงสถานะเปิด-ปิด บริการและเครื่องเล่น (รองรับการระบุวันที่ date)
 exports.getFacilityStatus = async (req, res) => {
     try {
-        const settings = await SystemSetting.getSettings();
-        res.json(settings);
+        const { date } = req.query;
+        const now = new Date();
+        const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+        const targetDate = date || todayStr;
+
+        const settings = await SystemSetting.getSettingsForDate(targetDate);
+        const upcomingClosures = await SystemSetting.getUpcomingClosures(todayStr);
+        const hasDateOverride = settings.date === targetDate;
+
+        res.json({
+            settings,
+            targetDate,
+            hasDateOverride,
+            upcomingClosures
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
-// อัปเดตสถานะเปิด-ปิด บริการและเครื่องเล่น
+// อัปเดตสถานะเปิด-ปิด บริการและเครื่องเล่น (รองรับการระบุวันที่ date)
 exports.updateFacilityStatus = async (req, res) => {
     try {
-        const { gameRoom, iceBath } = req.body;
-        const settings = await SystemSetting.getSettings();
+        const { date, gameRoom, iceBath, note } = req.body;
+        const now = new Date();
+        const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+        const targetDate = date || todayStr;
+
+        let settings = await SystemSetting.findOne({ date: targetDate });
+        if (!settings) {
+            const defaultSettings = await SystemSetting.getSettings();
+            settings = new SystemSetting({
+                date: targetDate,
+                gameRoom: { ...defaultSettings.gameRoom.toObject() },
+                iceBath: { ...defaultSettings.iceBath.toObject() }
+            });
+        }
 
         if (gameRoom) {
             if (typeof gameRoom.isOpen === 'boolean') settings.gameRoom.isOpen = gameRoom.isOpen;
@@ -110,10 +135,40 @@ exports.updateFacilityStatus = async (req, res) => {
             if (typeof iceBath.female_bath_2 === 'boolean') settings.iceBath.female_bath_2 = iceBath.female_bath_2;
         }
 
+        if (typeof note === 'string') settings.note = note;
         settings.updatedAt = new Date();
         await settings.save();
 
-        res.json({ message: 'อัปเดตสถานะบริการสำเร็จ', settings });
+        const upcomingClosures = await SystemSetting.getUpcomingClosures(todayStr);
+
+        res.json({ 
+            message: `อัปเดตสถานะบริการสำหรับวันที่ ${targetDate} สำเร็จ`, 
+            settings,
+            upcomingClosures
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// รีเซ็ตการปิดล่วงหน้าของวันที่ระบุ ให้กลับเป็นเปิดบริการปกติ
+exports.resetFacilityStatus = async (req, res) => {
+    try {
+        const { date } = req.query;
+        if (!date || date === 'default') {
+            return res.status(400).json({ message: 'กรุณาระบุวันที่ที่ต้องการรีเซ็ต' });
+        }
+
+        await SystemSetting.deleteOne({ date });
+        
+        const now = new Date();
+        const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+        const upcomingClosures = await SystemSetting.getUpcomingClosures(todayStr);
+
+        res.json({ 
+            message: `รีเซ็ตการตั้งค่าของวันที่ ${date} กลับเป็นเปิดปกติเรียบร้อย`,
+            upcomingClosures
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

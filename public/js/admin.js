@@ -32,6 +32,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const dateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
     document.getElementById('adminDate').value = dateStr;
     document.getElementById('historyDate').value = dateStr;
+    const ctrlDateEl = document.getElementById('controlDate');
+    if (ctrlDateEl) ctrlDateEl.value = dateStr;
 
     loadSchedule();
     // Auto refresh every 30 seconds
@@ -415,15 +417,49 @@ function openDocument(ref, room, name, date, time, lang, facility = 'game_room',
 // ================= FACILITY & UNIT CONTROLS =================
 
 let currentFacilitySettings = null;
+let currentTargetDate = null;
 
 async function loadFacilityStatus() {
+    const ctrlDateEl = document.getElementById('controlDate');
+    const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+    const targetDate = (ctrlDateEl && ctrlDateEl.value) ? ctrlDateEl.value : todayStr;
+    currentTargetDate = targetDate;
+
+    const displayDateEl = document.getElementById('display-target-date');
+    if (displayDateEl) displayDateEl.innerText = targetDate;
+
     try {
-        const res = await fetch('https://sibling-compacted-decrease.ngrok-free.dev/api/admin/facility-status', {
+        const res = await fetch(`https://sibling-compacted-decrease.ngrok-free.dev/api/admin/facility-status?date=${targetDate}`, {
             headers: { 'ngrok-skip-browser-warning': '69420' }
         });
         if (!res.ok) throw new Error('API Error');
-        const settings = await res.json();
-        currentFacilitySettings = settings;
+        const data = await res.json();
+        
+        currentFacilitySettings = data.settings;
+
+        // Date status badge & Reset button
+        const badgeEl = document.getElementById('date-status-badge');
+        const resetBtn = document.getElementById('btn-reset-date');
+
+        if (data.hasDateOverride) {
+            if (badgeEl) {
+                badgeEl.style.background = 'rgba(255, 204, 0, 0.15)';
+                badgeEl.style.color = '#ffcc00';
+                badgeEl.style.borderColor = '#ffcc00';
+                badgeEl.innerText = targetDate === todayStr ? '⚠️ มีการตั้งค่าเฉพาะวันนี้' : '⚠️ มีการตั้งค่าล่วงหน้านี้';
+            }
+            if (resetBtn) resetBtn.style.display = 'inline-block';
+        } else {
+            if (badgeEl) {
+                badgeEl.style.background = 'rgba(57, 255, 20, 0.15)';
+                badgeEl.style.color = 'var(--neon-green)';
+                badgeEl.style.borderColor = 'var(--neon-green)';
+                badgeEl.innerText = targetDate === todayStr ? 'เปิดบริการตามปกติ (วันนี้)' : 'เปิดบริการตามปกติ (วันล่วงหน้า)';
+            }
+            if (resetBtn) resetBtn.style.display = 'none';
+        }
+
+        const settings = data.settings;
 
         // Game Room Main
         const gameMainBtn = document.getElementById('btn-main-gameroom');
@@ -469,9 +505,63 @@ async function loadFacilityStatus() {
             femaleSummaryEl.innerHTML = `เปิดอยู่ <strong style="color:var(--neon-pink);">${femaleActiveCount}/2</strong> บ่อ (รับได้ ${femaleActiveCount} ท่าน/รอบ)`;
         }
 
+        // Render Upcoming Closures table
+        renderUpcomingClosures(data.upcomingClosures || []);
+
     } catch (error) {
         console.error(error);
         await customAlert('⚠️ เซิร์ฟเวอร์หลังบ้านยังไม่ได้อัปเดตโค้ดใหม่ (API 404)\n\nกรุณาไปที่เครื่องเซิร์ฟเวอร์ สั่ง git pull origin main และรีสตาร์ทเซิร์ฟเวอร์ครับ');
+    }
+}
+
+function renderUpcomingClosures(list) {
+    const tbody = document.getElementById('upcoming-closures-body');
+    if (!tbody) return;
+
+    if (list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #888; padding: 20px;">ไม่มีรายการปิดล่วงหน้า (ทุกวันเปิดให้บริการตามปกติ)</td></tr>';
+        return;
+    }
+
+    let html = '';
+    list.forEach(item => {
+        const closedParts = [];
+        if (!item.gameRoom.isOpen) closedParts.push('ปิดห้องเกมส์ทั้งห้อง');
+        else {
+            if (!item.gameRoom.ps5) closedParts.push('PS5 (ปิด)');
+            if (!item.gameRoom.nintendo) closedParts.push('Nintendo Switch (ปิด)');
+        }
+
+        if (!item.iceBath.isOpen) closedParts.push('ปิดบ่อน้ำแข็งทั้งระบบ');
+        else {
+            if (!item.iceBath.male_bath_1) closedParts.push('บ่อชาย #1 (ปิด)');
+            if (!item.iceBath.male_bath_2) closedParts.push('บ่อชาย #2 (ปิด)');
+            if (!item.iceBath.female_bath_1) closedParts.push('บ่อหญิง #1 (ปิด)');
+            if (!item.iceBath.female_bath_2) closedParts.push('บ่อหญิง #2 (ปิด)');
+        }
+
+        const closedText = closedParts.join(', ') || 'ไม่มีรายการปิด';
+
+        html += `
+            <tr>
+                <td style="font-weight: bold; color: #00f3ff; white-space: nowrap;">
+                    <a href="javascript:void(0)" onclick="viewClosureDate('${item.date}')" style="color:#00f3ff; text-decoration: underline;">${item.date}</a>
+                </td>
+                <td style="color: var(--neon-pink);">${closedText}</td>
+                <td style="white-space: nowrap;">
+                    <button class="btn-cancel" style="padding: 5px 12px; font-size: 12px;" onclick="resetFacilityDate('${item.date}')">[ เปิดคืนปกติ ]</button>
+                </td>
+            </tr>
+        `;
+    });
+    tbody.innerHTML = html;
+}
+
+function viewClosureDate(dateStr) {
+    const ctrlDateEl = document.getElementById('controlDate');
+    if (ctrlDateEl) {
+        ctrlDateEl.value = dateStr;
+        loadFacilityStatus();
     }
 }
 
@@ -503,12 +593,15 @@ async function toggleUnit(facilityKey, unitKey) {
         'female_bath_2': 'บ่อแช่ผู้หญิง #2'
     };
     const unitTitle = unitNames[unitKey] || unitKey;
+    const targetDate = currentTargetDate || 'วันนี้';
 
-    const confirmed = await customConfirm(`ต้องการ [${actionText}] สำหรับ "${unitTitle}" ใช่หรือไม่?`);
+    const confirmed = await customConfirm(`ต้องการ [${actionText}] สำหรับ "${unitTitle}"\n(สำหรับวันที่: ${targetDate}) ใช่หรือไม่?`);
     if (!confirmed) return;
 
     try {
-        const payload = {};
+        const payload = {
+            date: currentTargetDate
+        };
         payload[facilityKey] = {};
         payload[facilityKey][unitKey] = targetVal;
 
@@ -522,7 +615,7 @@ async function toggleUnit(facilityKey, unitKey) {
         });
 
         if (res.ok) {
-            await customAlert(`อัปเดตสถานะ "${unitTitle}" เป็น [${actionText}] สำเร็จ!`);
+            await customAlert(`อัปเดตสถานะ "${unitTitle}" วันที่ ${targetDate} เป็น [${actionText}] สำเร็จ!`);
             loadFacilityStatus();
         } else {
             const data = await res.json();
@@ -543,12 +636,15 @@ async function toggleMainFacility(facilityKey) {
     const targetVal = !currentVal;
     const actionText = targetVal ? 'เปิดให้บริการทั้งหมด' : 'ปิดบริการทั้งระบบ';
     const facName = facilityKey === 'gameRoom' ? 'ห้องเกมส์ (Game Room)' : 'บ่อน้ำแข็ง (Ice Bath)';
+    const targetDate = currentTargetDate || 'วันนี้';
 
-    const confirmed = await customConfirm(`ต้องการ [${actionText}] สำหรับ "${facName}" ใช่หรือไม่?`);
+    const confirmed = await customConfirm(`ต้องการ [${actionText}] สำหรับ "${facName}"\n(สำหรับวันที่: ${targetDate}) ใช่หรือไม่?`);
     if (!confirmed) return;
 
     try {
-        const payload = {};
+        const payload = {
+            date: currentTargetDate
+        };
         payload[facilityKey] = { isOpen: targetVal };
 
         const res = await fetch('https://sibling-compacted-decrease.ngrok-free.dev/api/admin/facility-status', {
@@ -561,7 +657,33 @@ async function toggleMainFacility(facilityKey) {
         });
 
         if (res.ok) {
-            await customAlert(`อัปเดตสถานะ "${facName}" สำเร็จ!`);
+            await customAlert(`อัปเดตสถานะ "${facName}" วันที่ ${targetDate} สำเร็จ!`);
+            loadFacilityStatus();
+        } else {
+            const data = await res.json();
+            await customAlert(`ข้อผิดพลาด: ${data.message}`);
+        }
+    } catch (e) {
+        console.error(e);
+        await customAlert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+    }
+}
+
+async function resetFacilityDate(dateStr) {
+    const targetDate = dateStr || currentTargetDate;
+    if (!targetDate) return;
+
+    const confirmed = await customConfirm(`ต้องการรีเซ็ตการตั้งค่าของวันที่ ${targetDate} ให้กลับเป็น "เปิดบริการตามปกติทั้งหมด" ใช่หรือไม่?`);
+    if (!confirmed) return;
+
+    try {
+        const res = await fetch(`https://sibling-compacted-decrease.ngrok-free.dev/api/admin/facility-status/reset?date=${targetDate}`, {
+            method: 'DELETE',
+            headers: { 'ngrok-skip-browser-warning': '69420' }
+        });
+
+        if (res.ok) {
+            await customAlert(`รีเซ็ตการตั้งค่าของวันที่ ${targetDate} เป็นเปิดปกติเรียบร้อย!`);
             loadFacilityStatus();
         } else {
             const data = await res.json();

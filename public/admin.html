@@ -356,13 +356,30 @@
         <!-- Facility & Unit Control Section -->
         <div id="tab-facility" class="tab-content">
             <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
-                    <h2 class="section-title" style="margin: 0; border: none; padding: 0;">⚡ FACILITY & UNIT CONTROLS (ควบคุมเปิด-ปิดบริการ)</h2>
-                    <button class="btn-refresh" onclick="loadFacilityStatus()">[ RELOAD STATUS ]</button>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 15px;">
+                    <div>
+                        <h2 class="section-title" style="margin: 0; border: none; padding: 0; display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                            ⚡ FACILITY & UNIT CONTROLS 
+                            <span style="font-size: 15px; color: #fff; font-weight: normal;">(วันที่จัดการ:</span>
+                            <input type="date" id="controlDate" class="admin-input" style="width:auto; padding: 6px 15px; font-size: 14px;" onchange="loadFacilityStatus()">
+                            <span style="font-size: 15px; color: #fff; font-weight: normal;">)</span>
+                        </h2>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <button id="btn-reset-date" class="btn-unit-toggle status-offline" style="display: none; padding: 8px 15px; font-size: 12px;" onclick="resetFacilityDate()">[ รีเซ็ตเป็นเปิดปกติ ]</button>
+                        <button class="btn-refresh" onclick="loadFacilityStatus()">[ RELOAD STATUS ]</button>
+                    </div>
                 </div>
-                <p style="color: #aaa; margin-bottom: 25px;">
-                    สามารถเปิด-ปิดห้องเกม หรือบ่อน้ำแข็งแยกรายจุด/รายบ่อได้อย่างอิสระ เมื่อกดปิด ระบบการจองของลูกค้าจะตัดสิทธิ์การจองจุดนั้นทันที
-                </p>
+                
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px; flex-wrap: wrap; background: rgba(0, 243, 255, 0.05); padding: 12px 18px; border-radius: 8px; border: 1px dashed rgba(0, 243, 255, 0.3);">
+                    <div style="font-size: 14px; color: #00f3ff;">
+                        📅 กำลังตั้งค่าของวันที่: <strong id="display-target-date" style="color: #fff; font-size: 16px;">--</strong> 
+                        <span id="date-status-badge" style="margin-left: 8px; font-size: 12px; padding: 3px 10px; border-radius: 4px; background: rgba(57, 255, 20, 0.15); color: var(--neon-green); border: 1px solid var(--neon-green);">เปิดบริการตามปกติ</span>
+                    </div>
+                    <div style="font-size: 12px; color: #aaa; margin-left: auto;">
+                        💡 สามารถเลือกวันที่ข้างหน้าเพื่อสั่งปิดบ่อหรือเครื่องเล่นล่วงหน้าได้
+                    </div>
+                </div>
 
                 <!-- GAME ROOM CONTROLS -->
                 <div style="background: rgba(0, 243, 255, 0.03); border: 1px solid rgba(0, 243, 255, 0.3); border-radius: 10px; padding: 22px; margin-bottom: 25px;">
@@ -472,6 +489,30 @@
                     </div>
 
                 </div>
+
+                <!-- Upcoming Closures Section -->
+                <div style="margin-top: 30px; background: #0f101a; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 22px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                        <h3 style="color: #ffcc00; margin: 0; font-family: 'Orbitron', sans-serif; font-size: 17px; letter-spacing: 1px;">📅 ตารางรายการที่ปิดล่วงหน้า (SCHEDULED CLOSURES)</h3>
+                        <span style="font-size: 12px; color: #888;">รายการวันข้างหน้าที่มีการสั่งปิดบริการ</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="schedule-table">
+                            <thead>
+                                <tr>
+                                    <th style="white-space: nowrap;">วันที่ (Date)</th>
+                                    <th style="white-space: nowrap;">รายการที่ปิด (Closed Facilities/Units)</th>
+                                    <th style="white-space: nowrap;">การจัดการ (Actions)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="upcoming-closures-body">
+                                <tr>
+                                    <td colspan="3" style="text-align: center; color: #888; padding: 20px;">ไม่มีรายการปิดล่วงหน้า (ทุกวันเปิดให้บริการตามปกติ)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -501,6 +542,6 @@
     </div>
 
     
-<script src="js/admin.js?v=1791780255831"></script>
+<script src="js/admin.js?v=1791786375632"></script>
 </body>
 </html>
