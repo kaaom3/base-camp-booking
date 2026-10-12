@@ -500,32 +500,7 @@
 
     </div>
 
-    <script>
-        // Modal functions not in admin.js
-        let pendingConfirmFn = null;
-        function showConfirmModal(message, confirmFn) {
-            document.getElementById('confirmMessage').innerText = message;
-            pendingConfirmFn = confirmFn;
-            document.getElementById('confirmModal').style.display = 'flex';
-        }
-        function closeConfirmModal() {
-            document.getElementById('confirmModal').style.display = 'none';
-            pendingConfirmFn = null;
-        }
-        document.getElementById('confirmBtn').onclick = () => {
-            if (pendingConfirmFn) pendingConfirmFn();
-            closeConfirmModal();
-        };
-
-        // Override the window.confirm in admin.js to use our modal
-        // admin.js uses window.confirm in updateStatus
-        const originalConfirm = window.confirm;
-        window.confirm = function(msg) {
-            // We can't really override synchronous confirm with async modal easily without rewriting admin.js updateStatus
-            // Let's just return true for now and let admin.js handle it, or we could let it use standard confirm.
-            return originalConfirm(msg);
-        };
-    </script>
-<script src="js/admin.js?v=1791777886742"></script>
+    
+<script src="js/admin.js?v=1791778860639"></script>
 </body>
 </html>
