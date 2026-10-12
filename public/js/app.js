@@ -15,8 +15,46 @@ document.addEventListener('DOMContentLoaded', () => {
         const bkkTime = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Bangkok' }));
         dateInput.value = bkkTime.toLocaleDateString('en-CA');
     }
+    checkFacilityMainStatus();
 });
 
+
+
+async function checkFacilityMainStatus() {
+    try {
+        const res = await fetch('https://sibling-compacted-decrease.ngrok-free.dev/api/customer/facility-status', {
+            headers: { 'ngrok-skip-browser-warning': '69420' }
+        });
+        if (!res.ok) return;
+        const status = await res.json();
+        
+        // Game Room
+        const gameBtn = document.querySelector('.fac-btn.fac-game[onclick*="game_room"]');
+        if (gameBtn) {
+            const isGameActive = status.gameRoom && status.gameRoom.isOpen && (status.gameRoom.ps5 || status.gameRoom.nintendo);
+            if (!isGameActive) {
+                gameBtn.disabled = true;
+                const priceTag = gameBtn.querySelector('.price-tag');
+                if (priceTag) priceTag.innerText = isEn ? 'MAINTENANCE' : 'ปิดปรับปรุง';
+            }
+        }
+        
+        // Ice Bath
+        const iceBtn = document.querySelector('.fac-btn.fac-ice[onclick*="ice_bath"]');
+        if (iceBtn) {
+            const hasMaleBath = status.iceBath && (status.iceBath.male_bath_1 || status.iceBath.male_bath_2);
+            const hasFemaleBath = status.iceBath && (status.iceBath.female_bath_1 || status.iceBath.female_bath_2);
+            const isIceActive = status.iceBath && status.iceBath.isOpen && (hasMaleBath || hasFemaleBath);
+            if (!isIceActive) {
+                iceBtn.disabled = true;
+                const priceTag = iceBtn.querySelector('.price-tag');
+                if (priceTag) priceTag.innerText = isEn ? 'MAINTENANCE' : 'ปิดปรับปรุง';
+            }
+        }
+    } catch (e) {
+        console.error(e);
+    }
+}
 
 function updateProgress(stepNumber) {
     const indicator = document.getElementById('stepIndicator');
@@ -83,43 +121,62 @@ async function goStep2(facility) {
         if (facility === 'game_room') {
             document.getElementById('step2-title').innerText = isEn ? '🎮 Select Console' : '🎮 เลือกเครื่องเล่น';
             
-            const ps5Avail = summary.ps5 > 0;
-            const ninAvail = summary.nintendo > 0;
+            const ps5Closed = summary.ps5Closed;
+            const ninClosed = summary.nintendoClosed;
+            const ps5Avail = !ps5Closed && summary.ps5 > 0;
+            const ninAvail = !ninClosed && summary.nintendo > 0;
             
+            const ps5Tag = ps5Closed ? (isEn ? 'MAINTENANCE' : 'ปิดปรับปรุง') : (ps5Avail ? (isEn ? 'Available' : 'ว่าง') : (isEn ? 'FULLY BOOKED' : 'คิวเต็มแล้ว'));
+            const ninTag = ninClosed ? (isEn ? 'MAINTENANCE' : 'ปิดปรับปรุง') : (ninAvail ? (isEn ? 'Available' : 'ว่าง') : (isEn ? 'FULLY BOOKED' : 'คิวเต็มแล้ว'));
+
             html += `
                 <button class="fac-btn fac-game" ${ps5Avail ? 'onclick="goStep3(\'ps5\')"' : 'disabled'}>
                     <img src="images/ps5.png" alt="PS5" style="width: auto; height: 75px; max-width: 90%; object-fit: contain; margin-bottom: 15px;">
                     <div class="fac-title">PlayStation 5</div>
-                    <div class="price-tag">${ps5Avail ? (isEn ? 'Available' : 'ว่าง') : (isEn ? 'FULLY BOOKED' : 'คิวเต็มแล้ว')}</div>
+                    <div class="price-tag">${ps5Tag}</div>
                 </button>
                 <button class="fac-btn fac-nintendo" ${ninAvail ? 'onclick="goStep3(\'nintendo\')"' : 'disabled'}>
                     <img src="images/nintendo.png" alt="Nintendo" style="width: auto; height: 75px; max-width: 90%; object-fit: contain; margin-bottom: 15px;">
                     <div class="fac-title">Nintendo Switch</div>
-                    <div class="price-tag">${ninAvail ? (isEn ? 'Available' : 'ว่าง') : (isEn ? 'FULLY BOOKED' : 'คิวเต็มแล้ว')}</div>
+                    <div class="price-tag">${ninTag}</div>
                 </button>
             `;
         } else {
             document.getElementById('step2-title').innerText = isEn ? '🧊 Select Option' : '🧊 เลือกบ่อที่ต้องการจอง';
             
-            const maleAvail = summary.male > 0;
-            const femaleAvail = summary.female > 0;
+            const maleClosed = summary.maleClosed;
+            const femaleClosed = summary.femaleClosed;
+            const maleAvail = !maleClosed && summary.male > 0;
+            const femaleAvail = !femaleClosed && summary.female > 0;
             const bothAvail = maleAvail && femaleAvail;
+
+            let maleTag = isEn ? 'FULLY BOOKED' : 'คิวเต็มแล้ว';
+            if (maleClosed) maleTag = isEn ? 'MAINTENANCE' : 'ปิดปรับปรุง';
+            else if (maleAvail) maleTag = summary.activeMaleBaths === 1 ? (isEn ? 'Available (1 Bath)' : 'ว่าง (เปิด 1 บ่อ)') : (isEn ? 'Available' : 'ว่าง');
+
+            let femaleTag = isEn ? 'FULLY BOOKED' : 'คิวเต็มแล้ว';
+            if (femaleClosed) femaleTag = isEn ? 'MAINTENANCE' : 'ปิดปรับปรุง';
+            else if (femaleAvail) femaleTag = summary.activeFemaleBaths === 1 ? (isEn ? 'Available (1 Bath)' : 'ว่าง (เปิด 1 บ่อ)') : (isEn ? 'Available' : 'ว่าง');
+
+            let bothTag = isEn ? 'FULLY BOOKED' : 'คิวเต็มแล้ว';
+            if (maleClosed || femaleClosed) bothTag = isEn ? 'UNAVAILABLE' : 'ไม่พร้อมบริการ';
+            else if (bothAvail) bothTag = isEn ? 'Available' : 'ว่าง';
             
             html += `
                 <button class="fac-btn fac-game" ${maleAvail ? 'onclick="goStep3(\'male\')"' : 'disabled'}>
                     <img src="images/male.png" alt="Male" style="width: 130px; height: 130px; object-fit: contain; margin-bottom: 15px;">
                     <div class="fac-title">${isEn ? 'Male Bath' : 'บ่อผู้ชาย (Male)'}</div>
-                    <div class="price-tag">${maleAvail ? (isEn ? 'Available' : 'ว่าง') : (isEn ? 'FULLY BOOKED' : 'คิวเต็มแล้ว')}</div>
+                    <div class="price-tag">${maleTag}</div>
                 </button>
                 <button class="fac-btn fac-female" ${femaleAvail ? 'onclick="goStep3(\'female\')"' : 'disabled'}>
                     <img src="images/female.png" alt="Female" style="width: 130px; height: 130px; object-fit: contain; margin-bottom: 15px;">
                     <div class="fac-title">${isEn ? 'Female Bath' : 'บ่อผู้หญิง (Female)'}</div>
-                    <div class="price-tag">${femaleAvail ? (isEn ? 'Available' : 'ว่าง') : (isEn ? 'FULLY BOOKED' : 'คิวเต็มแล้ว')}</div>
+                    <div class="price-tag">${femaleTag}</div>
                 </button>
                 <button class="fac-btn fac-both" ${bothAvail ? 'onclick="goStep3(\'both\')"' : 'disabled'}>
                     <img src="images/couple.png" alt="Couple" style="width: 130px; height: 130px; object-fit: contain; margin-bottom: 15px;">
                     <div class="fac-title">${isEn ? 'Couples (Both)' : 'จองทั้งคู่ ชายและหญิง'}</div>
-                    <div class="price-tag">${bothAvail ? (isEn ? 'Available' : 'ว่าง') : (isEn ? 'FULLY BOOKED' : 'คิวเต็มแล้ว')}</div>
+                    <div class="price-tag">${bothTag}</div>
                 </button>
             `;
         }
@@ -232,7 +289,7 @@ async function fetchSlots(option, containerId, isSecondSlot = false) {
                 btn.disabled = true;
                 btn.innerHTML = `
                     <div class="slot-time">${slot.startTime} - ${slot.endTime}</div>
-                    <div class="slot-status booked">${isEn ? 'FULL' : 'เต็ม'}</div>
+                    <div class="slot-status booked">${slot.isClosed ? (isEn ? "MAINTENANCE" : "ปิดปรับปรุง") : (isEn ? "FULL" : "เต็ม")}</div>
                 `;
             }
             container.appendChild(btn);

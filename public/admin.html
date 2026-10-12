@@ -249,6 +249,55 @@
             color: var(--neon-pink);
         }
 
+    
+        /* Unit Control Cards */
+        .unit-control-card {
+            background: #0f101a;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: 0.3s;
+        }
+        .unit-control-card:hover {
+            border-color: rgba(0, 243, 255, 0.4);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.1);
+        }
+        .btn-unit-toggle {
+            font-family: 'Orbitron', 'Kanit', sans-serif;
+            font-size: 13px;
+            font-weight: bold;
+            padding: 9px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .btn-unit-toggle.status-online {
+            background: rgba(57, 255, 20, 0.12);
+            color: var(--neon-green);
+            border: 1px solid var(--neon-green);
+            box-shadow: 0 0 10px rgba(57, 255, 20, 0.3);
+        }
+        .btn-unit-toggle.status-online:hover {
+            background: var(--neon-green);
+            color: #000;
+            box-shadow: 0 0 20px rgba(57, 255, 20, 0.6);
+        }
+        .btn-unit-toggle.status-offline {
+            background: rgba(255, 0, 127, 0.15);
+            color: var(--neon-pink);
+            border: 1px solid var(--neon-pink);
+            box-shadow: 0 0 10px rgba(255, 0, 127, 0.3);
+        }
+        .btn-unit-toggle.status-offline:hover {
+            background: var(--neon-pink);
+            color: #fff;
+            box-shadow: 0 0 20px rgba(255, 0, 127, 0.6);
+        }
     </style>
 </head>
 <body class="admin-body">
@@ -302,6 +351,129 @@
             </div>
         </div>
 
+        
+        <!-- Facility & Unit Control Section -->
+        <div id="tab-facility" class="tab-content">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                    <h2 class="section-title" style="margin: 0; border: none; padding: 0;">⚡ FACILITY & UNIT CONTROLS (ควบคุมเปิด-ปิดบริการ)</h2>
+                    <button class="btn-refresh" onclick="loadFacilityStatus()">[ RELOAD STATUS ]</button>
+                </div>
+                <p style="color: #aaa; margin-bottom: 25px;">
+                    สามารถเปิด-ปิดห้องเกม หรือบ่อน้ำแข็งแยกรายจุด/รายบ่อได้อย่างอิสระ เมื่อกดปิด ระบบการจองของลูกค้าจะตัดสิทธิ์การจองจุดนั้นทันที
+                </p>
+
+                <!-- GAME ROOM CONTROLS -->
+                <div style="background: rgba(0, 243, 255, 0.03); border: 1px solid rgba(0, 243, 255, 0.3); border-radius: 10px; padding: 22px; margin-bottom: 25px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 10px;">
+                        <div>
+                            <h3 style="color: var(--neon-blue); margin: 0; font-family: 'Orbitron', sans-serif; font-size: 18px; letter-spacing: 1px;">🎮 GAME ROOM (ห้องเกมส์)</h3>
+                            <div style="font-size: 13px; color: #888; margin-top: 4px;">ควบคุมระบบห้องเกมส์หลักและเครื่องเล่นแยกเครื่อง</div>
+                        </div>
+                        <div>
+                            <span style="font-size: 12px; color: #aaa; margin-right: 8px;">ภาพรวมห้องเกมส์:</span>
+                            <button id="btn-main-gameroom" class="btn-unit-toggle" onclick="toggleMainFacility('gameRoom')">ONLINE</button>
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
+                        <!-- PS5 Unit -->
+                        <div class="unit-control-card">
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <img src="images/ps5.png" alt="PS5" style="height: 38px; width: auto; object-fit: contain;">
+                                <div>
+                                    <div style="font-weight: 600; font-size: 16px;">PlayStation 5</div>
+                                    <div style="font-size: 12px; color: #00f3ff;">Console Unit #1</div>
+                                </div>
+                            </div>
+                            <button id="btn-unit-ps5" class="btn-unit-toggle" onclick="toggleUnit('gameRoom', 'ps5')">ONLINE</button>
+                        </div>
+
+                        <!-- Nintendo Unit -->
+                        <div class="unit-control-card">
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <img src="images/nintendo.png" alt="Nintendo" style="height: 38px; width: auto; object-fit: contain;">
+                                <div>
+                                    <div style="font-weight: 600; font-size: 16px;">Nintendo Switch</div>
+                                    <div style="font-size: 12px; color: #ff007f;">Console Unit #2</div>
+                                </div>
+                            </div>
+                            <button id="btn-unit-nintendo" class="btn-unit-toggle" onclick="toggleUnit('gameRoom', 'nintendo')">ONLINE</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ICE BATH CONTROLS -->
+                <div style="background: rgba(188, 19, 254, 0.03); border: 1px solid rgba(188, 19, 254, 0.3); border-radius: 10px; padding: 22px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                        <div>
+                            <h3 style="color: var(--neon-purple); margin: 0; font-family: 'Orbitron', sans-serif; font-size: 18px; letter-spacing: 1px;">🧊 ICE BATH (บ่อน้ำแข็ง - ทั้งหมด 4 บ่อ)</h3>
+                            <div style="font-size: 13px; color: #888; margin-top: 4px;">เปิด-ปิดแยกแต่ละบ่อได้อิสระ หากปิด 1 บ่อ ระบบจะรับจองได้เหลือ 1 คนต่อรอบ</div>
+                        </div>
+                        <div>
+                            <span style="font-size: 12px; color: #aaa; margin-right: 8px;">ภาพรวมบ่อน้ำแข็ง:</span>
+                            <button id="btn-main-icebath" class="btn-unit-toggle" onclick="toggleMainFacility('iceBath')">ONLINE</button>
+                        </div>
+                    </div>
+
+                    <!-- Male Baths Section -->
+                    <div style="margin-bottom: 25px; background: rgba(0, 0, 0, 0.2); padding: 15px; border-radius: 8px; border-left: 3px solid #00bcd4;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap;">
+                            <div style="font-weight: bold; font-size: 15px; color: #00bcd4;">🚹 บ่อแช่ผู้ชาย (Male Baths)</div>
+                            <span id="male-capacity-summary" style="font-size: 13px; color: #ccc;">กำลังโหลด...</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
+                            <!-- Male Bath 1 -->
+                            <div class="unit-control-card">
+                                <div>
+                                    <div style="font-weight: 600; font-size: 15px;">บ่อชาย #1 (Bath 1)</div>
+                                    <div style="font-size: 12px; color: #888;">รองรับ 1 ท่าน/รอบ</div>
+                                </div>
+                                <button id="btn-unit-male_bath_1" class="btn-unit-toggle" onclick="toggleUnit('iceBath', 'male_bath_1')">ONLINE</button>
+                            </div>
+
+                            <!-- Male Bath 2 -->
+                            <div class="unit-control-card">
+                                <div>
+                                    <div style="font-weight: 600; font-size: 15px;">บ่อชาย #2 (Bath 2)</div>
+                                    <div style="font-size: 12px; color: #888;">รองรับ 1 ท่าน/รอบ</div>
+                                </div>
+                                <button id="btn-unit-male_bath_2" class="btn-unit-toggle" onclick="toggleUnit('iceBath', 'male_bath_2')">ONLINE</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Female Baths Section -->
+                    <div style="background: rgba(0, 0, 0, 0.2); padding: 15px; border-radius: 8px; border-left: 3px solid #ff007f;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap;">
+                            <div style="font-weight: bold; font-size: 15px; color: #ff007f;">🚺 บ่อแช่ผู้หญิง (Female Baths)</div>
+                            <span id="female-capacity-summary" style="font-size: 13px; color: #ccc;">กำลังโหลด...</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
+                            <!-- Female Bath 1 -->
+                            <div class="unit-control-card">
+                                <div>
+                                    <div style="font-weight: 600; font-size: 15px;">บ่อหญิง #1 (Bath 1)</div>
+                                    <div style="font-size: 12px; color: #888;">รองรับ 1 ท่าน/รอบ</div>
+                                </div>
+                                <button id="btn-unit-female_bath_1" class="btn-unit-toggle" onclick="toggleUnit('iceBath', 'female_bath_1')">ONLINE</button>
+                            </div>
+
+                            <!-- Female Bath 2 -->
+                            <div class="unit-control-card">
+                                <div>
+                                    <div style="font-weight: 600; font-size: 15px;">บ่อหญิง #2 (Bath 2)</div>
+                                    <div style="font-size: 12px; color: #888;">รองรับ 1 ท่าน/รอบ</div>
+                                </div>
+                                <button id="btn-unit-female_bath_2" class="btn-unit-toggle" onclick="toggleUnit('iceBath', 'female_bath_2')">ONLINE</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
         <div id="tab-history" class="tab-content">
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
@@ -328,7 +500,6 @@
     </div>
 
     <script>
-    <script>
         // Modal functions not in admin.js
         let pendingConfirmFn = null;
         function showConfirmModal(message, confirmFn) {
@@ -354,6 +525,6 @@
             return originalConfirm(msg);
         };
     </script>
-<script src="js/admin.js?v=1791445653494"></script>
+<script src="js/admin.js?v=1791771627143"></script>
 </body>
 </html>

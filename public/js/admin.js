@@ -410,3 +410,159 @@ function openDocument(ref, room, name, date, time, lang, facility = 'game_room',
     `);
     printWindow.document.close();
 }
+
+
+// ================= FACILITY & UNIT CONTROLS =================
+
+let currentFacilitySettings = null;
+
+async function loadFacilityStatus() {
+    try {
+        const res = await fetch('https://sibling-compacted-decrease.ngrok-free.dev/api/admin/facility-status', {
+            headers: { 'ngrok-skip-browser-warning': '69420' }
+        });
+        if (!res.ok) throw new Error('API Error');
+        const settings = await res.json();
+        currentFacilitySettings = settings;
+
+        // Game Room Main
+        const gameMainBtn = document.getElementById('btn-main-gameroom');
+        if (gameMainBtn) updateStatusBtn(gameMainBtn, settings.gameRoom.isOpen);
+
+        // PS5
+        const ps5Btn = document.getElementById('btn-unit-ps5');
+        if (ps5Btn) updateStatusBtn(ps5Btn, settings.gameRoom.ps5);
+
+        // Nintendo Switch
+        const ninBtn = document.getElementById('btn-unit-nintendo');
+        if (ninBtn) updateStatusBtn(ninBtn, settings.gameRoom.nintendo);
+
+        // Ice Bath Main
+        const iceMainBtn = document.getElementById('btn-main-icebath');
+        if (iceMainBtn) updateStatusBtn(iceMainBtn, settings.iceBath.isOpen);
+
+        // Male Bath 1 & 2
+        const m1Btn = document.getElementById('btn-unit-male_bath_1');
+        if (m1Btn) updateStatusBtn(m1Btn, settings.iceBath.male_bath_1);
+
+        const m2Btn = document.getElementById('btn-unit-male_bath_2');
+        if (m2Btn) updateStatusBtn(m2Btn, settings.iceBath.male_bath_2);
+
+        // Male summary
+        const maleActiveCount = (settings.iceBath.male_bath_1 ? 1 : 0) + (settings.iceBath.male_bath_2 ? 1 : 0);
+        const maleSummaryEl = document.getElementById('male-capacity-summary');
+        if (maleSummaryEl) {
+            maleSummaryEl.innerHTML = `เปิดอยู่ <strong style="color:var(--neon-blue);">${maleActiveCount}/2</strong> บ่อ (รับได้ ${maleActiveCount} ท่าน/รอบ)`;
+        }
+
+        // Female Bath 1 & 2
+        const f1Btn = document.getElementById('btn-unit-female_bath_1');
+        if (f1Btn) updateStatusBtn(f1Btn, settings.iceBath.female_bath_1);
+
+        const f2Btn = document.getElementById('btn-unit-female_bath_2');
+        if (f2Btn) updateStatusBtn(f2Btn, settings.iceBath.female_bath_2);
+
+        // Female summary
+        const femaleActiveCount = (settings.iceBath.female_bath_1 ? 1 : 0) + (settings.iceBath.female_bath_2 ? 1 : 0);
+        const femaleSummaryEl = document.getElementById('female-capacity-summary');
+        if (femaleSummaryEl) {
+            femaleSummaryEl.innerHTML = `เปิดอยู่ <strong style="color:var(--neon-pink);">${femaleActiveCount}/2</strong> บ่อ (รับได้ ${femaleActiveCount} ท่าน/รอบ)`;
+        }
+
+    } catch (error) {
+        console.error(error);
+        await customAlert('เกิดข้อผิดพลาดในการโหลดสถานะบริการ');
+    }
+}
+
+function updateStatusBtn(btn, isOpen) {
+    if (isOpen) {
+        btn.className = 'btn-unit-toggle status-online';
+        btn.innerHTML = '● ONLINE (เปิด)';
+    } else {
+        btn.className = 'btn-unit-toggle status-offline';
+        btn.innerHTML = '✕ CLOSED (ปิด)';
+    }
+}
+
+async function toggleUnit(facilityKey, unitKey) {
+    if (!currentFacilitySettings) return;
+    const currentVal = currentFacilitySettings[facilityKey][unitKey];
+    const targetVal = !currentVal;
+    const actionText = targetVal ? 'เปิดให้บริการ' : 'ปิดปรับปรุง (ห้ามจอง)';
+
+    const unitNames = {
+        'ps5': 'PlayStation 5 (PS5)',
+        'nintendo': 'Nintendo Switch',
+        'male_bath_1': 'บ่อแช่ผู้ชาย #1',
+        'male_bath_2': 'บ่อแช่ผู้ชาย #2',
+        'female_bath_1': 'บ่อแช่ผู้หญิง #1',
+        'female_bath_2': 'บ่อแช่ผู้หญิง #2'
+    };
+    const unitTitle = unitNames[unitKey] || unitKey;
+
+    const confirmed = await customConfirm(`ต้องการ [${actionText}] สำหรับ "${unitTitle}" ใช่หรือไม่?`);
+    if (!confirmed) return;
+
+    try {
+        const payload = {};
+        payload[facilityKey] = {};
+        payload[facilityKey][unitKey] = targetVal;
+
+        const res = await fetch('https://sibling-compacted-decrease.ngrok-free.dev/api/admin/facility-status', {
+            method: 'PUT',
+            headers: { 
+                'Content-Type': 'application/json',
+                'ngrok-skip-browser-warning': '69420'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            await customAlert(`อัปเดตสถานะ "${unitTitle}" เป็น [${actionText}] สำเร็จ!`);
+            loadFacilityStatus();
+        } else {
+            const data = await res.json();
+            await customAlert(`ข้อผิดพลาด: ${data.message}`);
+        }
+    } catch (e) {
+        console.error(e);
+        await customAlert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+    }
+}
+
+async function toggleMainFacility(facilityKey) {
+    if (!currentFacilitySettings) return;
+    const currentVal = currentFacilitySettings[facilityKey].isOpen;
+    const targetVal = !currentVal;
+    const actionText = targetVal ? 'เปิดให้บริการทั้งหมด' : 'ปิดบริการทั้งระบบ';
+    const facName = facilityKey === 'gameRoom' ? 'ห้องเกมส์ (Game Room)' : 'บ่อน้ำแข็ง (Ice Bath)';
+
+    const confirmed = await customConfirm(`ต้องการ [${actionText}] สำหรับ "${facName}" ใช่หรือไม่?`);
+    if (!confirmed) return;
+
+    try {
+        const payload = {};
+        payload[facilityKey] = { isOpen: targetVal };
+
+        const res = await fetch('https://sibling-compacted-decrease.ngrok-free.dev/api/admin/facility-status', {
+            method: 'PUT',
+            headers: { 
+                'Content-Type': 'application/json',
+                'ngrok-skip-browser-warning': '69420'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            await customAlert(`อัปเดตสถานะ "${facName}" สำเร็จ!`);
+            loadFacilityStatus();
+        } else {
+            const data = await res.json();
+            await customAlert(`ข้อผิดพลาด: ${data.message}`);
+        }
+    } catch (e) {
+        console.error(e);
+        await customAlert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+    }
+}

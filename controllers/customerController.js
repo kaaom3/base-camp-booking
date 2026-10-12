@@ -1,5 +1,6 @@
 const Booking = require('../models/Booking');
 const User = require('../models/User');
+const SystemSetting = require('../models/SystemSetting');
 
 const GAME_ROOM_SLOTS = [
     { slotNumber: 1, startTime: "09:00", endTime: "10:00" },
@@ -21,14 +22,56 @@ const ICE_BATH_SLOTS = [
     { slotNumber: 5, startTime: "19:00", endTime: "20:00" }
 ];
 
+// ดึงสถานะเปิด-ปิด บริการสำหรับหน้าลูกค้า
+exports.getFacilityStatus = async (req, res) => {
+    try {
+        const settings = await SystemSetting.getSettings();
+        res.json(settings);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 exports.getAvailableSlots = async (req, res) => {
     try {
         const { date, facility, option } = req.query;
         if (!date) return res.status(400).json({ message: 'กรุณาระบุวันที่ (date)' });
         if (!option) return res.status(400).json({ message: 'กรุณาระบุตัวเลือก (option)' });
         
+        const settings = await SystemSetting.getSettings();
+        const gameRoomOpen = settings.gameRoom.isOpen;
+        const ps5Active = gameRoomOpen && settings.gameRoom.ps5;
+        const nintendoActive = gameRoomOpen && settings.gameRoom.nintendo;
+
+        const iceBathOpen = settings.iceBath.isOpen;
+        const maxMale = iceBathOpen ? ((settings.iceBath.male_bath_1 ? 1 : 0) + (settings.iceBath.male_bath_2 ? 1 : 0)) : 0;
+        const maxFemale = iceBathOpen ? ((settings.iceBath.female_bath_1 ? 1 : 0) + (settings.iceBath.female_bath_2 ? 1 : 0)) : 0;
+
         const targetFacility = facility === 'ice_bath' ? 'ice_bath' : 'game_room';
         const targetSlots = targetFacility === 'ice_bath' ? ICE_BATH_SLOTS : GAME_ROOM_SLOTS;
+
+        // ถ้าเครื่องหรือบริการปิดปรับปรุง ให้ส่งกลับว่าไม่ว่างทั้งหมด
+        if (targetFacility === 'game_room') {
+            if (option === 'ps5' && !ps5Active) {
+                return res.json(targetSlots.map(s => ({ ...s, isAvailable: false, remainingSpots: 0, isClosed: true })));
+            }
+            if (option === 'nintendo' && !nintendoActive) {
+                return res.json(targetSlots.map(s => ({ ...s, isAvailable: false, remainingSpots: 0, isClosed: true })));
+            }
+        } else if (targetFacility === 'ice_bath') {
+            if (!iceBathOpen) {
+                return res.json(targetSlots.map(s => ({ ...s, isAvailable: false, remainingSpots: 0, isClosed: true })));
+            }
+            if (option === 'male' && maxMale === 0) {
+                return res.json(targetSlots.map(s => ({ ...s, isAvailable: false, remainingSpots: 0, isClosed: true })));
+            }
+            if (option === 'female' && maxFemale === 0) {
+                return res.json(targetSlots.map(s => ({ ...s, isAvailable: false, remainingSpots: 0, isClosed: true })));
+            }
+            if (option === 'both' && (maxMale === 0 || maxFemale === 0)) {
+                return res.json(targetSlots.map(s => ({ ...s, isAvailable: false, remainingSpots: 0, isClosed: true })));
+            }
+        }
 
         const bookedSlots = await Booking.find({ 
             bookingDate: date,
@@ -59,16 +102,16 @@ exports.getAvailableSlots = async (req, res) => {
                 const femaleBookedCount = bookedSlots.filter(b => b.slotNumber === slot.slotNumber && (b.facilityOption === 'female' || b.facilityOption === 'both')).length;
                 
                 if (option === 'male') {
-                    remainingSpots = Math.max(0, 2 - maleBookedCount);
-                    isAvailable = remainingSpots > 0;
+                    remainingSpots = Math.max(0, maxMale - maleBookedCount);
+                    isAvailable = maxMale > 0 && remainingSpots > 0;
                 } else if (option === 'female') {
-                    remainingSpots = Math.max(0, 2 - femaleBookedCount);
-                    isAvailable = remainingSpots > 0;
+                    remainingSpots = Math.max(0, maxFemale - femaleBookedCount);
+                    isAvailable = maxFemale > 0 && remainingSpots > 0;
                 } else if (option === 'both') {
-                    const remainingMale = Math.max(0, 2 - maleBookedCount);
-                    const remainingFemale = Math.max(0, 2 - femaleBookedCount);
+                    const remainingMale = Math.max(0, maxMale - maleBookedCount);
+                    const remainingFemale = Math.max(0, maxFemale - femaleBookedCount);
                     remainingSpots = Math.min(remainingMale, remainingFemale);
-                    isAvailable = remainingSpots > 0;
+                    isAvailable = maxMale > 0 && maxFemale > 0 && remainingSpots > 0;
                 }
             }
             
@@ -86,7 +129,8 @@ exports.getAvailableSlots = async (req, res) => {
             return {
                 ...slot,
                 isAvailable,
-                remainingSpots
+                remainingSpots,
+                isClosed: false
             };
         });
 
@@ -101,6 +145,15 @@ exports.getSlotSummary = async (req, res) => {
         const { date, facility } = req.query;
         if (!date) return res.status(400).json({ message: 'กรุณาระบุวันที่ (date)' });
         
+        const settings = await SystemSetting.getSettings();
+        const gameRoomOpen = settings.gameRoom.isOpen;
+        const ps5Active = gameRoomOpen && settings.gameRoom.ps5;
+        const nintendoActive = gameRoomOpen && settings.gameRoom.nintendo;
+
+        const iceBathOpen = settings.iceBath.isOpen;
+        const maxMale = iceBathOpen ? ((settings.iceBath.male_bath_1 ? 1 : 0) + (settings.iceBath.male_bath_2 ? 1 : 0)) : 0;
+        const maxFemale = iceBathOpen ? ((settings.iceBath.female_bath_1 ? 1 : 0) + (settings.iceBath.female_bath_2 ? 1 : 0)) : 0;
+
         const targetFacility = facility === 'ice_bath' ? 'ice_bath' : 'game_room';
         const targetSlots = targetFacility === 'ice_bath' ? ICE_BATH_SLOTS : GAME_ROOM_SLOTS;
 
@@ -124,6 +177,9 @@ exports.getSlotSummary = async (req, res) => {
         if (targetFacility === 'game_room') {
             summary.ps5 = 0;
             summary.nintendo = 0;
+            summary.ps5Closed = !ps5Active;
+            summary.nintendoClosed = !nintendoActive;
+            summary.gameRoomOpen = gameRoomOpen && (ps5Active || nintendoActive);
             
             targetSlots.forEach(slot => {
                 let isTimeValid = true;
@@ -135,13 +191,18 @@ exports.getSlotSummary = async (req, res) => {
                 if (isTimeValid) {
                     const isPS5Booked = bookedSlots.some(b => b.slotNumber === slot.slotNumber && b.facilityOption === 'ps5');
                     const isNinBooked = bookedSlots.some(b => b.slotNumber === slot.slotNumber && b.facilityOption === 'nintendo');
-                    if (!isPS5Booked) summary.ps5++;
-                    if (!isNinBooked) summary.nintendo++;
+                    if (ps5Active && !isPS5Booked) summary.ps5++;
+                    if (nintendoActive && !isNinBooked) summary.nintendo++;
                 }
             });
         } else {
             summary.male = 0;
             summary.female = 0;
+            summary.maleClosed = maxMale === 0;
+            summary.femaleClosed = maxFemale === 0;
+            summary.iceBathOpen = iceBathOpen && (maxMale > 0 || maxFemale > 0);
+            summary.activeMaleBaths = maxMale;
+            summary.activeFemaleBaths = maxFemale;
             
             targetSlots.forEach(slot => {
                 let isTimeValid = true;
@@ -154,8 +215,8 @@ exports.getSlotSummary = async (req, res) => {
                     const maleBookedCount = bookedSlots.filter(b => b.slotNumber === slot.slotNumber && (b.facilityOption === 'male' || b.facilityOption === 'both')).length;
                     const femaleBookedCount = bookedSlots.filter(b => b.slotNumber === slot.slotNumber && (b.facilityOption === 'female' || b.facilityOption === 'both')).length;
                     
-                    if (maleBookedCount < 2) summary.male++;
-                    if (femaleBookedCount < 2) summary.female++;
+                    if (maxMale > 0 && maleBookedCount < maxMale) summary.male++;
+                    if (maxFemale > 0 && femaleBookedCount < maxFemale) summary.female++;
                 }
             });
         }
@@ -174,6 +235,38 @@ exports.createBooking = async (req, res) => {
 
         if (!displayName || !hotelRoomNumber || !bookingDate || !slotNumber || !facilityOption) {
             return res.status(400).json({ message: 'กรอกข้อมูลไม่ครบถ้วน (ต้องระบุตัวเลือก)' });
+        }
+
+        // ตรวจสอบสถานะเปิด-ปิด บริการและเครื่องเล่น
+        const settings = await SystemSetting.getSettings();
+        const gameRoomOpen = settings.gameRoom.isOpen;
+        const ps5Active = gameRoomOpen && settings.gameRoom.ps5;
+        const nintendoActive = gameRoomOpen && settings.gameRoom.nintendo;
+
+        const iceBathOpen = settings.iceBath.isOpen;
+        const maxMale = iceBathOpen ? ((settings.iceBath.male_bath_1 ? 1 : 0) + (settings.iceBath.male_bath_2 ? 1 : 0)) : 0;
+        const maxFemale = iceBathOpen ? ((settings.iceBath.female_bath_1 ? 1 : 0) + (settings.iceBath.female_bath_2 ? 1 : 0)) : 0;
+
+        if (targetFacility === 'game_room') {
+            if (facilityOption === 'ps5' && !ps5Active) {
+                return res.status(400).json({ message: 'เครื่องเล่น PlayStation 5 ปิดปรับปรุงอยู่ในขณะนี้' });
+            }
+            if (facilityOption === 'nintendo' && !nintendoActive) {
+                return res.status(400).json({ message: 'เครื่องเล่น Nintendo Switch ปิดปรับปรุงอยู่ในขณะนี้' });
+            }
+        } else if (targetFacility === 'ice_bath') {
+            if (!iceBathOpen) {
+                return res.status(400).json({ message: 'บริการบ่อน้ำแข็งปิดปรับปรุงอยู่ในขณะนี้' });
+            }
+            if (facilityOption === 'male' && maxMale === 0) {
+                return res.status(400).json({ message: 'บ่อแช่ผู้ชายปิดปรับปรุงอยู่ในขณะนี้' });
+            }
+            if (facilityOption === 'female' && maxFemale === 0) {
+                return res.status(400).json({ message: 'บ่อแช่ผู้หญิงปิดปรับปรุงอยู่ในขณะนี้' });
+            }
+            if (facilityOption === 'both' && (maxMale === 0 || maxFemale === 0)) {
+                return res.status(400).json({ message: 'บ่อแช่สำหรับคู่ไม่พร้อมให้บริการ (มีบางบ่อปิดปรับปรุง)' });
+            }
         }
 
         // Check quota limits
@@ -218,9 +311,15 @@ exports.createBooking = async (req, res) => {
             const maleBookedCount = existingSlotBookings.filter(b => b.facilityOption === 'male' || b.facilityOption === 'both').length;
             const femaleBookedCount = existingSlotBookings.filter(b => b.facilityOption === 'female' || b.facilityOption === 'both').length;
             
-            if (facilityOption === 'male' && maleBookedCount >= 2) return res.status(400).json({ message: 'รอบเวลานี้บ่อชายเต็มแล้ว' });
-            if (facilityOption === 'female' && femaleBookedCount >= 2) return res.status(400).json({ message: 'รอบเวลานี้บ่อหญิงเต็มแล้ว' });
-            if (facilityOption === 'both' && (maleBookedCount >= 2 || femaleBookedCount >= 2)) return res.status(400).json({ message: 'รอบเวลานี้ไม่ว่างพอสำหรับ 2 ท่าน' });
+            if (facilityOption === 'male' && maleBookedCount >= maxMale) {
+                return res.status(400).json({ message: 'รอบเวลานี้บ่อชายเต็มแล้ว' });
+            }
+            if (facilityOption === 'female' && femaleBookedCount >= maxFemale) {
+                return res.status(400).json({ message: 'รอบเวลานี้บ่อหญิงเต็มแล้ว' });
+            }
+            if (facilityOption === 'both' && (maleBookedCount >= maxMale || femaleBookedCount >= maxFemale)) {
+                return res.status(400).json({ message: 'รอบเวลานี้ไม่ว่างพอสำหรับ 2 ท่าน' });
+            }
         }
 
         // Find start time and end time for this slot

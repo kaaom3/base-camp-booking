@@ -1,4 +1,5 @@
 const Booking = require('../models/Booking');
+const SystemSetting = require('../models/SystemSetting');
 
 // ดูตารางการจองของวันนี้
 exports.getSchedule = async (req, res) => {
@@ -74,6 +75,45 @@ exports.cancelBooking = async (req, res) => {
         await booking.save();
 
         res.json({ message: 'ยกเลิกการจองสำเร็จ', booking });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// ดึงสถานะเปิด-ปิด บริการและเครื่องเล่น
+exports.getFacilityStatus = async (req, res) => {
+    try {
+        const settings = await SystemSetting.getSettings();
+        res.json(settings);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// อัปเดตสถานะเปิด-ปิด บริการและเครื่องเล่น
+exports.updateFacilityStatus = async (req, res) => {
+    try {
+        const { gameRoom, iceBath } = req.body;
+        const settings = await SystemSetting.getSettings();
+
+        if (gameRoom) {
+            if (typeof gameRoom.isOpen === 'boolean') settings.gameRoom.isOpen = gameRoom.isOpen;
+            if (typeof gameRoom.ps5 === 'boolean') settings.gameRoom.ps5 = gameRoom.ps5;
+            if (typeof gameRoom.nintendo === 'boolean') settings.gameRoom.nintendo = gameRoom.nintendo;
+        }
+
+        if (iceBath) {
+            if (typeof iceBath.isOpen === 'boolean') settings.iceBath.isOpen = iceBath.isOpen;
+            if (typeof iceBath.male_bath_1 === 'boolean') settings.iceBath.male_bath_1 = iceBath.male_bath_1;
+            if (typeof iceBath.male_bath_2 === 'boolean') settings.iceBath.male_bath_2 = iceBath.male_bath_2;
+            if (typeof iceBath.female_bath_1 === 'boolean') settings.iceBath.female_bath_1 = iceBath.female_bath_1;
+            if (typeof iceBath.female_bath_2 === 'boolean') settings.iceBath.female_bath_2 = iceBath.female_bath_2;
+        }
+
+        settings.updatedAt = new Date();
+        await settings.save();
+
+        res.json({ message: 'อัปเดตสถานะบริการสำเร็จ', settings });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
