@@ -8,8 +8,7 @@ const systemSettingSchema = new mongoose.Schema({
     },
     key: { 
         type: String, 
-        required: false, 
-        default: 'facility_status' 
+        required: false 
     },
     gameRoom: {
         isOpen: { type: Boolean, default: true },
@@ -34,6 +33,16 @@ systemSettingSchema.index({ date: 1 }, { unique: true });
 
 // Helper static function to get or initialize default settings
 systemSettingSchema.statics.getSettings = async function() {
+    // Ensure legacy key_1 unique index is dropped if present
+    try {
+        const indexes = await this.collection.indexes();
+        if (indexes.some(idx => idx.name === 'key_1')) {
+            await this.collection.dropIndex('key_1');
+        }
+    } catch (e) {
+        // Ignore if collection not ready
+    }
+
     let settings = await this.findOne({ date: 'default' });
     if (!settings) {
         settings = await this.findOne({ key: 'facility_status' });
