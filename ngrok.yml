@@ -1,0 +1,4 @@
+version: "3"
+agent:
+  authtoken: 3JXYrYchYzyScmfL3Sufv5iOoRo_4LKtXQHvC7xtNbZmCj4ug
+  web_addr: false
