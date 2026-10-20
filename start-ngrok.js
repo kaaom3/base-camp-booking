@@ -6,6 +6,7 @@ const args = [
     'http',
     '--authtoken', '3JXYrYchYzyScmfL3Sufv5iOoRo_4LKtXQHvC7xtNbZmCj4ug',
     '--domain=sibling-compacted-decrease.ngrok-free.dev',
+    '--inspect=false',
     '5050'
 ];
 
