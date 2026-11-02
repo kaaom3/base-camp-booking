@@ -11,7 +11,7 @@ ngrok config add-authtoken 3JXYrYchYzyScmfL3Sufv5iOoRo_4LKtXQHvC7xtNbZmCj4ug
 เข้าไปที่โฟลเดอร์โปรเจกต์ (ที่มีไฟล์ server.js) แล้วพิมพ์ทีละบรรทัด:
 pm2 start server.js --name "basecamp-server"
 pm2 start start-ngrok.js --name "basecamp-ngrok"
-
+pm2 delete ngrok-basecamp
 4. บันทึกการตั้งค่า
 pm2 save
 
