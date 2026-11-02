@@ -315,6 +315,7 @@
         
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('schedule')">🎮 Live Schedule</button>
+            <button class="tab-btn" onclick="switchTab('bicycle')">🚲 Bicycle Fleet (จักรยาน)</button>
             <button class="tab-btn" onclick="switchTab('facility')">⚡ Unit Control (เปิด-ปิดจุด)</button>
             <button class="tab-btn" onclick="switchTab('history')">📂 Data Logs</button>
         </div>
@@ -353,6 +354,27 @@
         </div>
 
         
+
+        <!-- Bicycle Fleet Live Tab -->
+        <div id="tab-bicycle" class="tab-content">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <h2 class="section-title" style="margin: 0; border: none; padding: 0; color: var(--neon-green);">🚲 BICYCLE LIVE FLEET (จักรยานเบอร์ 1-5)</h2>
+                        <div style="font-size: 13px; color: #888; margin-top: 4px;">ติดตามสถานะจักรยานแบบ Real-time: เมื่อกด <strong>[ รับคืนรถ ]</strong> รถจะเปิดว่างให้จองต่อทันที</div>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="date" id="adminBikeDate" class="admin-input" style="width:auto; padding: 5px 15px;" onchange="loadBicycleFleet()">
+                        <button class="btn-refresh" onclick="loadBicycleFleet()">[ RELOAD FLEET ]</button>
+                    </div>
+                </div>
+
+                <div id="admin-bicycle-fleet-list" style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+        </div>
+
         <!-- Facility & Unit Control Section -->
         <div id="tab-facility" class="tab-content">
             <div class="card">
@@ -490,6 +512,59 @@
 
                 </div>
 
+                
+                <!-- BICYCLE CONTROLS -->
+                <div style="background: rgba(57, 255, 20, 0.03); border: 1px solid rgba(57, 255, 20, 0.3); border-radius: 10px; padding: 22px; margin-top: 25px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                        <div>
+                            <h3 style="color: var(--neon-green); margin: 0; font-family: 'Orbitron', sans-serif; font-size: 18px; letter-spacing: 1px;">🚲 BICYCLE FLEET (จักรยาน 5 คัน)</h3>
+                            <div style="font-size: 13px; color: #888; margin-top: 4px;">เปิด-ปิดแยกแต่ละเบอร์ได้อิสระ (กรณีซ่อมบำรุง/ยางแบน)</div>
+                        </div>
+                        <div>
+                            <span style="font-size: 12px; color: #aaa; margin-right: 8px;">ภาพรวมจักรยาน:</span>
+                            <button id="btn-main-bicycle" class="btn-unit-toggle" onclick="toggleMainFacility('bicycle')">ONLINE</button>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
+                        <div class="unit-control-card">
+                            <div>
+                                <div style="font-weight: 600; font-size: 15px;">จักรยาน เบอร์ 1</div>
+                                <div style="font-size: 12px; color: #888;">Bike #01</div>
+                            </div>
+                            <button id="btn-unit-bike_1" class="btn-unit-toggle" onclick="toggleUnit('bicycle', 'bike_1')">ONLINE</button>
+                        </div>
+                        <div class="unit-control-card">
+                            <div>
+                                <div style="font-weight: 600; font-size: 15px;">จักรยาน เบอร์ 2</div>
+                                <div style="font-size: 12px; color: #888;">Bike #02</div>
+                            </div>
+                            <button id="btn-unit-bike_2" class="btn-unit-toggle" onclick="toggleUnit('bicycle', 'bike_2')">ONLINE</button>
+                        </div>
+                        <div class="unit-control-card">
+                            <div>
+                                <div style="font-weight: 600; font-size: 15px;">จักรยาน เบอร์ 3</div>
+                                <div style="font-size: 12px; color: #888;">Bike #03</div>
+                            </div>
+                            <button id="btn-unit-bike_3" class="btn-unit-toggle" onclick="toggleUnit('bicycle', 'bike_3')">ONLINE</button>
+                        </div>
+                        <div class="unit-control-card">
+                            <div>
+                                <div style="font-weight: 600; font-size: 15px;">จักรยาน เบอร์ 4</div>
+                                <div style="font-size: 12px; color: #888;">Bike #04</div>
+                            </div>
+                            <button id="btn-unit-bike_4" class="btn-unit-toggle" onclick="toggleUnit('bicycle', 'bike_4')">ONLINE</button>
+                        </div>
+                        <div class="unit-control-card">
+                            <div>
+                                <div style="font-weight: 600; font-size: 15px;">จักรยาน เบอร์ 5</div>
+                                <div style="font-size: 12px; color: #888;">Bike #05</div>
+                            </div>
+                            <button id="btn-unit-bike_5" class="btn-unit-toggle" onclick="toggleUnit('bicycle', 'bike_5')">ONLINE</button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Upcoming Closures Section -->
                 <div style="margin-top: 30px; background: #0f101a; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 22px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
@@ -542,6 +617,6 @@
     </div>
 
     
-<script src="js/admin.js?v=1791786375632"></script>
+<script src="js/admin.js?v=1793614956020"></script>
 </body>
 </html>

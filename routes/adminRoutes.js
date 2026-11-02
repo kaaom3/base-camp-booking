@@ -9,4 +9,9 @@ router.get('/facility-status', adminController.getFacilityStatus);
 router.put('/facility-status', adminController.updateFacilityStatus);
 router.delete('/facility-status/reset', adminController.resetFacilityStatus);
 
+// Bicycle Fleet Controls
+router.get('/bicycles/fleet', adminController.getBicycleFleet);
+router.post('/bicycles/handover', adminController.handoverBicycle);
+router.post('/bicycles/return', adminController.returnBicycle);
+
 module.exports = router;

@@ -1,14 +1,17 @@
 const mongoose = require('mongoose');
 
 const bookingSchema = new mongoose.Schema({
-  bookingRef: { type: String, required: true, unique: true }, // เช่น BC-1001
+  bookingRef: { type: String, required: true, unique: true }, // เช่น BC-1001, BK-1001
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   hotelRoomNumber: { type: String, required: true }, // ดึงมาจาก User เพื่อให้อ้างอิงและค้นหาง่าย
   
   bookingDate: { type: String, required: true }, // เก็บเป็น YYYY-MM-DD
-  slotNumber: { type: Number, required: true }, // รอบที่ 1-9
-  startTime: { type: String, required: true }, // เช่น "09:00"
-  endTime: { type: String, required: true }, // เช่น "10:00"
+  slotNumber: { type: Number, required: false, default: 0 }, // รอบที่ 1-9 (สำหรับ Game Room, Ice Bath)
+  startTime: { type: String, required: false, default: '' }, // เช่น "09:00"
+  endTime: { type: String, required: false, default: '' }, // เช่น "10:00"
+
+  checkOutTime: { type: String, default: '' }, // เวลาที่รับจักรยานไป
+  returnTime: { type: String, default: '' }, // เวลาที่นำจักรยานมาคืน
 
   status: { 
     type: String, 
@@ -18,12 +21,17 @@ const bookingSchema = new mongoose.Schema({
   
   facility: { 
     type: String, 
-    enum: ['game_room', 'ice_bath'], 
+    enum: ['game_room', 'ice_bath', 'bicycle'], 
     default: 'game_room' 
   },
   
   facilityOption: {
     type: String,
+    required: false
+  },
+
+  bikeNumber: {
+    type: Number,
     required: false
   },
   

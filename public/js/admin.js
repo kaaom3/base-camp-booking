@@ -1,3 +1,4 @@
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? '' : 'https://sibling-compacted-decrease.ngrok-free.dev';
 
 function customAlert(msg) {
     return new Promise(resolve => {
@@ -32,6 +33,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const dateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
     document.getElementById('adminDate').value = dateStr;
     document.getElementById('historyDate').value = dateStr;
+    const bikeDateEl = document.getElementById('adminBikeDate');
+    if (bikeDateEl) bikeDateEl.value = dateStr;
     const ctrlDateEl = document.getElementById('controlDate');
     if (ctrlDateEl) ctrlDateEl.value = dateStr;
 
@@ -505,6 +508,19 @@ async function loadFacilityStatus() {
             femaleSummaryEl.innerHTML = `เปิดอยู่ <strong style="color:var(--neon-pink);">${femaleActiveCount}/2</strong> บ่อ (รับได้ ${femaleActiveCount} ท่าน/รอบ)`;
         }
 
+        
+        // Bicycle Main
+        const bikeMainBtn = document.getElementById('btn-main-bicycle');
+        if (bikeMainBtn && settings.bicycle) updateStatusBtn(bikeMainBtn, settings.bicycle.isOpen);
+
+        // Bike 1 to 5
+        if (settings.bicycle) {
+            for (let i = 1; i <= 5; i++) {
+                const bBtn = document.getElementById('btn-unit-bike_' + i);
+                if (bBtn) updateStatusBtn(bBtn, settings.bicycle['bike_' + i]);
+            }
+        }
+
         // Render Upcoming Closures table
         renderUpcomingClosures(data.upcomingClosures || []);
 
@@ -590,7 +606,12 @@ async function toggleUnit(facilityKey, unitKey) {
         'male_bath_1': 'บ่อแช่ผู้ชาย #1',
         'male_bath_2': 'บ่อแช่ผู้ชาย #2',
         'female_bath_1': 'บ่อแช่ผู้หญิง #1',
-        'female_bath_2': 'บ่อแช่ผู้หญิง #2'
+        'female_bath_2': 'บ่อแช่ผู้หญิง #2',
+        'bike_1': 'จักรยาน เบอร์ 1',
+        'bike_2': 'จักรยาน เบอร์ 2',
+        'bike_3': 'จักรยาน เบอร์ 3',
+        'bike_4': 'จักรยาน เบอร์ 4',
+        'bike_5': 'จักรยาน เบอร์ 5'
     };
     const unitTitle = unitNames[unitKey] || unitKey;
     const targetDate = currentTargetDate || 'วันนี้';
@@ -635,7 +656,7 @@ async function toggleMainFacility(facilityKey) {
     const currentVal = currentFacilitySettings[facilityKey].isOpen;
     const targetVal = !currentVal;
     const actionText = targetVal ? 'เปิดให้บริการทั้งหมด' : 'ปิดบริการทั้งระบบ';
-    const facName = facilityKey === 'gameRoom' ? 'ห้องเกมส์ (Game Room)' : 'บ่อน้ำแข็ง (Ice Bath)';
+    const facName = facilityKey === 'gameRoom' ? 'ห้องเกมส์ (Game Room)' : (facilityKey === 'iceBath' ? 'บ่อน้ำแข็ง (Ice Bath)' : 'จักรยาน (Bicycle)');
     const targetDate = currentTargetDate || 'วันนี้';
 
     const confirmed = await customConfirm(`ต้องการ [${actionText}] สำหรับ "${facName}"\n(สำหรับวันที่: ${targetDate}) ใช่หรือไม่?`);
@@ -692,5 +713,137 @@ async function resetFacilityDate(dateStr) {
     } catch (e) {
         console.error(e);
         await customAlert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+    }
+}
+
+
+// ================= BICYCLE FLEET CONTROLS =================
+
+async function loadBicycleFleet() {
+    const bikeDateEl = document.getElementById('adminBikeDate');
+    const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+    const targetDate = (bikeDateEl && bikeDateEl.value) ? bikeDateEl.value : todayStr;
+
+    try {
+        const res = await fetch(`${API_BASE}/api/admin/bicycles/fleet?date=${targetDate}`, {
+            headers: { 'ngrok-skip-browser-warning': '69420' }
+        });
+        if (!res.ok) throw new Error('API Error');
+        const data = await res.json();
+        renderAdminBicycleFleet(data.fleet);
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+function renderAdminBicycleFleet(fleet) {
+    const container = document.getElementById('admin-bicycle-fleet-list');
+    if (!container) return;
+
+    let html = '';
+    fleet.forEach(b => {
+        let badgeClass = 'status-available';
+        let badgeLabel = '🟢 ว่าง (พร้อมให้จอง)';
+        let borrowerInfo = '<span style="color:#666;">- ยังไม่มีผู้ใช้งานในขณะนี้ -</span>';
+        let actionBtn = '';
+
+        if (b.status === 'booked' && b.booking) {
+            badgeClass = 'status-booked';
+            badgeLabel = '🟡 รอรับรถ (Booked)';
+            borrowerInfo = `
+                <div><strong>ห้อง:</strong> <span style="color:#ffcc00; font-weight:bold; font-size:16px;">${b.booking.hotelRoomNumber}</span> (${b.booking.userId?.displayName || 'ลูกค้า'})</div>
+                <div style="font-size:12px; color:#aaa; margin-top:3px;">Ref: ${b.booking.bookingRef} | จองเมื่อ: ${b.booking.startTime || '-'}</div>
+            `;
+            actionBtn = `
+                <button class="btn-checkin" style="padding: 8px 18px; font-size: 13px;" onclick="handoverBike('${b.booking.bookingRef}', ${b.bikeNumber})">
+                    [ 🔑 ส่งมอบรถให้ลูกค้า ]
+                </button>
+            `;
+        } else if (b.status === 'in_use' && b.booking) {
+            badgeClass = 'status-in_use';
+            badgeLabel = '🔵 กำลังใช้งาน (In Use)';
+            borrowerInfo = `
+                <div><strong>ห้อง:</strong> <span style="color:var(--neon-blue); font-weight:bold; font-size:16px;">${b.booking.hotelRoomNumber}</span> (${b.booking.userId?.displayName || 'ลูกค้า'})</div>
+                <div style="font-size:12px; color:#aaa; margin-top:3px;">Ref: ${b.booking.bookingRef} | เริ่มยืม: ${b.booking.checkOutTime || b.booking.startTime}</div>
+            `;
+            actionBtn = `
+                <button class="btn-refresh" style="padding: 8px 18px; font-size: 13px; background: linear-gradient(45deg, #00f3ff, #00a8ff); color:#000; font-weight:bold;" onclick="returnBike('${b.booking.bookingRef}', ${b.bikeNumber})">
+                    [ 🏁 รับคืนรถ (เปิดว่างทันที) ]
+                </button>
+            `;
+        } else if (b.status === 'maintenance') {
+            badgeClass = 'status-maintenance';
+            badgeLabel = '🔴 ปิดซ่อมบำรุง';
+            borrowerInfo = '<span style="color:var(--neon-pink);">ปิดให้บริการในแท็บ Unit Control</span>';
+        }
+
+        html += `
+            <div style="background:#0f101a; border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:18px 22px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px;">
+                <div style="display:flex; align-items:center; gap:20px;">
+                    <div style="font-size:36px;">🚲</div>
+                    <div>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <h3 style="margin:0; font-family:'Orbitron',sans-serif; font-size:18px; color:#fff;">BIKE #${b.bikeNumber}</h3>
+                            <span style="font-size:12px; padding:3px 10px; border-radius:12px; font-weight:bold;" class="${badgeClass}">${badgeLabel}</span>
+                        </div>
+                        <div style="margin-top:6px; font-size:14px;">
+                            ${borrowerInfo}
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    ${actionBtn}
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
+async function handoverBike(ref, bikeNum) {
+    const confirmed = await customConfirm(`ยืนยันการส่งมอบกุญแจและจักรยานเบอร์ ${bikeNum} ให้ลูกค้าใช่หรือไม่?`);
+    if (!confirmed) return;
+
+    try {
+        const res = await fetch(`${API_BASE}/api/admin/bicycles/handover`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'ngrok-skip-browser-warning': '69420'
+            },
+            body: JSON.stringify({ bookingRef: ref })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message);
+
+        await customAlert(data.message);
+        loadBicycleFleet();
+    } catch (e) {
+        await customAlert(e.message);
+    }
+}
+
+async function returnBike(ref, bikeNum) {
+    const confirmed = await customConfirm(`ยืนยันการรับคืนจักรยานเบอร์ ${bikeNum} เรียบร้อยแล้วใช่หรือไม่?\n\n(ทันทีที่กด จักรยานเบอร์ ${bikeNum} จะกลับมาว่างพร้อมให้ลูกค้าคนต่อไปจองทันที)`);
+    if (!confirmed) return;
+
+    try {
+        const res = await fetch(`${API_BASE}/api/admin/bicycles/return`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'ngrok-skip-browser-warning': '69420'
+            },
+            body: JSON.stringify({ bookingRef: ref })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message);
+
+        await customAlert(data.message);
+        loadBicycleFleet();
+    } catch (e) {
+        await customAlert(e.message);
     }
 }

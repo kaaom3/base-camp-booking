@@ -374,3 +374,165 @@ exports.getMyBooking = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+// ดึงสถานะจักรยาน 5 คัน (สำหรับหน้าลูกค้า)
+exports.getBicycleStatus = async (req, res) => {
+    try {
+        const { date, hotelRoomNumber } = req.query;
+        const now = new Date();
+        const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+        const targetDate = date || todayStr;
+
+        const settings = await SystemSetting.getSettingsForDate(targetDate);
+        const bikeSettings = settings.bicycle || {
+            isOpen: true, bike_1: true, bike_2: true, bike_3: true, bike_4: true, bike_5: true
+        };
+
+        const activeBookings = await Booking.find({
+            bookingDate: targetDate,
+            facility: 'bicycle',
+            status: { $in: ['booked', 'checked_in'] }
+        });
+
+        let roomActiveCount = 0;
+        if (hotelRoomNumber) {
+            roomActiveCount = activeBookings.filter(b => b.hotelRoomNumber === hotelRoomNumber).length;
+        }
+
+        const bikes = [];
+        for (let i = 1; i <= 5; i++) {
+            const key = `bike_${i}`;
+            const isEnabled = bikeSettings.isOpen && bikeSettings[key];
+            const booking = activeBookings.find(b => b.bikeNumber === i);
+
+            let status = 'available';
+            if (!isEnabled) {
+                status = 'maintenance';
+            } else if (booking) {
+                status = booking.status === 'checked_in' ? 'in_use' : 'booked';
+            }
+
+            bikes.push({
+                bikeNumber: i,
+                code: key,
+                name: `จักรยาน เบอร์ ${i}`,
+                isAvailable: status === 'available',
+                status
+            });
+        }
+
+        const availableCount = bikes.filter(b => b.isAvailable).length;
+
+        res.json({
+            targetDate,
+            isOpen: bikeSettings.isOpen,
+            availableCount,
+            roomActiveCount,
+            maxAllowedPerRoom: 2,
+            canRoomBook: roomActiveCount < 2 && availableCount > 0 && bikeSettings.isOpen,
+            bikes
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// จองจักรยาน (เลือก 1 หรือ 2 คัน)
+exports.bookBicycles = async (req, res) => {
+    try {
+        const { displayName, hotelRoomNumber, bookingDate, selectedBikes } = req.body;
+
+        if (!displayName || !hotelRoomNumber || !bookingDate || !Array.isArray(selectedBikes) || selectedBikes.length === 0) {
+            return res.status(400).json({ message: 'กรุณากรอกข้อมูลให้ครบถ้วนและเลือกจักรยานอย่างน้อย 1 คัน' });
+        }
+
+        if (selectedBikes.length > 2) {
+            return res.status(400).json({ message: 'สามารถเลือกจองจักรยานได้สูงสุด 2 คันต่อครั้ง' });
+        }
+
+        // ตรวจสอบสถานะเปิด-ปิด บริการจักรยาน
+        const settings = await SystemSetting.getSettingsForDate(bookingDate);
+        const bikeSettings = settings.bicycle || {
+            isOpen: true, bike_1: true, bike_2: true, bike_3: true, bike_4: true, bike_5: true
+        };
+
+        if (!bikeSettings.isOpen) {
+            return res.status(400).json({ message: 'บริการจักรยานปิดปรับปรุงในวันที่เลือก' });
+        }
+
+        // ตรวจสอบโควตาของห้องพัก (สูงสุด 2 คันที่กำลังจองหรือใช้งานอยู่)
+        const activeRoomBookings = await Booking.find({
+            hotelRoomNumber,
+            bookingDate,
+            facility: 'bicycle',
+            status: { $in: ['booked', 'checked_in'] }
+        });
+
+        if (activeRoomBookings.length + selectedBikes.length > 2) {
+            return res.status(400).json({ 
+                message: `ห้องพักนี้ใช้สิทธิ์จอง/ยืมจักรยานไปแล้ว ${activeRoomBookings.length} คัน (1 ห้องจองได้สูงสุด 2 คัน)` 
+            });
+        }
+
+        // ตรวจสอบความพร้อมของจักรยานแต่ละคันที่เลือก
+        const activeBikeBookings = await Booking.find({
+            bookingDate,
+            facility: 'bicycle',
+            bikeNumber: { $in: selectedBikes },
+            status: { $in: ['booked', 'checked_in'] }
+        });
+
+        if (activeBikeBookings.length > 0) {
+            const bookedNumbers = activeBikeBookings.map(b => b.bikeNumber).join(', ');
+            return res.status(400).json({ message: `จักรยานเบอร์ ${bookedNumbers} มีผู้จองหรือกำลังใช้งานอยู่แล้ว` });
+        }
+
+        for (const num of selectedBikes) {
+            if (!bikeSettings[`bike_${num}`]) {
+                return res.status(400).json({ message: `จักรยานเบอร์ ${num} ปิดปรับปรุงอยู่ในขณะนี้` });
+            }
+        }
+
+        // สร้างหรือค้นหา User
+        let user = await User.findOne({ hotelRoomNumber, displayName });
+        if (!user) {
+            user = await User.create({ displayName, hotelRoomNumber });
+        }
+
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('th-TH', { timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit' });
+
+        const createdBookings = [];
+        const groupRef = 'BK-' + Date.now().toString().slice(-6);
+
+        for (let i = 0; i < selectedBikes.length; i++) {
+            const bikeNum = selectedBikes[i];
+            const bookingRef = selectedBikes.length === 1 ? groupRef : `${groupRef}-${i + 1}`;
+            
+            const booking = await Booking.create({
+                bookingRef,
+                userId: user._id,
+                hotelRoomNumber,
+                bookingDate,
+                slotNumber: 0,
+                facility: 'bicycle',
+                facilityOption: `bike_${bikeNum}`,
+                bikeNumber: bikeNum,
+                startTime: timeStr,
+                endTime: 'ไม่มีเวลากำหนด',
+                status: 'booked',
+                agreedToTerms: true
+            });
+            createdBookings.push(booking);
+        }
+
+        res.status(201).json({
+            message: `จองจักรยานสำเร็จ (${selectedBikes.map(n => 'เบอร์ ' + n).join(', ')})`,
+            groupRef,
+            bookings: createdBookings
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};

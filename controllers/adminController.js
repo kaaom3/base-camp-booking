@@ -9,7 +9,7 @@ exports.getSchedule = async (req, res) => {
 
         const bookings = await Booking.find({ bookingDate: date })
             .populate('userId', 'displayName hotelRoomNumber')
-            .sort({ slotNumber: 1 });
+            .sort({ slotNumber: 1, createdAt: -1 });
 
         res.json(bookings);
     } catch (error) {
@@ -30,10 +30,10 @@ exports.checkIn = async (req, res) => {
             return res.status(400).json({ message: 'การจองนี้ถูกยกเลิกไปแล้ว' });
         }
         if (booking.status === 'completed') {
-            return res.status(400).json({ message: 'การจองนี้เล่นเสร็จสิ้นไปแล้ว' });
+            return res.status(400).json({ message: 'การจองนี้เล่นเสร็จสิ้นหรือคืนรถไปแล้ว' });
         }
         if (booking.status === 'checked_in') {
-            return res.status(400).json({ message: 'ลูกค้าทำการ Check-in ไปแล้ว' });
+            return res.status(400).json({ message: 'รายการนี้ทำการ Check-in / ส่งมอบไปแล้ว' });
         }
 
         const now = new Date();
@@ -44,14 +44,20 @@ exports.checkIn = async (req, res) => {
             return res.status(400).json({ message: `ยังไม่ถึงวันที่จอง (คิวนี้ของวันที่ ${booking.bookingDate})` });
         }
 
-        // เช็คเวลาว่ามาก่อนเวลาเกิน 15 นาที หรือไม่
         const bkkTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Bangkok' }));
         const currentMinutes = bkkTime.getHours() * 60 + bkkTime.getMinutes();
-        const [startH, startM] = booking.startTime.split(':').map(Number);
-        const startMinutes = startH * 60 + startM;
+        const timeStr = now.toLocaleTimeString('th-TH', { timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit' });
 
-        if (currentMinutes < startMinutes - 15) {
-            return res.status(400).json({ message: `ยังไม่ถึงรอบเวลา (รอบ ${booking.startTime} สามารถ Check-in ได้ก่อนเวลา 15 นาที)` });
+        // สำหรับห้องเกมส์ และบ่อน้ำแข็ง ให้เช็คเวลาว่ามาก่อนเวลาเกิน 15 นาที หรือไม่
+        if (booking.facility !== 'bicycle') {
+            const [startH, startM] = (booking.startTime || '00:00').split(':').map(Number);
+            const startMinutes = startH * 60 + startM;
+
+            if (currentMinutes < startMinutes - 15) {
+                return res.status(400).json({ message: `ยังไม่ถึงรอบเวลา (รอบ ${booking.startTime} สามารถ Check-in ได้ก่อนเวลา 15 นาที)` });
+            }
+        } else {
+            booking.checkOutTime = timeStr;
         }
 
         booking.status = 'checked_in';
@@ -106,7 +112,7 @@ exports.getFacilityStatus = async (req, res) => {
 // อัปเดตสถานะเปิด-ปิด บริการและเครื่องเล่น (รองรับการระบุวันที่ date)
 exports.updateFacilityStatus = async (req, res) => {
     try {
-        const { date, gameRoom, iceBath, note } = req.body;
+        const { date, gameRoom, iceBath, bicycle, note } = req.body;
         const now = new Date();
         const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
         const targetDate = date || todayStr;
@@ -117,7 +123,8 @@ exports.updateFacilityStatus = async (req, res) => {
             settings = new SystemSetting({
                 date: targetDate,
                 gameRoom: { ...defaultSettings.gameRoom.toObject() },
-                iceBath: { ...defaultSettings.iceBath.toObject() }
+                iceBath: { ...defaultSettings.iceBath.toObject() },
+                bicycle: { ...(defaultSettings.bicycle ? defaultSettings.bicycle.toObject() : {}) }
             });
         }
 
@@ -133,6 +140,16 @@ exports.updateFacilityStatus = async (req, res) => {
             if (typeof iceBath.male_bath_2 === 'boolean') settings.iceBath.male_bath_2 = iceBath.male_bath_2;
             if (typeof iceBath.female_bath_1 === 'boolean') settings.iceBath.female_bath_1 = iceBath.female_bath_1;
             if (typeof iceBath.female_bath_2 === 'boolean') settings.iceBath.female_bath_2 = iceBath.female_bath_2;
+        }
+
+        if (bicycle) {
+            if (!settings.bicycle) settings.bicycle = {};
+            if (typeof bicycle.isOpen === 'boolean') settings.bicycle.isOpen = bicycle.isOpen;
+            if (typeof bicycle.bike_1 === 'boolean') settings.bicycle.bike_1 = bicycle.bike_1;
+            if (typeof bicycle.bike_2 === 'boolean') settings.bicycle.bike_2 = bicycle.bike_2;
+            if (typeof bicycle.bike_3 === 'boolean') settings.bicycle.bike_3 = bicycle.bike_3;
+            if (typeof bicycle.bike_4 === 'boolean') settings.bicycle.bike_4 = bicycle.bike_4;
+            if (typeof bicycle.bike_5 === 'boolean') settings.bicycle.bike_5 = bicycle.bike_5;
         }
 
         if (typeof note === 'string') settings.note = note;
@@ -169,6 +186,109 @@ exports.resetFacilityStatus = async (req, res) => {
             message: `รีเซ็ตการตั้งค่าของวันที่ ${date} กลับเป็นเปิดปกติเรียบร้อย`,
             upcomingClosures
         });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// ================= BICYCLE FLEET CONTROLS =================
+
+// ดึงสถานะจักรยาน 5 คันสำหรับหน้า Admin Dashboard
+exports.getBicycleFleet = async (req, res) => {
+    try {
+        const { date } = req.query;
+        const now = new Date();
+        const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+        const targetDate = date || todayStr;
+
+        const settings = await SystemSetting.getSettingsForDate(targetDate);
+        const bikeSettings = settings.bicycle || {
+            isOpen: true, bike_1: true, bike_2: true, bike_3: true, bike_4: true, bike_5: true
+        };
+
+        const activeBookings = await Booking.find({
+            bookingDate: targetDate,
+            facility: 'bicycle',
+            status: { $in: ['booked', 'checked_in'] }
+        }).populate('userId', 'displayName hotelRoomNumber');
+
+        const fleet = [];
+        for (let i = 1; i <= 5; i++) {
+            const key = `bike_${i}`;
+            const isEnabled = bikeSettings.isOpen && bikeSettings[key];
+            const booking = activeBookings.find(b => b.bikeNumber === i);
+
+            let status = 'available';
+            if (!isEnabled) {
+                status = 'maintenance';
+            } else if (booking) {
+                status = booking.status === 'checked_in' ? 'in_use' : 'booked';
+            }
+
+            fleet.push({
+                bikeNumber: i,
+                code: key,
+                name: `จักรยาน เบอร์ ${i}`,
+                status,
+                booking: booking || null
+            });
+        }
+
+        res.json({
+            targetDate,
+            bicycleOpen: bikeSettings.isOpen,
+            fleet
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// ส่งมอบจักรยานให้ลูกค้า (Check-out / Handover)
+exports.handoverBicycle = async (req, res) => {
+    try {
+        const { bookingRef, id } = req.body;
+        const query = id ? { _id: id } : { bookingRef };
+        const booking = await Booking.findOne(query);
+
+        if (!booking) return res.status(404).json({ message: 'ไม่พบข้อมูลการจอง' });
+        if (booking.facility !== 'bicycle') return res.status(400).json({ message: 'รายการนี้ไม่ใช่จักรยาน' });
+        if (booking.status === 'cancelled') return res.status(400).json({ message: 'การจองนี้ถูกยกเลิกแล้ว' });
+        if (booking.status === 'completed') return res.status(400).json({ message: 'จักรยานคันนี้ส่งคืนเรียบร้อยแล้ว' });
+        if (booking.status === 'checked_in') return res.status(400).json({ message: 'จักรยานคันนี้ส่งมอบไปแล้ว' });
+
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('th-TH', { timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit' });
+
+        booking.status = 'checked_in';
+        booking.checkOutTime = timeStr;
+        await booking.save();
+
+        res.json({ message: `ส่งมอบจักรยานเบอร์ ${booking.bikeNumber} สำเร็จ`, booking });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// รับคืนจักรยาน (Return) -> ทันทีที่รับคืน คันนั้นจะเปิดว่างให้จองต่อได้ทันที
+exports.returnBicycle = async (req, res) => {
+    try {
+        const { bookingRef, id } = req.body;
+        const query = id ? { _id: id } : { bookingRef };
+        const booking = await Booking.findOne(query);
+
+        if (!booking) return res.status(404).json({ message: 'ไม่พบข้อมูลการจอง' });
+        if (booking.facility !== 'bicycle') return res.status(400).json({ message: 'รายการนี้ไม่ใช่จักรยาน' });
+        if (booking.status === 'completed') return res.status(400).json({ message: 'จักรยานคันนี้บันทึกรับคืนไปแล้ว' });
+
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('th-TH', { timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit' });
+
+        booking.status = 'completed';
+        booking.returnTime = timeStr;
+        await booking.save();
+
+        res.json({ message: `รับคืนจักรยานเบอร์ ${booking.bikeNumber} เรียบร้อย (เปิดว่างทันที)`, booking });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

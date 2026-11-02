@@ -22,6 +22,14 @@ const systemSettingSchema = new mongoose.Schema({
         female_bath_1: { type: Boolean, default: true },
         female_bath_2: { type: Boolean, default: true }
     },
+    bicycle: {
+        isOpen: { type: Boolean, default: true },
+        bike_1: { type: Boolean, default: true },
+        bike_2: { type: Boolean, default: true },
+        bike_3: { type: Boolean, default: true },
+        bike_4: { type: Boolean, default: true },
+        bike_5: { type: Boolean, default: true }
+    },
     note: { type: String, default: '' },
     updatedAt: { 
         type: Date, 
@@ -53,6 +61,20 @@ systemSettingSchema.statics.getSettings = async function() {
             settings = await this.create({ date: 'default', key: 'facility_status' });
         }
     }
+    
+    // Ensure bicycle object exists on default settings if created before
+    if (settings && !settings.bicycle) {
+        settings.bicycle = {
+            isOpen: true,
+            bike_1: true,
+            bike_2: true,
+            bike_3: true,
+            bike_4: true,
+            bike_5: true
+        };
+        await settings.save();
+    }
+
     return settings;
 };
 
@@ -79,7 +101,8 @@ systemSettingSchema.statics.getUpcomingClosures = async function(todayStr) {
     return list.filter(item => {
         const gameClosed = !item.gameRoom.isOpen || !item.gameRoom.ps5 || !item.gameRoom.nintendo;
         const iceClosed = !item.iceBath.isOpen || !item.iceBath.male_bath_1 || !item.iceBath.male_bath_2 || !item.iceBath.female_bath_1 || !item.iceBath.female_bath_2;
-        return gameClosed || iceClosed;
+        const bikeClosed = item.bicycle && (!item.bicycle.isOpen || !item.bicycle.bike_1 || !item.bicycle.bike_2 || !item.bicycle.bike_3 || !item.bicycle.bike_4 || !item.bicycle.bike_5);
+        return gameClosed || iceClosed || bikeClosed;
     });
 };
 
