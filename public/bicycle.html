@@ -536,6 +536,12 @@
                 const res = await fetch(url, {
                     headers: { 'ngrok-skip-browser-warning': '1' }
                 });
+
+                const contentType = res.headers.get('content-type') || '';
+                if (!res.ok || !contentType.includes('application/json')) {
+                    throw new Error('เซิร์ฟเวอร์หลังบ้านยังไม่ได้อัปเดตโค้ดใหม่ (API ' + res.status + ') กรุณาอัปเดตโค้ดและ restart เซิร์ฟเวอร์');
+                }
+
                 const data = await res.json();
                 liveBikeData = data;
 
@@ -668,7 +674,13 @@
                     })
                 });
 
-                const data = await res.json();
+                const contentType = res.headers.get('content-type') || '';
+                let data;
+                if (contentType.includes('application/json')) {
+                    data = await res.json();
+                } else {
+                    throw new Error('เซิร์ฟเวอร์ตอบกลับไม่ถูกต้อง (HTTP ' + res.status + ')');
+                }
 
                 if (!res.ok) {
                     throw new Error(data.message || 'Booking failed');
