@@ -1,11 +1,11 @@
-const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? '' : 'https://sibling-compacted-decrease.ngrok-free.dev';
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.includes('ngrok')) ? '' : 'https://sibling-compacted-decrease.ngrok-free.dev';
 
 function customAlert(msg) {
     return new Promise(resolve => {
         const modal = document.createElement('div');
         modal.className = 'modal-overlay';
-        modal.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; display:flex; justify-content:center; align-items:center; backdrop-filter: blur(5px);';
-        modal.innerHTML = "<div class='modal-box' style='background: var(--panel-bg); border: 1px solid var(--neon-blue); box-shadow: 0 0 30px rgba(0,243,255,0.4); color: #fff; padding: 30px; border-radius: 8px; width: 400px; max-width: 90%; text-align: center;'><h3 style='color: var(--neon-blue); font-family: Orbitron, sans-serif; margin-top: 0; letter-spacing: 2px;'>SYSTEM ALERT</h3><p style='color: #eee; margin: 20px 0; font-family: Kanit, sans-serif; font-size: 16px; line-height: 1.5;'>" + msg.replace(/\n/g, '<br>') + "</p><div style='margin-top: 25px; display: flex; justify-content: center;'><button id='alertOkBtn' style='background: var(--neon-blue); color: #000; border: none; padding: 10px 30px; border-radius: 4px; box-shadow: 0 0 15px rgba(0,243,255,0.6); font-family: Orbitron, sans-serif; cursor: pointer; font-weight: bold; letter-spacing: 1px;'>ACKNOWLEDGE</button></div></div>";
+        modal.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.55); z-index:1000; display:flex; justify-content:center; align-items:center; backdrop-filter: blur(4px);';
+        modal.innerHTML = "<div class='modal-box' style='background: #ffffff; border-top: 6px solid #0011ff; box-shadow: 0 20px 40px rgba(0,0,0,0.18); color: #1e293b; padding: 28px; border-radius: 14px; width: 400px; max-width: 90%; text-align: center;'><h3 style='color: #0011ff; font-family: Kanit, sans-serif; margin-top: 0; font-size: 20px;'>แจ้งเตือนระบบ</h3><p style='color: #334155; margin: 18px 0; font-family: Kanit, sans-serif; font-size: 16px; line-height: 1.6;'>" + msg.replace(/\n/g, '<br>') + "</p><div style='margin-top: 24px; display: flex; justify-content: center;'><button id='alertOkBtn' style='background: #0011ff; color: #ffffff; border: none; padding: 10px 32px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,17,255,0.25); font-family: Kanit, sans-serif; font-size: 15px; cursor: pointer; font-weight: 600;'>ตกลง</button></div></div>";
         document.body.appendChild(modal);
         document.getElementById('alertOkBtn').onclick = () => { document.body.removeChild(modal); resolve(); };
     });
@@ -15,12 +15,10 @@ function customConfirm(msg) {
     return new Promise(resolve => {
         const modal = document.createElement('div');
         modal.className = 'modal-overlay';
-        modal.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; display:flex; justify-content:center; align-items:center; backdrop-filter: blur(5px);';
-        modal.innerHTML = "<div class='modal-box' style='background: var(--panel-bg); border: 1px solid var(--neon-pink); box-shadow: 0 0 30px rgba(255,0,127,0.4); color: #fff; padding: 30px; border-radius: 8px; width: 400px; max-width: 90%; text-align: center;'><h3 style='color: var(--neon-pink); font-family: Orbitron, sans-serif; margin-top: 0; letter-spacing: 2px;'>SYSTEM WARNING</h3><p style='color: #eee; margin: 20px 0; font-family: Kanit, sans-serif; font-size: 16px; line-height: 1.5;'>" + msg.replace(/\n/g, '<br>') + "</p><div style='margin-top: 25px; display: flex; gap: 15px; justify-content: center;'><button id='confirmNoBtn' style='background: transparent; color: #ccc; border: 1px solid #666; padding: 10px 20px; border-radius: 4px; font-family: Orbitron, sans-serif; cursor: pointer; letter-spacing: 1px; transition: 0.3s;'>[ ABORT ]</button><button id='confirmYesBtn' style='background: var(--neon-pink); color: #fff; border: none; padding: 10px 20px; border-radius: 4px; box-shadow: 0 0 15px rgba(255,0,127,0.6); font-family: Orbitron, sans-serif; cursor: pointer; font-weight: bold; letter-spacing: 1px;'>[ EXECUTE ]</button></div></div>";
+        modal.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.55); z-index:1000; display:flex; justify-content:center; align-items:center; backdrop-filter: blur(4px);';
+        modal.innerHTML = "<div class='modal-box' style='background: #ffffff; border-top: 6px solid #ff3a00; box-shadow: 0 20px 40px rgba(0,0,0,0.18); color: #1e293b; padding: 28px; border-radius: 14px; width: 400px; max-width: 90%; text-align: center;'><h3 style='color: #ff3a00; font-family: Kanit, sans-serif; margin-top: 0; font-size: 20px;'>ยืนยันการทำรายการ</h3><p style='color: #334155; margin: 18px 0; font-family: Kanit, sans-serif; font-size: 16px; line-height: 1.6;'>" + msg.replace(/\n/g, '<br>') + "</p><div style='margin-top: 24px; display: flex; gap: 12px; justify-content: center;'><button id='confirmNoBtn' style='background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 10px 24px; border-radius: 10px; font-family: Kanit, sans-serif; font-size: 15px; cursor: pointer; font-weight: 500;'>ยกเลิก</button><button id='confirmYesBtn' style='background: #ff3a00; color: #ffffff; border: none; padding: 10px 26px; border-radius: 10px; box-shadow: 0 4px 12px rgba(255,58,0,0.28); font-family: Kanit, sans-serif; font-size: 15px; cursor: pointer; font-weight: 600;'>ยืนยัน</button></div></div>";
         document.body.appendChild(modal);
         document.getElementById('confirmNoBtn').onclick = () => { document.body.removeChild(modal); resolve(false); };
-        document.getElementById('confirmNoBtn').onmouseover = function() { this.style.borderColor = 'var(--neon-blue)'; this.style.color = 'var(--neon-blue)'; };
-        document.getElementById('confirmNoBtn').onmouseout = function() { this.style.borderColor = '#666'; this.style.color = '#ccc'; };
         document.getElementById('confirmYesBtn').onclick = () => { document.body.removeChild(modal); resolve(true); };
     });
 }
@@ -43,6 +41,8 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(() => {
         if (document.getElementById('tab-schedule').classList.contains('active')) {
             loadSchedule();
+        } else if (document.getElementById('tab-bicycle').classList.contains('active')) {
+            loadBicycleFleet();
         }
     }, 30000);
 });
@@ -54,8 +54,12 @@ function switchTab(tabId) {
     event.target.classList.add('active');
     document.getElementById(`tab-${tabId}`).classList.add('active');
 
-    if(tabId === 'history') {
+    if (tabId === 'history') {
         loadHistory();
+    } else if (tabId === 'bicycle') {
+        loadBicycleFleet();
+    } else if (tabId === 'facility') {
+        loadFacilityStatus();
     } else {
         loadSchedule();
     }
@@ -63,17 +67,35 @@ function switchTab(tabId) {
 
 const statusMap = {
     'booked': { label: 'รอ Check-in', color: 'bg-yellow' },
-    'checked_in': { label: 'กำลังเล่น', color: 'bg-blue' },
+    'checked_in': { label: 'กำลังใช้งาน', color: 'bg-blue' },
     'completed': { label: 'เสร็จสิ้น', color: 'bg-gray' },
     'cancelled': { label: 'ยกเลิก', color: 'bg-red' }
 };
+
+function getFacilityBadgeHtml(b) {
+    let optLabel = '';
+    if (b.facilityOption === 'ps5') optLabel = ' (PS5)';
+    if (b.facilityOption === 'nintendo') optLabel = ' (Switch)';
+    if (b.facilityOption === 'male') optLabel = ' (ชาย)';
+    if (b.facilityOption === 'female') optLabel = ' (หญิง)';
+    if (b.facilityOption === 'both') optLabel = ' (คู่)';
+    if (b.facility === 'bicycle' && b.bikeNumber) optLabel = ` (คันที่ ${b.bikeNumber})`;
+
+    if (b.facility === 'ice_bath') {
+        return `<span style="font-size:11px; background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; padding:2px 8px; border-radius:12px; font-weight:600;">🧊 ICE BATH${optLabel}</span>`;
+    } else if (b.facility === 'bicycle') {
+        return `<span style="font-size:11px; background:#ffedd5; color:#c2410c; border:1px solid #fed7aa; padding:2px 8px; border-radius:12px; font-weight:600;">🚲 BICYCLE${optLabel}</span>`;
+    } else {
+        return `<span style="font-size:11px; background:#eef2ff; color:#0011ff; border:1px solid #c7d2fe; padding:2px 8px; border-radius:12px; font-weight:600;">🎮 GAME ROOM${optLabel}</span>`;
+    }
+}
 
 async function loadSchedule() {
     const selectedDate = document.getElementById('adminDate').value;
     if(!selectedDate) return;
 
     try {
-        const res = await fetch(`https://sibling-compacted-decrease.ngrok-free.dev/api/admin/schedule?date=${selectedDate}`, {
+        const res = await fetch(`${API_BASE}/api/admin/schedule?date=${selectedDate}`, {
             headers: { 'ngrok-skip-browser-warning': '69420' }
         });
         const bookings = await res.json();
@@ -82,7 +104,7 @@ async function loadSchedule() {
         tbody.innerHTML = '';
 
         if (bookings.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">ยังไม่มีการจองในวันที่เลือก</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #64748b; padding: 24px;">ยังไม่มีการจองในวันที่เลือก</td></tr>';
             return;
         }
 
@@ -96,29 +118,26 @@ async function loadSchedule() {
             let actionHtml = '-';
             if (b.status === 'booked') {
                 actionHtml = `
-                    <div style="display:flex; flex-direction:column; gap: 5px;">
-                        <div style="display:flex; gap: 5px;">
-                            <button class="btn-sm-doc" style="background:#3182ce; flex:1;" onclick="openDocument('${b.bookingRef}', '${b.hotelRoomNumber}', '${name}', '${b.bookingDate}', '${b.startTime}', 'th', '${b.facility}', '${b.facilityOption || ''}')">📄 พิมพ์ (TH)</button>
-                            <button class="btn-sm-doc" style="background:#4a5568; flex:1;" onclick="openDocument('${b.bookingRef}', '${b.hotelRoomNumber}', '${name}', '${b.bookingDate}', '${b.startTime}', 'en', '${b.facility}', '${b.facilityOption || ''}')">📄 Print (EN)</button>
+                    <div style="display:flex; flex-direction:column; gap: 6px;">
+                        <div style="display:flex; gap: 6px;">
+                            <button class="btn-sm-doc" style="background:#0011ff; flex:1;" onclick="openDocument('${b.bookingRef}', '${b.hotelRoomNumber}', '${name}', '${b.bookingDate}', '${b.startTime}', 'th', '${b.facility}', '${b.facilityOption || ''}')">📄 พิมพ์ (TH)</button>
+                            <button class="btn-sm-doc" style="background:#475569; flex:1;" onclick="openDocument('${b.bookingRef}', '${b.hotelRoomNumber}', '${name}', '${b.bookingDate}', '${b.startTime}', 'en', '${b.facility}', '${b.facilityOption || ''}')">📄 Print (EN)</button>
                         </div>
-                        <div style="display:flex; gap: 5px;">
+                        <div style="display:flex; gap: 6px;">
                             <button class="btn-sm-checkin" style="flex:1;" onclick="checkIn('${b.bookingRef}')">Check-in</button>
                             <button class="btn-cancel" style="flex:1;" onclick="cancelBooking('${b._id}')">ยกเลิก</button>
                         </div>
                     </div>
                 `;
+            } else if (b.status === 'checked_in' && b.facility === 'bicycle') {
+                actionHtml = `
+                    <button class="btn-sm-checkin" style="background:#0011ff;" onclick="returnBike('${b.bookingRef}', ${b.bikeNumber || 0})">🏁 รับคืนรถ</button>
+                `;
             }
 
-            let optLabel = '';
-            if (b.facilityOption === 'ps5') optLabel = ' (PS5)';
-            if (b.facilityOption === 'nintendo') optLabel = ' (Switch)';
-            if (b.facilityOption === 'male') optLabel = ' (ชาย)';
-            if (b.facilityOption === 'female') optLabel = ' (หญิง)';
-            if (b.facilityOption === 'both') optLabel = ' (คู่)';
-
             tr.innerHTML = `
-                <td><strong style="color:var(--primary-color)">${b.bookingRef}</strong><br><span style="font-size:11px; background:${b.facility === 'ice_bath' ? '#00bcd4' : '#e2e8f0'}; color:${b.facility === 'ice_bath' ? 'white' : '#4a5568'}; padding:2px 6px; border-radius:4px;">${b.facility === 'ice_bath' ? 'ICE BATH' : 'GAME ROOM'}${optLabel}</span></td>
-                <td>${b.slotNumber}</td>
+                <td><strong style="color:#0011ff;">${b.bookingRef}</strong><br>${getFacilityBadgeHtml(b)}</td>
+                <td>${b.facility === 'bicycle' ? '-' : b.slotNumber}</td>
                 <td>${b.startTime} - ${b.endTime}</td>
                 <td><strong>${b.hotelRoomNumber}</strong></td>
                 <td>${name}</td>
@@ -138,7 +157,7 @@ async function loadHistory() {
     if(!selectedDate) return;
 
     try {
-        const res = await fetch(`https://sibling-compacted-decrease.ngrok-free.dev/api/admin/schedule?date=${selectedDate}`, {
+        const res = await fetch(`${API_BASE}/api/admin/schedule?date=${selectedDate}`, {
             headers: { 'ngrok-skip-browser-warning': '69420' }
         });
         let bookings = await res.json();
@@ -150,7 +169,7 @@ async function loadHistory() {
         tbody.innerHTML = '';
 
         if (bookings.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">ไม่มีประวัติการเข้าใช้งานในวันนี้</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #64748b; padding: 24px;">ไม่มีประวัติการเข้าใช้งานในวันนี้</td></tr>';
             return;
         }
 
@@ -161,23 +180,16 @@ async function loadHistory() {
             let name = "-";
             if(b.userId && b.userId.displayName) name = b.userId.displayName;
 
-            let optLabel = '';
-            if (b.facilityOption === 'ps5') optLabel = ' (PS5)';
-            if (b.facilityOption === 'nintendo') optLabel = ' (Switch)';
-            if (b.facilityOption === 'male') optLabel = ' (ชาย)';
-            if (b.facilityOption === 'female') optLabel = ' (หญิง)';
-            if (b.facilityOption === 'both') optLabel = ' (คู่)';
-
             tr.innerHTML = `
-                <td><strong style="color:var(--primary-color)">${b.bookingRef}</strong><br><span style="font-size:11px; background:${b.facility === 'ice_bath' ? '#00bcd4' : '#e2e8f0'}; color:${b.facility === 'ice_bath' ? 'white' : '#4a5568'}; padding:2px 6px; border-radius:4px;">${b.facility === 'ice_bath' ? 'ICE BATH' : 'GAME ROOM'}${optLabel}</span></td>
-                <td>${b.startTime} - ${b.endTime}</td>
-                <td>${b.hotelRoomNumber}</td>
+                <td><strong style="color:#0011ff;">${b.bookingRef}</strong><br>${getFacilityBadgeHtml(b)}</td>
+                <td>${b.startTime} - ${b.returnTime || b.endTime}</td>
+                <td><strong>${b.hotelRoomNumber}</strong></td>
                 <td>${name}</td>
                 <td><span class="badge ${st.color}">${st.label}</span></td>
                 <td>
-                    <div style="display:flex; gap: 5px;">
-                        <button class="btn-sm-doc" style="background:#3182ce;" onclick="openDocument('${b.bookingRef}', '${b.hotelRoomNumber}', '${name}', '${b.bookingDate}', '${b.startTime}', 'th', '${b.facility}', '${b.facilityOption || ''}')">📄 พิมพ์ (TH)</button>
-                        <button class="btn-sm-doc" style="background:#4a5568;" onclick="openDocument('${b.bookingRef}', '${b.hotelRoomNumber}', '${name}', '${b.bookingDate}', '${b.startTime}', 'en', '${b.facility}', '${b.facilityOption || ''}')">📄 Print (EN)</button>
+                    <div style="display:flex; gap: 6px;">
+                        <button class="btn-sm-doc" style="background:#0011ff;" onclick="openDocument('${b.bookingRef}', '${b.hotelRoomNumber}', '${name}', '${b.bookingDate}', '${b.startTime}', 'th', '${b.facility}', '${b.facilityOption || ''}')">📄 พิมพ์ (TH)</button>
+                        <button class="btn-sm-doc" style="background:#475569;" onclick="openDocument('${b.bookingRef}', '${b.hotelRoomNumber}', '${name}', '${b.bookingDate}', '${b.startTime}', 'en', '${b.facility}', '${b.facilityOption || ''}')">📄 Print (EN)</button>
                     </div>
                 </td>
             `;
@@ -204,7 +216,7 @@ async function checkIn(bookingRef) {
     if(!(await customConfirm(`ยืนยันการ Check-in ให้กับรหัส: ${bookingRef} ใช่หรือไม่?`))) return;
 
     try {
-        const res = await fetch('https://sibling-compacted-decrease.ngrok-free.dev/api/admin/bookings/check-in', {
+        const res = await fetch(`${API_BASE}/api/admin/bookings/check-in`, {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
@@ -231,7 +243,7 @@ async function cancelBooking(id) {
     if(!(await customConfirm('คุณแน่ใจหรือไม่ว่าต้องการยกเลิกการจองนี้? รอบเวลาจะว่างให้คนอื่นจองทันที'))) return;
 
     try {
-        const res = await fetch(`https://sibling-compacted-decrease.ngrok-free.dev/api/admin/bookings/${id}/cancel`, {
+        const res = await fetch(`${API_BASE}/api/admin/bookings/${id}/cancel`, {
             method: 'PUT',
             headers: { 'ngrok-skip-browser-warning': '69420' }
         });
@@ -260,8 +272,8 @@ function openDocument(ref, room, name, date, time, lang, facility = 'game_room',
     if (facilityOption === 'both') { optLabelEn = ' (Couple)'; optLabelTh = ' (คู่รัก)'; }
 
     if (lang === 'en') {
-        title = facility === 'ice_bath' ? "Ice Bath Agreement" : "Game Room Agreement";
-        header = (facility === 'ice_bath' ? "ICE BATH USAGE AGREEMENT" : "GAME ROOM USAGE AGREEMENT") + optLabelEn.toUpperCase();
+        title = facility === 'ice_bath' ? "Ice Bath Agreement" : (facility === 'bicycle' ? "Bicycle Rental Agreement" : "Game Room Agreement");
+        header = (facility === 'ice_bath' ? "ICE BATH USAGE AGREEMENT" : (facility === 'bicycle' ? "BICYCLE RENTAL AGREEMENT" : "GAME ROOM USAGE AGREEMENT")) + optLabelEn.toUpperCase();
         printBtn = "Print Document";
         refLabel = "Booking Ref:";
         dateLabel = "Date:";
@@ -281,6 +293,14 @@ function openDocument(ref, room, name, date, time, lang, facility = 'game_room',
                 <li>Enter and exit the bath slowly and carefully to prevent slips and falls.</li>
                 <li>Users assume all risks. The hotel is not liable for any health issues or injuries resulting from rule violations.</li>
             `;
+        } else if (facility === 'bicycle') {
+            listItems = `
+                <li>Bicycles are provided free of charge for hotel guests (maximum 2 bicycles per room).</li>
+                <li>Please inspect the bicycle before riding and observe traffic and safety rules at all times.</li>
+                <li>Always lock the bicycle when parked unattended and keep the key safe.</li>
+                <li>Return the bicycle and key directly to the hotel staff when finished so other guests may use it.</li>
+                <li>Guests are responsible for any loss or damage to the bicycle or key during the rental period.</li>
+            `;
         } else {
             listItems = `
                 <li>Bookings must be made via the hotel's online QR system.</li>
@@ -293,8 +313,8 @@ function openDocument(ref, room, name, date, time, lang, facility = 'game_room',
             `;
         }
     } else {
-        title = facility === 'ice_bath' ? "เอกสารยินยอม - บ่อน้ำแข็ง" : "เอกสารยินยอม - ห้องเกมส์";
-        header = (facility === 'ice_bath' ? "เอกสารยินยอมการใช้บริการ บ่อน้ำแข็ง" : "เอกสารยินยอมการใช้บริการ ห้องเกมส์") + optLabelTh;
+        title = facility === 'ice_bath' ? "เอกสารยินยอม - บ่อน้ำแข็ง" : (facility === 'bicycle' ? "เอกสารยินยอม - ยืมจักรยาน" : "เอกสารยินยอม - ห้องเกมส์");
+        header = (facility === 'ice_bath' ? "เอกสารยินยอมการใช้บริการ บ่อน้ำแข็ง" : (facility === 'bicycle' ? "เอกสารยินยอมการยืมจักรยาน" : "เอกสารยินยอมการใช้บริการ ห้องเกมส์")) + optLabelTh;
         printBtn = "พิมพ์เอกสาร";
         refLabel = "รหัสการจอง:";
         dateLabel = "วันที่:";
@@ -313,6 +333,14 @@ function openDocument(ref, room, name, date, time, lang, facility = 'game_room',
                 <li>ห้ามแช่น้ำแข็งตามลำพัง ต้องมีผู้ดูแลหรือเพื่อนอยู่ด้วยเสมอ</li>
                 <li>การลงและขึ้นจากอ่างต้องทำอย่างช้าๆ ระมัดระวังการลื่นล้ม</li>
                 <li>ผู้ใช้บริการยอมรับความเสี่ยงด้วยตนเอง ทางโรงแรมจะไม่รับผิดชอบต่อปัญหาสุขภาพหรืออุบัติเหตุที่เกิดจากการฝ่าฝืนกฎ</li>
+            `;
+        } else if (facility === 'bicycle') {
+            listItems = `
+                <li>บริการยืมจักรยานสำหรับผู้เข้าพักฟรี (จำกัดสูงสุดไม่เกิน 2 คันต่อห้องพัก)</li>
+                <li>กรุณาตรวจสอบสภาพรถก่อนขับขี่ และปฏิบัติตามกฎจราจรและความปลอดภัยอย่างเคร่งครัด</li>
+                <li>กรุณาล็อกรถจักรยานทุกครั้งเมื่อจอดแวะพัก และดูแลรักษากุญแจไม่ให้สูญหาย</li>
+                <li>เมื่อใช้งานเสร็จสิ้น กรุณานำจักรยานพร้อมกุญแจมาส่งคืนแก่เจ้าหน้าที่โดยตรง</li>
+                <li>หากเกิดความเสียหายหรือสูญหายต่อรถจักรยานหรือกุญแจ ผู้ยืมต้องรับผิดชอบตามมูลค่าจริง</li>
             `;
         } else {
             listItems = `
@@ -362,11 +390,11 @@ function openDocument(ref, room, name, date, time, lang, facility = 'game_room',
         </head>
         <body>
             <div class="no-print" style="text-align: right; margin-bottom: 20px;">
-                <button onclick="window.print()" style="background: #3182ce; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-family: 'Kanit'; font-size: 15px;">${printBtn}</button>
+                <button onclick="window.print()" style="background: #0011ff; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-family: 'Kanit'; font-size: 15px;">${printBtn}</button>
             </div>
             
             <div class="header-box">
-                <img src="https://kaaom3.github.io/base-camp-booking/public/images/logo.png" alt="Base Camp Logo">
+                <img src="images/logo.png" alt="Base Camp Logo">
                 <h2>${header}</h2>
             </div>
             
@@ -432,7 +460,7 @@ async function loadFacilityStatus() {
     if (displayDateEl) displayDateEl.innerText = targetDate;
 
     try {
-        const res = await fetch(`https://sibling-compacted-decrease.ngrok-free.dev/api/admin/facility-status?date=${targetDate}`, {
+        const res = await fetch(`${API_BASE}/api/admin/facility-status?date=${targetDate}`, {
             headers: { 'ngrok-skip-browser-warning': '69420' }
         });
         if (!res.ok) throw new Error('API Error');
@@ -446,17 +474,17 @@ async function loadFacilityStatus() {
 
         if (data.hasDateOverride) {
             if (badgeEl) {
-                badgeEl.style.background = 'rgba(255, 204, 0, 0.15)';
-                badgeEl.style.color = '#ffcc00';
-                badgeEl.style.borderColor = '#ffcc00';
+                badgeEl.style.background = '#fef3c7';
+                badgeEl.style.color = '#b45309';
+                badgeEl.style.borderColor = '#fde68a';
                 badgeEl.innerText = targetDate === todayStr ? '⚠️ มีการตั้งค่าเฉพาะวันนี้' : '⚠️ มีการตั้งค่าล่วงหน้านี้';
             }
             if (resetBtn) resetBtn.style.display = 'inline-block';
         } else {
             if (badgeEl) {
-                badgeEl.style.background = 'rgba(57, 255, 20, 0.15)';
-                badgeEl.style.color = 'var(--neon-green)';
-                badgeEl.style.borderColor = 'var(--neon-green)';
+                badgeEl.style.background = '#dcfce7';
+                badgeEl.style.color = '#15803d';
+                badgeEl.style.borderColor = '#86efac';
                 badgeEl.innerText = targetDate === todayStr ? 'เปิดบริการตามปกติ (วันนี้)' : 'เปิดบริการตามปกติ (วันล่วงหน้า)';
             }
             if (resetBtn) resetBtn.style.display = 'none';
@@ -491,7 +519,7 @@ async function loadFacilityStatus() {
         const maleActiveCount = (settings.iceBath.male_bath_1 ? 1 : 0) + (settings.iceBath.male_bath_2 ? 1 : 0);
         const maleSummaryEl = document.getElementById('male-capacity-summary');
         if (maleSummaryEl) {
-            maleSummaryEl.innerHTML = `เปิดอยู่ <strong style="color:var(--neon-blue);">${maleActiveCount}/2</strong> บ่อ (รับได้ ${maleActiveCount} ท่าน/รอบ)`;
+            maleSummaryEl.innerHTML = `เปิดอยู่ <strong style="color:#0284c7;">${maleActiveCount}/2</strong> บ่อ (รับได้ ${maleActiveCount} ท่าน/รอบ)`;
         }
 
         // Female Bath 1 & 2
@@ -505,10 +533,9 @@ async function loadFacilityStatus() {
         const femaleActiveCount = (settings.iceBath.female_bath_1 ? 1 : 0) + (settings.iceBath.female_bath_2 ? 1 : 0);
         const femaleSummaryEl = document.getElementById('female-capacity-summary');
         if (femaleSummaryEl) {
-            femaleSummaryEl.innerHTML = `เปิดอยู่ <strong style="color:var(--neon-pink);">${femaleActiveCount}/2</strong> บ่อ (รับได้ ${femaleActiveCount} ท่าน/รอบ)`;
+            femaleSummaryEl.innerHTML = `เปิดอยู่ <strong style="color:#db2777;">${femaleActiveCount}/2</strong> บ่อ (รับได้ ${femaleActiveCount} ท่าน/รอบ)`;
         }
 
-        
         // Bicycle Main
         const bikeMainBtn = document.getElementById('btn-main-bicycle');
         if (bikeMainBtn && settings.bicycle) updateStatusBtn(bikeMainBtn, settings.bicycle.isOpen);
@@ -526,7 +553,7 @@ async function loadFacilityStatus() {
 
     } catch (error) {
         console.error(error);
-        await customAlert('⚠️ เซิร์ฟเวอร์หลังบ้านยังไม่ได้อัปเดตโค้ดใหม่ (API 404)\n\nกรุณาไปที่เครื่องเซิร์ฟเวอร์ สั่ง git pull origin main และรีสตาร์ทเซิร์ฟเวอร์ครับ');
+        await customAlert('⚠️ ไม่สามารถโหลดสถานะบริการจากเซิร์ฟเวอร์ได้ กรุณาตรวจสอบการเชื่อมต่อเซิร์ฟเวอร์ครับ');
     }
 }
 
@@ -535,7 +562,7 @@ function renderUpcomingClosures(list) {
     if (!tbody) return;
 
     if (list.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #888; padding: 20px;">ไม่มีรายการปิดล่วงหน้า (ทุกวันเปิดให้บริการตามปกติ)</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #64748b; padding: 20px;">ไม่มีรายการปิดล่วงหน้า (ทุกวันเปิดให้บริการตามปกติ)</td></tr>';
         return;
     }
 
@@ -556,16 +583,25 @@ function renderUpcomingClosures(list) {
             if (!item.iceBath.female_bath_2) closedParts.push('บ่อหญิง #2 (ปิด)');
         }
 
+        if (item.bicycle) {
+            if (!item.bicycle.isOpen) closedParts.push('ปิดจักรยานทั้งระบบ');
+            else {
+                for (let i = 1; i <= 5; i++) {
+                    if (!item.bicycle['bike_' + i]) closedParts.push(`จักรยาน #${i} (ปิด)`);
+                }
+            }
+        }
+
         const closedText = closedParts.join(', ') || 'ไม่มีรายการปิด';
 
         html += `
             <tr>
-                <td style="font-weight: bold; color: #00f3ff; white-space: nowrap;">
-                    <a href="javascript:void(0)" onclick="viewClosureDate('${item.date}')" style="color:#00f3ff; text-decoration: underline;">${item.date}</a>
+                <td style="font-weight: 600; color: #0011ff; white-space: nowrap;">
+                    <a href="javascript:void(0)" onclick="viewClosureDate('${item.date}')" style="color:#0011ff; text-decoration: underline;">${item.date}</a>
                 </td>
-                <td style="color: var(--neon-pink);">${closedText}</td>
+                <td style="color: #dc2626; font-weight: 500;">${closedText}</td>
                 <td style="white-space: nowrap;">
-                    <button class="btn-cancel" style="padding: 5px 12px; font-size: 12px;" onclick="resetFacilityDate('${item.date}')">[ เปิดคืนปกติ ]</button>
+                    <button class="btn-cancel" style="padding: 5px 12px; font-size: 12px;" onclick="resetFacilityDate('${item.date}')">เปิดคืนปกติ</button>
                 </td>
             </tr>
         `;
@@ -584,16 +620,16 @@ function viewClosureDate(dateStr) {
 function updateStatusBtn(btn, isOpen) {
     if (isOpen) {
         btn.className = 'btn-unit-toggle status-online';
-        btn.innerHTML = '● ONLINE (เปิด)';
+        btn.innerHTML = '● เปิดบริการ (ONLINE)';
     } else {
         btn.className = 'btn-unit-toggle status-offline';
-        btn.innerHTML = '✕ CLOSED (ปิด)';
+        btn.innerHTML = '✕ ปิดปรับปรุง (CLOSED)';
     }
 }
 
 async function toggleUnit(facilityKey, unitKey) {
     if (!currentFacilitySettings) {
-        await customAlert('⚠️ ยังโหลดสถานะจากเซิร์ฟเวอร์ไม่สำเร็จ กรุณากด [ RELOAD STATUS ] หรือตรวจสอบเซิร์ฟเวอร์หลังบ้าน');
+        await customAlert('⚠️ ยังโหลดสถานะจากเซิร์ฟเวอร์ไม่สำเร็จ กรุณากดปุ่ม โหลดสถานะล่าสุด');
         return;
     }
     const currentVal = currentFacilitySettings[facilityKey][unitKey];
@@ -626,7 +662,7 @@ async function toggleUnit(facilityKey, unitKey) {
         payload[facilityKey] = {};
         payload[facilityKey][unitKey] = targetVal;
 
-        const res = await fetch('https://sibling-compacted-decrease.ngrok-free.dev/api/admin/facility-status', {
+        const res = await fetch(`${API_BASE}/api/admin/facility-status`, {
             method: 'PUT',
             headers: { 
                 'Content-Type': 'application/json',
@@ -650,7 +686,7 @@ async function toggleUnit(facilityKey, unitKey) {
 
 async function toggleMainFacility(facilityKey) {
     if (!currentFacilitySettings) {
-        await customAlert('⚠️ ยังโหลดสถานะจากเซิร์ฟเวอร์ไม่สำเร็จ กรุณากด [ RELOAD STATUS ] หรือตรวจสอบเซิร์ฟเวอร์หลังบ้าน');
+        await customAlert('⚠️ ยังโหลดสถานะจากเซิร์ฟเวอร์ไม่สำเร็จ กรุณากดปุ่ม โหลดสถานะล่าสุด');
         return;
     }
     const currentVal = currentFacilitySettings[facilityKey].isOpen;
@@ -668,7 +704,7 @@ async function toggleMainFacility(facilityKey) {
         };
         payload[facilityKey] = { isOpen: targetVal };
 
-        const res = await fetch('https://sibling-compacted-decrease.ngrok-free.dev/api/admin/facility-status', {
+        const res = await fetch(`${API_BASE}/api/admin/facility-status`, {
             method: 'PUT',
             headers: { 
                 'Content-Type': 'application/json',
@@ -698,7 +734,7 @@ async function resetFacilityDate(dateStr) {
     if (!confirmed) return;
 
     try {
-        const res = await fetch(`https://sibling-compacted-decrease.ngrok-free.dev/api/admin/facility-status/reset?date=${targetDate}`, {
+        const res = await fetch(`${API_BASE}/api/admin/facility-status/reset?date=${targetDate}`, {
             method: 'DELETE',
             headers: { 'ngrok-skip-browser-warning': '69420' }
         });
@@ -744,47 +780,51 @@ function renderAdminBicycleFleet(fleet) {
     fleet.forEach(b => {
         let badgeClass = 'status-available';
         let badgeLabel = '🟢 ว่าง (พร้อมให้จอง)';
-        let borrowerInfo = '<span style="color:#666;">- ยังไม่มีผู้ใช้งานในขณะนี้ -</span>';
+        let borderColor = '#10b981';
+        let borrowerInfo = '<span style="color:#64748b;">- ยังไม่มีผู้ใช้งานในขณะนี้ -</span>';
         let actionBtn = '';
 
         if (b.status === 'booked' && b.booking) {
             badgeClass = 'status-booked';
             badgeLabel = '🟡 รอรับรถ (Booked)';
+            borderColor = '#f59e0b';
             borrowerInfo = `
-                <div><strong>ห้อง:</strong> <span style="color:#ffcc00; font-weight:bold; font-size:16px;">${b.booking.hotelRoomNumber}</span> (${b.booking.userId?.displayName || 'ลูกค้า'})</div>
-                <div style="font-size:12px; color:#aaa; margin-top:3px;">Ref: ${b.booking.bookingRef} | จองเมื่อ: ${b.booking.startTime || '-'}</div>
+                <div><strong>ห้องพัก:</strong> <span style="color:#d97706; font-weight:700; font-size:16px;">${b.booking.hotelRoomNumber}</span> (${b.booking.userId?.displayName || 'ลูกค้า'})</div>
+                <div style="font-size:12.5px; color:#64748b; margin-top:3px;">รหัสจอง: <strong>${b.booking.bookingRef}</strong> | เวลาจอง: ${b.booking.startTime || '-'}</div>
             `;
             actionBtn = `
-                <button class="btn-checkin" style="padding: 8px 18px; font-size: 13px;" onclick="handoverBike('${b.booking.bookingRef}', ${b.bikeNumber})">
-                    [ 🔑 ส่งมอบรถให้ลูกค้า ]
+                <button class="btn-checkin" style="padding: 10px 20px; font-size: 14px;" onclick="handoverBike('${b.booking.bookingRef}', ${b.bikeNumber})">
+                    🔑 ส่งมอบรถให้ลูกค้า
                 </button>
             `;
         } else if (b.status === 'in_use' && b.booking) {
             badgeClass = 'status-in_use';
             badgeLabel = '🔵 กำลังใช้งาน (In Use)';
+            borderColor = '#0011ff';
             borrowerInfo = `
-                <div><strong>ห้อง:</strong> <span style="color:var(--neon-blue); font-weight:bold; font-size:16px;">${b.booking.hotelRoomNumber}</span> (${b.booking.userId?.displayName || 'ลูกค้า'})</div>
-                <div style="font-size:12px; color:#aaa; margin-top:3px;">Ref: ${b.booking.bookingRef} | เริ่มยืม: ${b.booking.checkOutTime || b.booking.startTime}</div>
+                <div><strong>ห้องพัก:</strong> <span style="color:#0011ff; font-weight:700; font-size:16px;">${b.booking.hotelRoomNumber}</span> (${b.booking.userId?.displayName || 'ลูกค้า'})</div>
+                <div style="font-size:12.5px; color:#64748b; margin-top:3px;">รหัสจอง: <strong>${b.booking.bookingRef}</strong> | รับรถเมื่อ: ${b.booking.checkOutTime || b.booking.startTime}</div>
             `;
             actionBtn = `
-                <button class="btn-refresh" style="padding: 8px 18px; font-size: 13px; background: linear-gradient(45deg, #00f3ff, #00a8ff); color:#000; font-weight:bold;" onclick="returnBike('${b.booking.bookingRef}', ${b.bikeNumber})">
-                    [ 🏁 รับคืนรถ (เปิดว่างทันที) ]
+                <button class="btn-refresh" style="padding: 10px 20px; font-size: 14px; background: #10b981; box-shadow: 0 4px 12px rgba(16,185,129,0.25);" onclick="returnBike('${b.booking.bookingRef}', ${b.bikeNumber})">
+                    🏁 รับคืนรถ (เปิดว่างทันที)
                 </button>
             `;
         } else if (b.status === 'maintenance') {
             badgeClass = 'status-maintenance';
             badgeLabel = '🔴 ปิดซ่อมบำรุง';
-            borrowerInfo = '<span style="color:var(--neon-pink);">ปิดให้บริการในแท็บ Unit Control</span>';
+            borderColor = '#ef4444';
+            borrowerInfo = '<span style="color:#dc2626;">ปิดให้บริการชั่วคราว (ตั้งค่าได้ในแท็บ เปิด-ปิดบริการ)</span>';
         }
 
         html += `
-            <div style="background:#0f101a; border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:18px 22px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px;">
-                <div style="display:flex; align-items:center; gap:20px;">
-                    <div style="font-size:36px;">🚲</div>
+            <div style="background:#ffffff; border:1.5px solid #e2e8f0; border-left: 6px solid ${borderColor}; border-radius:12px; padding:18px 22px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+                <div style="display:flex; align-items:center; gap:18px;">
+                    <div style="font-size:38px; background:#f8fafc; width:64px; height:64px; display:flex; align-items:center; justify-content:center; border-radius:12px; border:1px solid #e2e8f0;">🚲</div>
                     <div>
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <h3 style="margin:0; font-family:'Orbitron',sans-serif; font-size:18px; color:#fff;">BIKE #${b.bikeNumber}</h3>
-                            <span style="font-size:12px; padding:3px 10px; border-radius:12px; font-weight:bold;" class="${badgeClass}">${badgeLabel}</span>
+                        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                            <h3 style="margin:0; font-family:'Kanit',sans-serif; font-size:18px; color:#1e293b;">จักรยานคันที่ ${b.bikeNumber} (BIKE #${b.bikeNumber})</h3>
+                            <span style="font-size:12px; padding:3px 12px; border-radius:20px; font-weight:600;" class="${badgeClass}">${badgeLabel}</span>
                         </div>
                         <div style="margin-top:6px; font-size:14px;">
                             ${borrowerInfo}
@@ -843,6 +883,7 @@ async function returnBike(ref, bikeNum) {
 
         await customAlert(data.message);
         loadBicycleFleet();
+        loadSchedule();
     } catch (e) {
         await customAlert(e.message);
     }

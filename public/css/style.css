@@ -649,7 +649,7 @@ body {
 }
 .fac-game::before { background: linear-gradient(90deg, #0011ff, #3344ff); }
 .fac-ice::before { background: linear-gradient(90deg, #00bcd4, #26c6da); }
-.fac-bike::before { background: linear-gradient(90deg, #10b981, #059669); }
+.fac-bike::before { background: linear-gradient(90deg, #ff3a00, #ffd600); }
 .fac-nintendo::before { background: linear-gradient(90deg, #e53e3e, #f56565); }
 .fac-female::before { background: linear-gradient(90deg, #d53f8c, #ed64a6); }
 .fac-both::before { background: linear-gradient(90deg, #805ad5, #9f7aea); }

@@ -3,238 +3,254 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Base Camp - Bicycle System Test (ระบบทดสอบจองจักรยาน)</title>
+    <title>Base Camp Hotel - Bicycle System (ระบบจัดการและจองจักรยาน)</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <style>
         :root {
-            --neon-blue: #00f3ff;
-            --neon-purple: #bc13fe;
-            --neon-pink: #ff007f;
-            --neon-green: #39ff14;
-            --dark-bg: #0a0a10;
-            --panel-bg: #13141f;
+            --bc-blue: #0011ff;
+            --bc-orange: #ff3a00;
+            --bc-yellow: #ffd600;
+            --bc-bg: #f1f5f9;
+            --bc-card: #ffffff;
+            --bc-text: #1e293b;
+            --bc-muted: #64748b;
+            --bc-border: #e2e8f0;
         }
 
         body.test-body {
-            background-color: var(--dark-bg);
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(57, 255, 20, 0.08), transparent 30%),
-                radial-gradient(circle at 90% 80%, rgba(0, 243, 255, 0.08), transparent 30%);
-            color: #e0e0e0;
+            background-color: var(--bc-bg);
+            background-image: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            color: var(--bc-text);
             font-family: 'Kanit', sans-serif;
             min-height: 100vh;
-            padding: 20px;
+            padding: 25px 20px;
+            display: block;
         }
 
         .test-container {
-            max-width: 1100px;
+            max-width: 1060px;
             margin: 0 auto;
         }
 
         .test-header {
-            background: linear-gradient(90deg, #0d1b2a, #1b263b, #0d1b2a);
-            border: 1px solid var(--neon-green);
-            border-radius: 12px;
-            padding: 20px 30px;
-            box-shadow: 0 0 25px rgba(57, 255, 20, 0.2);
+            background: var(--bc-blue);
+            border-bottom: 5px solid var(--bc-orange);
+            border-radius: 16px;
+            padding: 25px 30px;
+            box-shadow: 0 10px 25px rgba(0, 17, 255, 0.15);
             margin-bottom: 25px;
             text-align: center;
+            color: #ffffff;
         }
 
         .test-badge {
             display: inline-block;
-            background: rgba(57, 255, 20, 0.15);
-            color: var(--neon-green);
-            border: 1px solid var(--neon-green);
+            background: var(--bc-yellow);
+            color: #1e293b;
             padding: 4px 14px;
             border-radius: 20px;
             font-size: 12px;
-            font-family: 'Orbitron', sans-serif;
-            letter-spacing: 1px;
+            font-weight: 700;
             margin-bottom: 8px;
         }
 
         .mode-tabs {
             display: flex;
-            gap: 15px;
-            margin-bottom: 25px;
+            gap: 12px;
+            margin-bottom: 24px;
             justify-content: center;
+            flex-wrap: wrap;
         }
 
         .mode-btn {
-            padding: 12px 25px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            color: #aaa;
-            border-radius: 8px;
-            font-family: 'Orbitron', 'Kanit', sans-serif;
+            padding: 12px 24px;
+            background: #ffffff;
+            border: 1.5px solid var(--bc-border);
+            color: var(--bc-muted);
+            border-radius: 12px;
+            font-family: 'Kanit', sans-serif;
             font-size: 15px;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
         }
 
         .mode-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
+            border-color: var(--bc-blue);
+            color: var(--bc-blue);
         }
 
         .mode-btn.active {
-            background: rgba(57, 255, 20, 0.15);
-            border-color: var(--neon-green);
-            color: var(--neon-green);
-            box-shadow: 0 0 15px rgba(57, 255, 20, 0.3);
+            background: var(--bc-blue);
+            border-color: var(--bc-blue);
+            color: #ffffff;
+            box-shadow: 0 6px 16px rgba(0, 17, 255, 0.22);
         }
 
         .card-panel {
-            background: var(--panel-bg);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            background: var(--bc-card);
+            border: 1px solid var(--bc-border);
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.05);
             margin-bottom: 25px;
         }
 
         /* Bike Cards Grid */
         .bike-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
             gap: 15px;
             margin: 20px 0;
         }
 
         .bike-card {
-            background: #0f101a;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
+            background: #ffffff;
+            border: 2px solid var(--bc-border);
+            border-radius: 14px;
             padding: 20px 15px;
             text-align: center;
             cursor: pointer;
             transition: all 0.25s ease;
             position: relative;
+            overflow: hidden;
+        }
+
+        .bike-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, var(--bc-blue), var(--bc-orange));
         }
 
         .bike-card:hover:not(.disabled) {
-            border-color: var(--neon-green);
+            border-color: var(--bc-blue);
             transform: translateY(-3px);
-            box-shadow: 0 5px 20px rgba(57, 255, 20, 0.2);
+            box-shadow: 0 8px 20px rgba(0, 17, 255, 0.12);
         }
 
         .bike-card.selected {
-            border-color: var(--neon-green);
-            background: rgba(57, 255, 20, 0.12);
-            box-shadow: 0 0 20px rgba(57, 255, 20, 0.4);
+            border-color: var(--bc-blue);
+            background: #eef2ff;
+            box-shadow: 0 0 0 2px var(--bc-blue);
         }
 
         .bike-card.disabled {
             cursor: not-allowed;
-            opacity: 0.6;
+            opacity: 0.55;
+            background: #f8fafc;
         }
 
         .bike-icon {
-            font-size: 42px;
-            margin-bottom: 10px;
+            font-size: 40px;
+            margin-bottom: 8px;
         }
 
         .bike-number {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 20px;
+            font-family: 'Kanit', sans-serif;
+            font-size: 18px;
             font-weight: 700;
+            color: var(--bc-text);
             margin-bottom: 8px;
         }
 
         .bike-status-pill {
             display: inline-block;
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 600;
-            padding: 4px 10px;
-            border-radius: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            padding: 3px 12px;
+            border-radius: 20px;
         }
 
-        .status-available { background: rgba(57, 255, 20, 0.15); color: var(--neon-green); border: 1px solid var(--neon-green); }
-        .status-booked { background: rgba(255, 204, 0, 0.15); color: #ffcc00; border: 1px solid #ffcc00; }
-        .status-in_use { background: rgba(0, 243, 255, 0.15); color: var(--neon-blue); border: 1px solid var(--neon-blue); }
-        .status-maintenance { background: rgba(255, 0, 127, 0.15); color: var(--neon-pink); border: 1px solid var(--neon-pink); }
+        .status-available { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+        .status-booked { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+        .status-in_use { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
+        .status-maintenance { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
 
         /* Form elements */
         .test-input {
-            background: #090a10;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 6px;
-            color: #fff;
-            padding: 12px 16px;
+            background: #ffffff;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 10px;
+            color: var(--bc-text);
+            padding: 11px 14px;
             font-size: 15px;
             font-family: 'Kanit', sans-serif;
             width: 100%;
             outline: none;
         }
         .test-input:focus {
-            border-color: var(--neon-green);
-            box-shadow: 0 0 10px rgba(57, 255, 20, 0.3);
+            border-color: var(--bc-blue);
+            box-shadow: 0 0 0 3px rgba(0, 17, 255, 0.12);
         }
 
         .btn-action {
-            background: linear-gradient(45deg, #10b981, #059669);
+            background: var(--bc-orange);
             color: #fff;
             border: none;
-            padding: 12px 24px;
-            border-radius: 6px;
-            font-family: 'Orbitron', 'Kanit', sans-serif;
-            font-size: 15px;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-family: 'Kanit', sans-serif;
+            font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.25s ease;
+            box-shadow: 0 6px 18px rgba(255, 58, 0, 0.25);
         }
         .btn-action:hover:not(:disabled) {
-            box-shadow: 0 0 20px rgba(57, 255, 20, 0.5);
+            background: #e03300;
             transform: translateY(-2px);
         }
         .btn-action:disabled {
-            opacity: 0.4;
+            background: #cbd5e1;
+            box-shadow: none;
             cursor: not-allowed;
         }
 
         .btn-return {
-            background: linear-gradient(45deg, #3b82f6, #06b6d4);
+            background: #10b981;
             color: white;
             border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
+            padding: 9px 18px;
+            border-radius: 10px;
             font-weight: 600;
+            font-family: 'Kanit', sans-serif;
             cursor: pointer;
             transition: 0.2s;
         }
         .btn-return:hover {
-            box-shadow: 0 0 15px rgba(0, 243, 255, 0.5);
+            background: #059669;
         }
 
         .btn-handover {
-            background: linear-gradient(45deg, #f59e0b, #d97706);
+            background: var(--bc-orange);
             color: white;
             border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
+            padding: 9px 18px;
+            border-radius: 10px;
             font-weight: 600;
+            font-family: 'Kanit', sans-serif;
             cursor: pointer;
             transition: 0.2s;
         }
         .btn-handover:hover {
-            box-shadow: 0 0 15px rgba(245, 158, 11, 0.5);
+            background: #e03300;
         }
 
         /* Ticket Modal */
         .ticket-box {
             background: #fff;
             color: #1a202c;
-            border-radius: 12px;
+            border-radius: 16px;
+            border: 2px dashed var(--bc-blue);
             padding: 25px;
             max-width: 450px;
             margin: 20px auto;
             text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 12px 30px rgba(0, 17, 255, 0.08);
         }
     </style>
 </head>
@@ -244,12 +260,13 @@
         
         <!-- Header -->
         <div class="test-header">
-            <span class="test-badge">⚡ TEST ENVIRONMENT &bull; BRANCH: test-bicycle</span>
-            <h1 style="margin: 5px 0; font-family: 'Orbitron', sans-serif; color: #fff; font-size: 26px;">
-                🚲 BICYCLE FLEET TEST SYSTEM
+            <img src="images/logo.png" alt="Base Camp Hotel" style="max-height: 60px; background: #fff; padding: 6px; border-radius: 12px; margin-bottom: 10px;"><br>
+            <span class="test-badge">BASE CAMP HOTEL &bull; BICYCLE PORTAL</span>
+            <h1 style="margin: 5px 0; font-family: 'Kanit', sans-serif; color: #fff; font-size: 26px;">
+                🚲 ระบบจองและจัดการจักรยาน 5 คัน
             </h1>
-            <p style="margin: 0; color: #aaa; font-size: 14px;">
-                ระบบทดสอบจองจักรยาน 5 คัน (จำกัดสิทธิ์ 1 ห้องจองได้สูงสุด 2 คัน &bull; คืนรถแล้วว่างทันที)
+            <p style="margin: 0; color: #e0e7ff; font-size: 14px;">
+                จำกัดสิทธิ์ 1 ห้องจองได้สูงสุด 2 คัน &bull; คืนรถแล้วเปิดว่างทันที
             </p>
         </div>
 
@@ -264,31 +281,31 @@
             <div class="card-panel">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
                     <div>
-                        <h2 style="margin: 0; color: var(--neon-green); font-family: 'Orbitron', sans-serif; font-size: 20px;">
+                        <h2 style="margin: 0; color: var(--bc-blue); font-size: 20px;">
                             🚲 จองจักรยาน (Bicycle Rental)
                         </h2>
-                        <div style="font-size: 13px; color: #888; margin-top: 4px;">เลือกเบอร์จักรยานที่ต้องการจอง (สูงสุด 2 คันต่อห้องพัก)</div>
+                        <div style="font-size: 13.5px; color: var(--bc-muted); margin-top: 4px;">เลือกเบอร์จักรยานที่ต้องการจอง (สูงสุด 2 คันต่อห้องพัก)</div>
                     </div>
                     <div style="display: flex; gap: 10px; align-items: center;">
-                        <label style="font-size: 14px; color: #aaa;">วันที่:</label>
+                        <label style="font-size: 14px; color: var(--bc-muted);">วันที่:</label>
                         <input type="date" id="custDate" class="test-input" style="width: auto; padding: 6px 12px;" onchange="loadCustomerBikes()">
-                        <button class="mode-btn" style="padding: 6px 14px; font-size: 12px;" onclick="loadCustomerBikes()">[ รีเฟรช ]</button>
+                        <button class="mode-btn" style="padding: 7px 14px; font-size: 13px;" onclick="loadCustomerBikes()">🔄 รีเฟรช</button>
                     </div>
                 </div>
 
                 <!-- Room & Name Inputs -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px; background: rgba(0,0,0,0.25); padding: 18px; border-radius: 8px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px; background: #f8fafc; border: 1px solid var(--bc-border); padding: 18px; border-radius: 12px;">
                     <div>
-                        <label style="display: block; font-size: 14px; color: #aaa; margin-bottom: 6px;">หมายเลขห้องพัก (Room Number):</label>
+                        <label style="display: block; font-size: 14px; font-weight: 600; color: var(--bc-text); margin-bottom: 6px;">หมายเลขห้องพัก (Room Number):</label>
                         <input type="text" id="custRoom" class="test-input" placeholder="เช่น 201" oninput="checkRoomQuota()">
                     </div>
                     <div>
-                        <label style="display: block; font-size: 14px; color: #aaa; margin-bottom: 6px;">ชื่อผู้จอง (Customer Name):</label>
-                        <input type="text" id="custName" class="test-input" placeholder="เช่น คุณสมชาย">
+                        <label style="display: block; font-size: 14px; font-weight: 600; color: var(--bc-text); margin-bottom: 6px;">ชื่อผู้จอง (Customer Name):</label>
+                        <input type="text" id="custName" class="test-input" placeholder="เช่น คุณสมชาย" oninput="updateSelectionUI()">
                     </div>
                     <div style="display: flex; flex-direction: column; justify-content: center;">
-                        <span style="font-size: 13px; color: #aaa;">สิทธิ์การจองของห้องนี้:</span>
-                        <div id="quota-status" style="font-size: 16px; font-weight: bold; color: var(--neon-green); margin-top: 4px;">
+                        <span style="font-size: 13px; color: var(--bc-muted);">สิทธิ์การจองของห้องนี้:</span>
+                        <div id="quota-status" style="font-size: 15px; font-weight: 700; color: #15803d; margin-top: 4px;">
                             พร้อมจอง (สูงสุด 2 คัน)
                         </div>
                     </div>
@@ -297,7 +314,7 @@
                 <!-- Bike Cards -->
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
                     <span style="font-size: 15px; font-weight: 600;">คลิกเลือกจักรยานที่ต้องการ (1 หรือ 2 คัน):</span>
-                    <span id="selected-counter" style="color: var(--neon-green); font-size: 14px; font-weight: 600;">เลือกแล้ว: 0/2 คัน</span>
+                    <span id="selected-counter" style="color: var(--bc-blue); font-size: 14px; font-weight: 600;">เลือกแล้ว: 0/2 คัน</span>
                 </div>
 
                 <div class="bike-grid" id="customer-bike-grid">
@@ -322,21 +339,21 @@
             <div class="card-panel">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
                     <div>
-                        <h2 style="margin: 0; color: var(--neon-blue); font-family: 'Orbitron', sans-serif; font-size: 20px;">
-                            🛠️ BICYCLE FLEET DISPATCH (จัดการส่งมอบ & รับคืน)
+                        <h2 style="margin: 0; color: var(--bc-blue); font-size: 20px;">
+                            🛠️ จัดการส่งมอบ & รับคืนจักรยาน (Admin Fleet Dispatch)
                         </h2>
-                        <div style="font-size: 13px; color: #888; margin-top: 4px;">
+                        <div style="font-size: 13.5px; color: var(--bc-muted); margin-top: 4px;">
                             เมื่อลูกค้ามาคืนรถ กดปุ่ม <strong>[ รับคืนรถ ]</strong> ระบบจะเปิดว่างให้จองต่อทันที
                         </div>
                     </div>
                     <div style="display: flex; gap: 10px; align-items: center;">
-                        <label style="font-size: 14px; color: #aaa;">วันที่:</label>
+                        <label style="font-size: 14px; color: var(--bc-muted);">วันที่:</label>
                         <input type="date" id="adminDate" class="test-input" style="width: auto; padding: 6px 12px;" onchange="loadAdminFleet()">
-                        <button class="mode-btn" style="padding: 6px 14px; font-size: 12px;" onclick="loadAdminFleet()">[ รีเฟรชข้อมูล ]</button>
+                        <button class="mode-btn" style="padding: 7px 14px; font-size: 13px;" onclick="loadAdminFleet()">🔄 รีเฟรชข้อมูล</button>
                     </div>
                 </div>
 
-                <div id="admin-fleet-container" style="display: flex; flex-direction: column; gap: 15px;">
+                <div id="admin-fleet-container" style="display: flex; flex-direction: column; gap: 14px;">
                     <!-- Fleet Cards injected via JS -->
                 </div>
             </div>
@@ -390,7 +407,9 @@
             const room = document.getElementById('custRoom').value.trim();
 
             try {
-                const res = await fetch(`${API_BASE}/api/customer/bicycles/status?date=${date}&hotelRoomNumber=${room}`);
+                const res = await fetch(`${API_BASE}/api/customer/bicycles/status?date=${date}&hotelRoomNumber=${room}`, {
+                    headers: { 'ngrok-skip-browser-warning': '1' }
+                });
                 if (!res.ok) throw new Error('API Error');
                 const data = await res.json();
                 currentBikesData = data.bikes;
@@ -412,13 +431,13 @@
             const remainingQuota = Math.max(0, 2 - roomActiveBookings);
 
             if (roomActiveBookings >= 2) {
-                quotaEl.style.color = 'var(--neon-pink)';
+                quotaEl.style.color = '#dc2626';
                 quotaEl.innerText = `⚠️ เต็มโควตาแล้ว (${roomActiveBookings}/2 คัน) ต้องคืนรถก่อน`;
             } else if (roomActiveBookings === 1) {
-                quotaEl.style.color = '#ffcc00';
+                quotaEl.style.color = '#d97706';
                 quotaEl.innerText = `ใช้ไปแล้ว 1 คัน (ยังจองได้อีก 1 คัน)`;
             } else {
-                quotaEl.style.color = 'var(--neon-green)';
+                quotaEl.style.color = '#15803d';
                 quotaEl.innerText = `สิทธิ์ว่าง 2 คัน (สูงสุด 2 คันต่อห้อง)`;
             }
 
@@ -454,9 +473,9 @@
                 html += `
                     <div class="bike-card ${isSelected ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}" onclick="toggleBikeSelection(${b.bikeNumber}, ${b.isAvailable})">
                         <div class="bike-icon">🚲</div>
-                        <div class="bike-number">BIKE #${b.bikeNumber}</div>
+                        <div class="bike-number">คันที่ ${b.bikeNumber}</div>
                         <span class="bike-status-pill ${statusClass}">${statusLabel}</span>
-                        ${isSelected ? '<div style="margin-top:8px; color:var(--neon-green); font-size:12px; font-weight:bold;">✔ เลือกแล้ว</div>' : ''}
+                        ${isSelected ? '<div style="margin-top:8px; color:var(--bc-blue); font-size:12px; font-weight:bold;">✔ เลือกแล้ว</div>' : ''}
                     </div>
                 `;
             });
@@ -517,7 +536,10 @@
             try {
                 const res = await fetch(`${API_BASE}/api/customer/bicycles/book`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'ngrok-skip-browser-warning': '1'
+                    },
                     body: JSON.stringify({
                         displayName: name,
                         hotelRoomNumber: room,
@@ -546,26 +568,26 @@
         function showSuccessTicket(data) {
             const container = document.getElementById('ticket-result');
             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${data.groupRef}`;
-            const bikesList = data.bookings.map(b => `เบอร์ ${b.bikeNumber}`).join(', ');
+            const bikesList = data.bookings.map(b => `คันที่ ${b.bikeNumber}`).join(', ');
 
             container.innerHTML = `
                 <div class="ticket-box">
-                    <h3 style="color:#10b981; margin:0 0 5px 0; font-size:22px;">✅ จองจักรยานสำเร็จ!</h3>
+                    <h3 style="color:var(--bc-blue); margin:0 0 5px 0; font-size:22px;">✅ จองจักรยานสำเร็จ!</h3>
                     <p style="color:#64748b; font-size:13px; margin:0 0 15px 0;">แคปเจอร์หน้าจอนี้เพื่อไปรับจักรยานที่เคาน์เตอร์ Base Camp</p>
                     
-                    <div style="background:#f1f5f9; padding:15px; border-radius:8px; margin-bottom:15px;">
+                    <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:15px; border-radius:12px; margin-bottom:15px;">
                         <img src="${qrUrl}" alt="QR" style="width:160px; height:160px; display:block; margin:0 auto 10px auto;">
-                        <div style="font-family:'Orbitron',sans-serif; font-size:18px; font-weight:bold; color:#0f172a;">${data.groupRef}</div>
+                        <div style="font-size:18px; font-weight:bold; color:var(--bc-blue);">${data.groupRef}</div>
                     </div>
 
                     <div style="text-align:left; font-size:14px; line-height:1.8;">
-                        <div><strong>คันที่จอง:</strong> <span style="color:#0284c7; font-weight:bold;">${bikesList}</span></div>
+                        <div><strong>คันที่จอง:</strong> <span style="color:var(--bc-orange); font-weight:bold;">${bikesList}</span></div>
                         <div><strong>ห้องพัก:</strong> ${data.bookings[0].hotelRoomNumber} (${data.bookings[0].displayName || 'ผู้เข้าพัก'})</div>
                         <div><strong>วันที่:</strong> ${data.bookings[0].bookingDate}</div>
                         <div><strong>เวลาส่งคืน:</strong> คืนเมื่อใช้งานเสร็จ</div>
                     </div>
 
-                    <button class="mode-btn" style="width:100%; margin-top:20px; background:#0f172a; color:#fff;" onclick="document.getElementById('ticket-result').style.display='none'">
+                    <button class="mode-btn" style="width:100%; margin-top:20px; background:var(--bc-blue); color:#fff;" onclick="document.getElementById('ticket-result').style.display='none'">
                         ปิดหน้าต่างนี้
                     </button>
                 </div>
@@ -580,7 +602,9 @@
         async function loadAdminFleet(isBackground = false) {
             const date = document.getElementById('adminDate').value;
             try {
-                const res = await fetch(`${API_BASE}/api/admin/bicycles/fleet?date=${date}`);
+                const res = await fetch(`${API_BASE}/api/admin/bicycles/fleet?date=${date}`, {
+                    headers: { 'ngrok-skip-browser-warning': '1' }
+                });
                 if (!res.ok) throw new Error('API Error');
                 const data = await res.json();
                 renderAdminFleet(data.fleet);
@@ -597,46 +621,50 @@
             fleet.forEach(b => {
                 let badgeClass = 'status-available';
                 let badgeLabel = 'ว่าง (พร้อมให้จอง)';
-                let borrowerInfo = '<span style="color:#666;">- ไม่มีผู้ใช้งาน -</span>';
+                let borderColor = '#10b981';
+                let borrowerInfo = '<span style="color:#64748b;">- ไม่มีผู้ใช้งาน -</span>';
                 let actionBtn = '';
 
                 if (b.status === 'booked' && b.booking) {
                     badgeClass = 'status-booked';
                     badgeLabel = 'รอรับรถ (Booked)';
+                    borderColor = '#f59e0b';
                     borrowerInfo = `
-                        <div><strong>ห้อง:</strong> <span style="color:#ffcc00; font-weight:bold;">${b.booking.hotelRoomNumber}</span> (${b.booking.userId?.displayName || 'ลูกค้า'})</div>
-                        <div style="font-size:12px; color:#aaa;">Ref: ${b.booking.bookingRef} | จองเมื่อ: ${b.booking.startTime || '-'}</div>
+                        <div><strong>ห้อง:</strong> <span style="color:#d97706; font-weight:bold;">${b.booking.hotelRoomNumber}</span> (${b.booking.userId?.displayName || 'ลูกค้า'})</div>
+                        <div style="font-size:12px; color:#64748b;">Ref: ${b.booking.bookingRef} | จองเมื่อ: ${b.booking.startTime || '-'}</div>
                     `;
                     actionBtn = `
                         <button class="btn-handover" onclick="handoverBike('${b.booking.bookingRef}', ${b.bikeNumber})">
-                            [ 🔑 ส่งมอบรถให้ลูกค้า ]
+                            🔑 ส่งมอบรถให้ลูกค้า
                         </button>
                     `;
                 } else if (b.status === 'in_use' && b.booking) {
                     badgeClass = 'status-in_use';
                     badgeLabel = 'กำลังใช้งาน (In Use)';
+                    borderColor = '#0011ff';
                     borrowerInfo = `
-                        <div><strong>ห้อง:</strong> <span style="color:var(--neon-blue); font-weight:bold;">${b.booking.hotelRoomNumber}</span> (${b.booking.userId?.displayName || 'ลูกค้า'})</div>
-                        <div style="font-size:12px; color:#aaa;">Ref: ${b.booking.bookingRef} | เริ่มยืม: ${b.booking.checkOutTime || b.booking.startTime}</div>
+                        <div><strong>ห้อง:</strong> <span style="color:var(--bc-blue); font-weight:bold;">${b.booking.hotelRoomNumber}</span> (${b.booking.userId?.displayName || 'ลูกค้า'})</div>
+                        <div style="font-size:12px; color:#64748b;">Ref: ${b.booking.bookingRef} | เริ่มยืม: ${b.booking.checkOutTime || b.booking.startTime}</div>
                     `;
                     actionBtn = `
                         <button class="btn-return" onclick="returnBike('${b.booking.bookingRef}', ${b.bikeNumber})">
-                            [ 🏁 รับคืนรถ (เปิดว่างทันที) ]
+                            🏁 รับคืนรถ (เปิดว่างทันที)
                         </button>
                     `;
                 } else if (b.status === 'maintenance') {
                     badgeClass = 'status-maintenance';
                     badgeLabel = 'ปิดซ่อมบำรุง';
-                    borrowerInfo = '<span style="color:var(--neon-pink);">ปิดให้บริการใน Unit Control</span>';
+                    borderColor = '#ef4444';
+                    borrowerInfo = '<span style="color:#dc2626;">ปิดให้บริการใน Unit Control</span>';
                 }
 
                 html += `
-                    <div style="background:#0f101a; border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:18px 22px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px;">
-                        <div style="display:flex; align-items:center; gap:20px;">
+                    <div style="background:#ffffff; border:1.5px solid #e2e8f0; border-left:6px solid ${borderColor}; border-radius:12px; padding:18px 22px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px;">
+                        <div style="display:flex; align-items:center; gap:18px;">
                             <div style="font-size:36px;">🚲</div>
                             <div>
                                 <div style="display:flex; align-items:center; gap:10px;">
-                                    <h3 style="margin:0; font-family:'Orbitron',sans-serif; font-size:18px;">BIKE #${b.bikeNumber}</h3>
+                                    <h3 style="margin:0; font-size:18px; color:var(--bc-text);">จักรยานคันที่ ${b.bikeNumber} (BIKE #${b.bikeNumber})</h3>
                                     <span class="bike-status-pill ${badgeClass}">${badgeLabel}</span>
                                 </div>
                                 <div style="margin-top:6px; font-size:14px;">
@@ -661,7 +689,10 @@
             try {
                 const res = await fetch(`${API_BASE}/api/admin/bicycles/handover`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'ngrok-skip-browser-warning': '1'
+                    },
                     body: JSON.stringify({ bookingRef: ref })
                 });
                 const data = await res.json();
@@ -681,7 +712,10 @@
             try {
                 const res = await fetch(`${API_BASE}/api/admin/bicycles/return`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'ngrok-skip-browser-warning': '1'
+                    },
                     body: JSON.stringify({ bookingRef: ref })
                 });
                 const data = await res.json();

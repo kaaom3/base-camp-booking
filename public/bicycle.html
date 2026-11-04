@@ -3,38 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Base Camp - Bicycle Rental (บริการยืมจักรยาน)</title>
+    <title>Base Camp Hotel - Bicycle Rental (บริการยืมจักรยาน)</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     
     <style>
-        :root {
-            --bike-accent: #10b981;
-            --bike-accent-dark: #059669;
-            --bike-accent-light: rgba(16, 185, 129, 0.12);
-        }
-
-        .bike-wrapper {
-            max-width: 540px;
-            margin: 0 auto;
-            min-height: 100vh;
-            background: #ffffff;
-            box-shadow: 0 0 30px rgba(0,0,0,0.06);
-            display: flex;
-            flex-direction: column;
-        }
-
         .lang-switch {
             position: absolute;
             top: 15px;
             right: 15px;
             display: flex;
             gap: 5px;
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.95);
             padding: 4px 8px;
             border-radius: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
             z-index: 10;
         }
 
@@ -45,14 +29,14 @@
             font-size: 13px;
             font-weight: 600;
             cursor: pointer;
-            padding: 3px 8px;
+            padding: 3px 10px;
             border-radius: 12px;
             color: #64748b;
             transition: all 0.2s;
         }
 
         .lang-btn-sm.active {
-            background: var(--bike-accent);
+            background: var(--primary-color);
             color: #ffffff;
         }
 
@@ -73,18 +57,28 @@
             background: #ffffff;
             position: relative;
             user-select: none;
+            overflow: hidden;
+        }
+
+        .bike-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            opacity: 0.85;
         }
 
         .bike-card:hover:not(.disabled) {
             transform: translateY(-3px);
-            border-color: var(--bike-accent);
-            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.18);
+            border-color: var(--primary-color);
+            box-shadow: 0 8px 20px rgba(0, 17, 255, 0.14);
         }
 
         .bike-card.selected {
-            border-color: var(--bike-accent);
-            background: var(--bike-accent-light);
-            box-shadow: 0 0 0 2px var(--bike-accent);
+            border-color: var(--primary-color);
+            background: #eef2ff;
+            box-shadow: 0 0 0 2px var(--primary-color);
         }
 
         .bike-card.disabled {
@@ -95,6 +89,10 @@
             filter: grayscale(80%);
         }
 
+        .bike-card.disabled::before {
+            background: #cbd5e1;
+        }
+
         .bike-icon {
             font-size: 32px;
             margin-bottom: 4px;
@@ -102,16 +100,16 @@
         }
 
         .bike-num {
-            font-family: 'Orbitron', 'Kanit', sans-serif;
+            font-family: 'Kanit', sans-serif;
             font-size: 16px;
             font-weight: 700;
-            color: #1e293b;
+            color: var(--text-main);
             display: block;
         }
 
         .bike-status-tag {
             font-size: 11px;
-            padding: 2px 6px;
+            padding: 2px 8px;
             border-radius: 10px;
             display: inline-block;
             margin-top: 6px;
@@ -134,10 +132,11 @@
         }
 
         .quota-banner {
-            background: #f0fdf4;
-            border: 1px solid #bbf7d0;
-            border-radius: 12px;
-            padding: 12px 16px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-left: 5px solid var(--accent-color);
+            border-radius: 10px;
+            padding: 14px 16px;
             margin-bottom: 20px;
             display: flex;
             align-items: center;
@@ -145,33 +144,34 @@
         }
 
         .quota-banner .icon {
-            font-size: 24px;
+            font-size: 26px;
         }
 
         .quota-banner .text {
-            font-size: 13px;
-            color: #166534;
-            line-height: 1.5;
+            font-size: 13.5px;
+            color: var(--text-main);
+            line-height: 1.55;
         }
 
         .btn-confirm-bike {
             width: 100%;
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            background: var(--accent-color);
             color: #ffffff;
             border: none;
-            padding: 18px;
-            border-radius: 14px;
+            padding: 16px;
+            border-radius: 12px;
             font-size: 17px;
-            font-weight: 700;
+            font-weight: 600;
             cursor: pointer;
-            box-shadow: 0 10px 22px rgba(16, 185, 129, 0.35);
+            box-shadow: 0 8px 20px rgba(255, 58, 0, 0.28);
             transition: all 0.25s;
             font-family: 'Kanit', sans-serif;
         }
 
         .btn-confirm-bike:hover:not(:disabled) {
+            background: var(--accent-hover);
             transform: translateY(-2px);
-            box-shadow: 0 14px 28px rgba(16, 185, 129, 0.45);
+            box-shadow: 0 12px 24px rgba(255, 58, 0, 0.38);
         }
 
         .btn-confirm-bike:disabled {
@@ -181,15 +181,15 @@
             color: #64748b;
         }
 
-        /* E-Ticket Popup / View */
+        /* E-Ticket View */
         .ticket-modal {
             background: #ffffff;
-            border-radius: 20px;
+            border-radius: 16px;
             padding: 25px 20px;
             text-align: center;
-            border: 2px dashed #10b981;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.08);
-            margin-top: 15px;
+            border: 2px dashed var(--primary-color);
+            box-shadow: 0 12px 30px rgba(0, 17, 255, 0.08);
+            margin-top: 10px;
             display: none;
         }
 
@@ -198,9 +198,9 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            color: var(--bike-accent-dark);
+            color: var(--primary-color);
             font-weight: 700;
-            font-size: 20px;
+            font-size: 22px;
             margin-bottom: 15px;
         }
 
@@ -221,11 +221,11 @@
         }
 
         .ticket-ref {
-            font-family: 'Orbitron', monospace;
+            font-family: 'Kanit', sans-serif;
             font-size: 20px;
             font-weight: 700;
-            letter-spacing: 2px;
-            color: #0f172a;
+            letter-spacing: 1.5px;
+            color: var(--primary-color);
         }
 
         .ticket-details {
@@ -236,6 +236,7 @@
             font-size: 14px;
             line-height: 1.9;
             margin-bottom: 20px;
+            border: 1px solid #e2e8f0;
         }
 
         .ticket-details strong {
@@ -249,12 +250,12 @@
         }
 
         .ticket-instructions {
-            background: #eff6ff;
-            border-left: 4px solid #3b82f6;
+            background: #fffbeb;
+            border-left: 4px solid #f59e0b;
             border-radius: 6px;
             padding: 10px 14px;
-            font-size: 12.5px;
-            color: #1e40af;
+            font-size: 13px;
+            color: #92400e;
             text-align: left;
             line-height: 1.6;
             margin-bottom: 20px;
@@ -263,133 +264,134 @@
 </head>
 <body>
 
-    <div class="bike-wrapper">
-        
-        <!-- Header -->
-        <div class="hero-header" style="position: relative;">
-            <div class="lang-switch">
-                <button class="lang-btn-sm active" id="btn-th" onclick="setLanguage('th')">TH</button>
-                <button class="lang-btn-sm" id="btn-en" onclick="setLanguage('en')">EN</button>
-            </div>
-            <img src="images/logo.png" alt="Base Camp Hotel">
-            <p id="txt-header-title">บริการยืมจักรยาน (Bicycle Rental)</p>
-        </div>
-
-        <div class="content-body" style="padding: 25px 20px; flex: 1;">
-            
-            <!-- Booking Form Container -->
-            <div id="booking-section">
-
-                <!-- Quota / Rule Banner -->
-                <div class="quota-banner">
-                    <span class="icon">🚲</span>
-                    <div class="text">
-                        <strong id="txt-quota-title">กติกาก่อนการยืมจักรยาน</strong><br>
-                        <span id="txt-quota-desc">• มีจักรยานบริการ 5 คัน (ไม่จำกัดเวลา)<br>• 1 ห้องพักสามารถยืมได้สูงสุดไม่เกิน 2 คัน<br>• เมื่อนำมาคืนแล้ว แจ้งเจ้าหน้าที่เพื่อปล่อยคิวต่อทันที</span>
-                    </div>
+    <div class="app-wrapper">
+        <div class="view-section">
+            <!-- Header (Left panel on desktop, top banner on mobile) -->
+            <div class="hero-header" style="position: relative;">
+                <div class="lang-switch">
+                    <button class="lang-btn-sm active" id="btn-th" onclick="setLanguage('th')">TH</button>
+                    <button class="lang-btn-sm" id="btn-en" onclick="setLanguage('en')">EN</button>
                 </div>
-
-                <!-- Live Capacity Badge -->
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
-                    <label style="font-weight: 600; font-size: 15px;" id="lbl-choose-bike">เลือกจักรยานที่ต้องการยืม:</label>
-                    <span id="live-capacity-text" style="font-size: 13px; font-weight: 600; color: #10b981;">กำลังโหลด...</span>
-                </div>
-
-                <!-- 5 Bikes Grid -->
-                <div class="bike-grid" id="bike-cards-container">
-                    <!-- Populated by JS -->
-                </div>
-
-                <!-- Input: Date -->
-                <div class="form-group" style="margin-top: 18px; margin-bottom: 16px;">
-                    <label id="lbl-date" style="font-size: 14px; font-weight: 600;">วันที่ใช้บริการ (Date)</label>
-                    <input type="date" id="bikeDate" class="form-input" style="padding: 12px;" onchange="loadBicycleAvailability()">
-                </div>
-
-                <!-- Input: Room Number -->
-                <div class="form-group" style="margin-bottom: 16px;">
-                    <label id="lbl-room" style="font-size: 14px; font-weight: 600;">หมายเลขห้องพัก (Room Number)</label>
-                    <input type="text" id="hotelRoomNumber" class="form-input" placeholder="เช่น 101, 204" style="padding: 12px;" oninput="onRoomNumberChange()">
-                    <div id="room-quota-warn" style="font-size: 12px; color: #dc2626; margin-top: 4px; display: none;"></div>
-                </div>
-
-                <!-- Input: Guest Name -->
-                <div class="form-group" style="margin-bottom: 20px;">
-                    <label id="lbl-name" style="font-size: 14px; font-weight: 600;">ชื่อผู้จอง (Guest Name)</label>
-                    <input type="text" id="displayName" class="form-input" placeholder="ชื่อ หรือ ชื่อย่อ" style="padding: 12px;">
-                </div>
-
-                <!-- Safety Agreement Checkbox -->
-                <div class="checkbox-group" style="margin-bottom: 25px; align-items: flex-start;">
-                    <input type="checkbox" id="agreeTerms" style="width: 20px; height: 20px; margin-top: 2px;">
-                    <label for="agreeTerms" id="lbl-terms" style="font-size: 13px; line-height: 1.5; color: #475569; margin-left: 8px;">
-                        ข้าพเจ้ายินยอมปฏิบัติตามกฎความปลอดภัยในการขับขี่ และจะนำจักรยานพร้อมกุญแจมาส่งคืนเจ้าหน้าที่เมื่อใช้งานเสร็จ
-                    </label>
-                </div>
-
-                <!-- Submit Button -->
-                <button class="btn-confirm-bike" id="btn-submit" onclick="submitBicycleBooking()">
-                    <span id="txt-btn-submit">ยืนยันการจองจักรยาน</span>
-                </button>
-
-                <!-- Back link -->
-                <div style="text-align: center; margin-top: 20px;">
-                    <a href="th.html" id="link-back" style="color: #64748b; font-size: 14px; text-decoration: underline;">
-                        ← กลับหน้าเลือกบริการ (Back to Services)
-                    </a>
-                </div>
-
+                <img src="images/logo.png" alt="Base Camp Hotel">
+                <p id="txt-header-title">บริการยืมจักรยาน (Bicycle Rental)</p>
             </div>
 
-            <!-- E-Ticket Result Section (Hidden by default) -->
-            <div id="ticket-section" class="ticket-modal">
-                <div class="ticket-header">
-                    <span>🚲</span>
-                    <span id="ticket-title">จองจักรยานสำเร็จ!</span>
-                </div>
+            <div class="content-body" style="padding: 25px 20px; flex: 1;">
                 
-                <div class="ticket-qr-box">
-                    <img id="ticket-qr-img" src="" alt="Booking QR Code">
-                    <div class="ticket-ref" id="ticket-ref-text">BK-XXXXXX</div>
-                </div>
+                <!-- Booking Form Container -->
+                <div id="booking-section">
 
-                <div class="ticket-details">
-                    <div>
-                        <strong id="ticket-lbl-bikes">จักรยานที่จอง:</strong>
-                        <span class="val" id="ticket-bikes-val" style="color:#059669;">คันที่ 1, คันที่ 2</span>
+                    <!-- Quota / Rule Banner -->
+                    <div class="quota-banner">
+                        <span class="icon">🚲</span>
+                        <div class="text">
+                            <strong id="txt-quota-title" style="color: var(--primary-color);">กติกาก่อนการยืมจักรยาน</strong><br>
+                            <span id="txt-quota-desc">• มีจักรยานบริการ 5 คัน (ไม่จำกัดเวลา)<br>• 1 ห้องพักสามารถยืมได้สูงสุดไม่เกิน 2 คัน<br>• เมื่อนำมาคืนแล้ว แจ้งเจ้าหน้าที่เพื่อปล่อยคิวต่อทันที</span>
+                        </div>
                     </div>
-                    <div>
-                        <strong id="ticket-lbl-room">ห้องพัก:</strong>
-                        <span class="val" id="ticket-room-val">101</span>
-                    </div>
-                    <div>
-                        <strong id="ticket-lbl-guest">ผู้จอง:</strong>
-                        <span class="val" id="ticket-guest-val">Guest</span>
-                    </div>
-                    <div>
-                        <strong id="ticket-lbl-date">วันที่:</strong>
-                        <span class="val" id="ticket-date-val">2026-11-04</span>
-                    </div>
-                    <div>
-                        <strong id="ticket-lbl-time">ระยะเวลา:</strong>
-                        <span class="val" style="color:#0284c7;">ไม่จำกัดเวลา (ใช้งานเสร็จนำมาคืน)</span>
-                    </div>
-                </div>
 
-                <div class="ticket-instructions" id="ticket-instructions-text">
-                    📍 <strong>ขั้นตอนการรับรถ:</strong> กรุณาแสดงหน้านี้หรือ QR Code ให้แก่เจ้าหน้าที่ เพื่อรับกุญแจ/จักรยาน และเมื่อใช้งานเสร็จสิ้นแล้วกรุณาแจ้งเจ้าหน้าที่เพื่อทำการรับคืนรถครับ
-                </div>
+                    <!-- Live Capacity Badge -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
+                        <label style="font-weight: 600; font-size: 15px;" id="lbl-choose-bike">เลือกจักรยานที่ต้องการยืม:</label>
+                        <span id="live-capacity-text" style="font-size: 13px; font-weight: 600; color: var(--primary-color); background: #eef2ff; padding: 3px 10px; border-radius: 12px;">กำลังโหลด...</span>
+                    </div>
 
-                <div style="display:flex; flex-direction:column; gap:10px;">
-                    <button class="btn-confirm-bike" style="padding:14px; background:#0f172a;" onclick="window.print()">
-                        🖨️ <span id="txt-print">พิมพ์ / บันทึกหน้าจอ</span>
+                    <!-- 5 Bikes Grid -->
+                    <div class="bike-grid" id="bike-cards-container">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <!-- Input: Date -->
+                    <div class="form-group" style="margin-top: 18px; margin-bottom: 16px;">
+                        <label id="lbl-date" style="font-size: 14px; font-weight: 600;">วันที่ใช้บริการ (Date)</label>
+                        <input type="date" id="bikeDate" class="form-input" style="padding: 12px;" onchange="loadBicycleAvailability()">
+                    </div>
+
+                    <!-- Input: Room Number -->
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label id="lbl-room" style="font-size: 14px; font-weight: 600;">หมายเลขห้องพัก (Room Number)</label>
+                        <input type="text" id="hotelRoomNumber" class="form-input" placeholder="เช่น 101, 204" style="padding: 12px;" oninput="onRoomNumberChange()">
+                        <div id="room-quota-warn" style="font-size: 12px; color: #dc2626; margin-top: 4px; display: none;"></div>
+                    </div>
+
+                    <!-- Input: Guest Name -->
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label id="lbl-name" style="font-size: 14px; font-weight: 600;">ชื่อผู้จอง (Guest Name)</label>
+                        <input type="text" id="displayName" class="form-input" placeholder="ชื่อ หรือ ชื่อย่อ" style="padding: 12px;">
+                    </div>
+
+                    <!-- Safety Agreement Checkbox -->
+                    <div class="checkbox-group" style="margin-bottom: 25px; display: flex; align-items: flex-start;">
+                        <input type="checkbox" id="agreeTerms" style="width: 20px; height: 20px; margin-top: 2px; accent-color: var(--primary-color);">
+                        <label for="agreeTerms" id="lbl-terms" style="font-size: 13px; line-height: 1.5; color: #475569; margin-left: 8px; cursor: pointer;">
+                            ข้าพเจ้ายินยอมปฏิบัติตามกฎความปลอดภัยในการขับขี่ และจะนำจักรยานพร้อมกุญแจมาส่งคืนเจ้าหน้าที่เมื่อใช้งานเสร็จ
+                        </label>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button class="btn-confirm-bike" id="btn-submit" onclick="submitBicycleBooking()">
+                        <span id="txt-btn-submit">ยืนยันการจองจักรยาน</span>
                     </button>
-                    <a href="th.html" class="btn-cancel" id="ticket-home-btn" style="padding:12px; text-decoration:none; display:block; text-align:center;">
-                        ← <span id="txt-home">กลับหน้าหลัก</span>
-                    </a>
-                </div>
-            </div>
 
+                    <!-- Back link -->
+                    <div style="text-align: center; margin-top: 20px;">
+                        <a href="th.html" id="link-back" style="color: #64748b; font-size: 14px; text-decoration: underline;">
+                            ← กลับหน้าเลือกบริการ (Back to Services)
+                        </a>
+                    </div>
+
+                </div>
+
+                <!-- E-Ticket Result Section (Hidden by default) -->
+                <div id="ticket-section" class="ticket-modal">
+                    <div class="ticket-header">
+                        <span>🚲</span>
+                        <span id="ticket-title">จองจักรยานสำเร็จ!</span>
+                    </div>
+                    
+                    <div class="ticket-qr-box">
+                        <img id="ticket-qr-img" src="" alt="Booking QR Code">
+                        <div class="ticket-ref" id="ticket-ref-text">BK-XXXXXX</div>
+                    </div>
+
+                    <div class="ticket-details">
+                        <div>
+                            <strong id="ticket-lbl-bikes">จักรยานที่จอง:</strong>
+                            <span class="val" id="ticket-bikes-val" style="color:var(--accent-color);">คันที่ 1, คันที่ 2</span>
+                        </div>
+                        <div>
+                            <strong id="ticket-lbl-room">ห้องพัก:</strong>
+                            <span class="val" id="ticket-room-val">101</span>
+                        </div>
+                        <div>
+                            <strong id="ticket-lbl-guest">ผู้จอง:</strong>
+                            <span class="val" id="ticket-guest-val">Guest</span>
+                        </div>
+                        <div>
+                            <strong id="ticket-lbl-date">วันที่:</strong>
+                            <span class="val" id="ticket-date-val">2026-11-04</span>
+                        </div>
+                        <div>
+                            <strong id="ticket-lbl-time">ระยะเวลา:</strong>
+                            <span class="val" style="color:var(--primary-color);">ไม่จำกัดเวลา (ใช้งานเสร็จนำมาคืน)</span>
+                        </div>
+                    </div>
+
+                    <div class="ticket-instructions" id="ticket-instructions-text">
+                        📍 <strong>ขั้นตอนการรับรถ:</strong> กรุณาแสดงหน้านี้หรือ QR Code ให้แก่เจ้าหน้าที่ เพื่อรับกุญแจ/จักรยาน และเมื่อใช้งานเสร็จสิ้นแล้วกรุณาแจ้งเจ้าหน้าที่เพื่อทำการรับคืนรถครับ
+                    </div>
+
+                    <div style="display:flex; flex-direction:column; gap:10px;">
+                        <button class="btn-confirm-bike" style="padding:14px; background:var(--primary-color); box-shadow: 0 8px 20px rgba(0, 17, 255, 0.2);" onclick="window.print()">
+                            🖨️ <span id="txt-print">พิมพ์ / บันทึกหน้าจอ</span>
+                        </button>
+                        <a href="th.html" class="btn-cancel" id="ticket-home-btn" style="padding:12px; text-decoration:none; display:block; text-align:center;">
+                            ← <span id="txt-home">กลับหน้าหลัก</span>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
         </div>
     </div>
 
@@ -560,7 +562,7 @@
                         : `⚠️ Room ${room} already has ${data.roomActiveCount} active bicycle(s) (Maximum 2 reached).`;
                 } else if (room && data.roomActiveCount === 1) {
                     warnEl.style.display = 'block';
-                    warnEl.style.color = '#0284c7';
+                    warnEl.style.color = '#0011ff';
                     warnEl.textContent = currentLang === 'th'
                         ? `ℹ️ ห้อง ${room} มีการยืมอยู่ 1 คัน (สามารถยืมเพิ่มได้อีก 1 คัน)`
                         : `ℹ️ Room ${room} currently has 1 active bicycle (can borrow 1 more).`;
@@ -612,7 +614,7 @@
                 return `
                     <div class="${cardClass}" onclick="toggleBikeSelect(${b.bikeNumber}, ${isAvailable})">
                         <span class="bike-icon">🚲</span>
-                        <span class="bike-num">${b.bikeNumber}</span>
+                        <span class="bike-num">${t.bikeNum(b.bikeNumber)}</span>
                         <span class="bike-status-tag ${tagClass}">${tagText}</span>
                     </div>
                 `;
@@ -633,7 +635,7 @@
                     Swal.fire({
                         icon: 'warning',
                         title: t.maxSelectedAlert,
-                        confirmButtonColor: '#10b981'
+                        confirmButtonColor: '#0011ff'
                     });
                     return;
                 }
@@ -654,7 +656,7 @@
                 Swal.fire({
                     icon: 'warning',
                     title: t.missingFieldsAlert,
-                    confirmButtonColor: '#10b981'
+                    confirmButtonColor: '#0011ff'
                 });
                 return;
             }
@@ -698,7 +700,7 @@
                     icon: 'error',
                     title: 'Error',
                     text: err.message,
-                    confirmButtonColor: '#10b981'
+                    confirmButtonColor: '#0011ff'
                 });
             } finally {
                 btnSubmit.disabled = false;
