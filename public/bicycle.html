@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base Camp - Bicycle Rental (บริการยืมจักรยาน)</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    
+    <style>
+        :root {
+            --bike-accent: #10b981;
+            --bike-accent-dark: #059669;
+            --bike-accent-light: rgba(16, 185, 129, 0.12);
+        }
+
+        .bike-wrapper {
+            max-width: 540px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background: #ffffff;
+            box-shadow: 0 0 30px rgba(0,0,0,0.06);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .lang-switch {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            gap: 5px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 4px 8px;
+            border-radius: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            z-index: 10;
+        }
+
+        .lang-btn-sm {
+            border: none;
+            background: transparent;
+            font-family: 'Kanit', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 3px 8px;
+            border-radius: 12px;
+            color: #64748b;
+            transition: all 0.2s;
+        }
+
+        .lang-btn-sm.active {
+            background: var(--bike-accent);
+            color: #ffffff;
+        }
+
+        .bike-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .bike-card {
+            border: 2px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 14px 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #ffffff;
+            position: relative;
+            user-select: none;
+        }
+
+        .bike-card:hover:not(.disabled) {
+            transform: translateY(-3px);
+            border-color: var(--bike-accent);
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.18);
+        }
+
+        .bike-card.selected {
+            border-color: var(--bike-accent);
+            background: var(--bike-accent-light);
+            box-shadow: 0 0 0 2px var(--bike-accent);
+        }
+
+        .bike-card.disabled {
+            opacity: 0.55;
+            background: #f8fafc;
+            border-color: #e2e8f0;
+            cursor: not-allowed;
+            filter: grayscale(80%);
+        }
+
+        .bike-icon {
+            font-size: 32px;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .bike-num {
+            font-family: 'Orbitron', 'Kanit', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            color: #1e293b;
+            display: block;
+        }
+
+        .bike-status-tag {
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-top: 6px;
+            font-weight: 600;
+        }
+
+        .tag-avail {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .tag-inuse {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .tag-off {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .quota-banner {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .quota-banner .icon {
+            font-size: 24px;
+        }
+
+        .quota-banner .text {
+            font-size: 13px;
+            color: #166534;
+            line-height: 1.5;
+        }
+
+        .btn-confirm-bike {
+            width: 100%;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: #ffffff;
+            border: none;
+            padding: 18px;
+            border-radius: 14px;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 10px 22px rgba(16, 185, 129, 0.35);
+            transition: all 0.25s;
+            font-family: 'Kanit', sans-serif;
+        }
+
+        .btn-confirm-bike:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 28px rgba(16, 185, 129, 0.45);
+        }
+
+        .btn-confirm-bike:disabled {
+            background: #cbd5e1;
+            box-shadow: none;
+            cursor: not-allowed;
+            color: #64748b;
+        }
+
+        /* E-Ticket Popup / View */
+        .ticket-modal {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 25px 20px;
+            text-align: center;
+            border: 2px dashed #10b981;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+            margin-top: 15px;
+            display: none;
+        }
+
+        .ticket-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: var(--bike-accent-dark);
+            font-weight: 700;
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+
+        .ticket-qr-box {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 18px;
+            display: inline-block;
+            margin-bottom: 15px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .ticket-qr-box img {
+            width: 180px;
+            height: 180px;
+            display: block;
+            margin: 0 auto 8px auto;
+        }
+
+        .ticket-ref {
+            font-family: 'Orbitron', monospace;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: #0f172a;
+        }
+
+        .ticket-details {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 14px 18px;
+            text-align: left;
+            font-size: 14px;
+            line-height: 1.9;
+            margin-bottom: 20px;
+        }
+
+        .ticket-details strong {
+            color: #334155;
+        }
+
+        .ticket-details .val {
+            float: right;
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        .ticket-instructions {
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            border-radius: 6px;
+            padding: 10px 14px;
+            font-size: 12.5px;
+            color: #1e40af;
+            text-align: left;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bike-wrapper">
+        
+        <!-- Header -->
+        <div class="hero-header" style="position: relative;">
+            <div class="lang-switch">
+                <button class="lang-btn-sm active" id="btn-th" onclick="setLanguage('th')">TH</button>
+                <button class="lang-btn-sm" id="btn-en" onclick="setLanguage('en')">EN</button>
+            </div>
+            <img src="images/logo.png" alt="Base Camp Hotel">
+            <p id="txt-header-title">บริการยืมจักรยาน (Bicycle Rental)</p>
+        </div>
+
+        <div class="content-body" style="padding: 25px 20px; flex: 1;">
+            
+            <!-- Booking Form Container -->
+            <div id="booking-section">
+
+                <!-- Quota / Rule Banner -->
+                <div class="quota-banner">
+                    <span class="icon">🚲</span>
+                    <div class="text">
+                        <strong id="txt-quota-title">กติกาก่อนการยืมจักรยาน</strong><br>
+                        <span id="txt-quota-desc">• มีจักรยานบริการ 5 คัน (ไม่จำกัดเวลา)<br>• 1 ห้องพักสามารถยืมได้สูงสุดไม่เกิน 2 คัน<br>• เมื่อนำมาคืนแล้ว แจ้งเจ้าหน้าที่เพื่อปล่อยคิวต่อทันที</span>
+                    </div>
+                </div>
+
+                <!-- Live Capacity Badge -->
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
+                    <label style="font-weight: 600; font-size: 15px;" id="lbl-choose-bike">เลือกจักรยานที่ต้องการยืม:</label>
+                    <span id="live-capacity-text" style="font-size: 13px; font-weight: 600; color: #10b981;">กำลังโหลด...</span>
+                </div>
+
+                <!-- 5 Bikes Grid -->
+                <div class="bike-grid" id="bike-cards-container">
+                    <!-- Populated by JS -->
+                </div>
+
+                <!-- Input: Date -->
+                <div class="form-group" style="margin-top: 18px; margin-bottom: 16px;">
+                    <label id="lbl-date" style="font-size: 14px; font-weight: 600;">วันที่ใช้บริการ (Date)</label>
+                    <input type="date" id="bikeDate" class="form-input" style="padding: 12px;" onchange="loadBicycleAvailability()">
+                </div>
+
+                <!-- Input: Room Number -->
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label id="lbl-room" style="font-size: 14px; font-weight: 600;">หมายเลขห้องพัก (Room Number)</label>
+                    <input type="text" id="hotelRoomNumber" class="form-input" placeholder="เช่น 101, 204" style="padding: 12px;" oninput="onRoomNumberChange()">
+                    <div id="room-quota-warn" style="font-size: 12px; color: #dc2626; margin-top: 4px; display: none;"></div>
+                </div>
+
+                <!-- Input: Guest Name -->
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label id="lbl-name" style="font-size: 14px; font-weight: 600;">ชื่อผู้จอง (Guest Name)</label>
+                    <input type="text" id="displayName" class="form-input" placeholder="ชื่อ หรือ ชื่อย่อ" style="padding: 12px;">
+                </div>
+
+                <!-- Safety Agreement Checkbox -->
+                <div class="checkbox-group" style="margin-bottom: 25px; align-items: flex-start;">
+                    <input type="checkbox" id="agreeTerms" style="width: 20px; height: 20px; margin-top: 2px;">
+                    <label for="agreeTerms" id="lbl-terms" style="font-size: 13px; line-height: 1.5; color: #475569; margin-left: 8px;">
+                        ข้าพเจ้ายินยอมปฏิบัติตามกฎความปลอดภัยในการขับขี่ และจะนำจักรยานพร้อมกุญแจมาส่งคืนเจ้าหน้าที่เมื่อใช้งานเสร็จ
+                    </label>
+                </div>
+
+                <!-- Submit Button -->
+                <button class="btn-confirm-bike" id="btn-submit" onclick="submitBicycleBooking()">
+                    <span id="txt-btn-submit">ยืนยันการจองจักรยาน</span>
+                </button>
+
+                <!-- Back link -->
+                <div style="text-align: center; margin-top: 20px;">
+                    <a href="th.html" id="link-back" style="color: #64748b; font-size: 14px; text-decoration: underline;">
+                        ← กลับหน้าเลือกบริการ (Back to Services)
+                    </a>
+                </div>
+
+            </div>
+
+            <!-- E-Ticket Result Section (Hidden by default) -->
+            <div id="ticket-section" class="ticket-modal">
+                <div class="ticket-header">
+                    <span>🚲</span>
+                    <span id="ticket-title">จองจักรยานสำเร็จ!</span>
+                </div>
+                
+                <div class="ticket-qr-box">
+                    <img id="ticket-qr-img" src="" alt="Booking QR Code">
+                    <div class="ticket-ref" id="ticket-ref-text">BK-XXXXXX</div>
+                </div>
+
+                <div class="ticket-details">
+                    <div>
+                        <strong id="ticket-lbl-bikes">จักรยานที่จอง:</strong>
+                        <span class="val" id="ticket-bikes-val" style="color:#059669;">คันที่ 1, คันที่ 2</span>
+                    </div>
+                    <div>
+                        <strong id="ticket-lbl-room">ห้องพัก:</strong>
+                        <span class="val" id="ticket-room-val">101</span>
+                    </div>
+                    <div>
+                        <strong id="ticket-lbl-guest">ผู้จอง:</strong>
+                        <span class="val" id="ticket-guest-val">Guest</span>
+                    </div>
+                    <div>
+                        <strong id="ticket-lbl-date">วันที่:</strong>
+                        <span class="val" id="ticket-date-val">2026-11-04</span>
+                    </div>
+                    <div>
+                        <strong id="ticket-lbl-time">ระยะเวลา:</strong>
+                        <span class="val" style="color:#0284c7;">ไม่จำกัดเวลา (ใช้งานเสร็จนำมาคืน)</span>
+                    </div>
+                </div>
+
+                <div class="ticket-instructions" id="ticket-instructions-text">
+                    📍 <strong>ขั้นตอนการรับรถ:</strong> กรุณาแสดงหน้านี้หรือ QR Code ให้แก่เจ้าหน้าที่ เพื่อรับกุญแจ/จักรยาน และเมื่อใช้งานเสร็จสิ้นแล้วกรุณาแจ้งเจ้าหน้าที่เพื่อทำการรับคืนรถครับ
+                </div>
+
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                    <button class="btn-confirm-bike" style="padding:14px; background:#0f172a;" onclick="window.print()">
+                        🖨️ <span id="txt-print">พิมพ์ / บันทึกหน้าจอ</span>
+                    </button>
+                    <a href="th.html" class="btn-cancel" id="ticket-home-btn" style="padding:12px; text-decoration:none; display:block; text-align:center;">
+                        ← <span id="txt-home">กลับหน้าหลัก</span>
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- SweetAlert2 for modern clean notifications -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        // Language dictionaries
+        const I18N = {
+            th: {
+                headerTitle: "บริการยืมจักรยาน (Bicycle Rental)",
+                quotaTitle: "กติกาก่อนการยืมจักรยาน",
+                quotaDesc: "• มีจักรยานบริการ 5 คัน (ไม่จำกัดเวลา)<br>• 1 ห้องพักสามารถยืมได้สูงสุดไม่เกิน 2 คัน<br>• เมื่อนำมาคืนแล้ว แจ้งเจ้าหน้าที่เพื่อปล่อยคิวต่อทันที",
+                chooseBike: "เลือกจักรยานที่ต้องการยืม:",
+                loading: "กำลังโหลดสถานะจักรยาน...",
+                availCount: (n) => `ว่าง ${n}/5 คัน`,
+                date: "วันที่ใช้บริการ (Date)",
+                room: "หมายเลขห้องพัก (Room Number)",
+                roomPlaceholder: "เช่น 101, 204",
+                name: "ชื่อผู้จอง (Guest Name)",
+                namePlaceholder: "ชื่อ หรือ ชื่อย่อ",
+                terms: "ข้าพเจ้ายินยอมปฏิบัติตามกฎความปลอดภัยในการขับขี่ และจะนำจักรยานพร้อมกุญแจมาส่งคืนเจ้าหน้าที่เมื่อใช้งานเสร็จ",
+                btnSubmit: "ยืนยันการจองจักรยาน",
+                backLink: "← กลับหน้าเลือกบริการ (Back to Services)",
+                bikeNum: (n) => `คันที่ ${n}`,
+                statusAvail: "ว่าง",
+                statusInUse: "ใช้งานอยู่",
+                statusOff: "ปิดปรับปรุง",
+                maxSelectedAlert: "1 ห้องพักสามารถเลือกจองได้สูงสุด 2 คันเท่านั้นครับ",
+                missingFieldsAlert: "กรุณากรอกเลขห้อง, ชื่อผู้จอง, เลือกจักรยานอย่างน้อย 1 คัน และกดยอมรับข้อตกลง",
+                ticketSuccess: "จองจักรยานสำเร็จ!",
+                ticketBikes: "จักรยานที่จอง:",
+                ticketRoom: "ห้องพัก:",
+                ticketGuest: "ผู้จอง:",
+                ticketDate: "วันที่:",
+                ticketDuration: "ระยะเวลา:",
+                ticketDurationVal: "ไม่จำกัดเวลา (ใช้งานเสร็จนำมาคืน)",
+                ticketInstructions: "📍 <strong>ขั้นตอนการรับรถ:</strong> กรุณาแสดงหน้านี้หรือ QR Code ให้แก่เจ้าหน้าที่ เพื่อรับกุญแจ/จักรยาน และเมื่อใช้งานเสร็จสิ้นแล้วกรุณาแจ้งเจ้าหน้าที่เพื่อทำการรับคืนรถครับ",
+                print: "พิมพ์ / บันทึกหน้าจอ",
+                home: "กลับหน้าหลัก",
+                homeUrl: "th.html"
+            },
+            en: {
+                headerTitle: "Bicycle Rental Service",
+                quotaTitle: "Rental Policy & Guidelines",
+                quotaDesc: "• 5 bicycles available (No fixed time limit)<br>• Max 2 bicycles per room simultaneously<br>• Return to staff when done so others can enjoy",
+                chooseBike: "Select Bicycle(s):",
+                loading: "Checking availability...",
+                availCount: (n) => `${n}/5 Bikes Available`,
+                date: "Rental Date",
+                room: "Room Number",
+                roomPlaceholder: "e.g. 101, 204",
+                name: "Guest Name",
+                namePlaceholder: "Your name or initials",
+                terms: "I agree to observe bicycle safety guidelines and will return the bicycle and key to the staff promptly after use.",
+                btnSubmit: "Confirm Bicycle Booking",
+                backLink: "← Back to Service Menu",
+                bikeNum: (n) => `Bike ${n}`,
+                statusAvail: "Available",
+                statusInUse: "In Use",
+                statusOff: "Maintenance",
+                maxSelectedAlert: "Maximum 2 bicycles per room allowed.",
+                missingFieldsAlert: "Please fill in room number, guest name, select at least 1 bike, and accept terms.",
+                ticketSuccess: "Bicycle Booking Confirmed!",
+                ticketBikes: "Booked Bikes:",
+                ticketRoom: "Room Number:",
+                ticketGuest: "Guest Name:",
+                ticketDate: "Date:",
+                ticketDuration: "Duration:",
+                ticketDurationVal: "No time limit (Return when done)",
+                ticketInstructions: "📍 <strong>Pick-up Instructions:</strong> Please present this E-Ticket / QR Code to our hotel staff to receive your bicycle and key. Once you are finished, return the bike to staff to complete the session.",
+                print: "Print / Save Screen",
+                home: "Back to Home",
+                homeUrl: "en.html"
+            }
+        };
+
+        // Determine language from URL param ?lang=en or default th
+        const urlParams = new URLSearchParams(window.location.search);
+        let currentLang = urlParams.get('lang') === 'en' ? 'en' : 'th';
+
+        let liveBikeData = null;
+        let selectedBikes = [];
+        let roomDebounceTimer = null;
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set date to today in Asia/Bangkok
+            const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+            document.getElementById('bikeDate').value = todayStr;
+
+            setLanguage(currentLang);
+            loadBicycleAvailability();
+        });
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            const t = I18N[lang];
+
+            document.getElementById('btn-th').className = `lang-btn-sm ${lang === 'th' ? 'active' : ''}`;
+            document.getElementById('btn-en').className = `lang-btn-sm ${lang === 'en' ? 'active' : ''}`;
+
+            document.getElementById('txt-header-title').textContent = t.headerTitle;
+            document.getElementById('txt-quota-title').textContent = t.quotaTitle;
+            document.getElementById('txt-quota-desc').innerHTML = t.quotaDesc;
+            document.getElementById('lbl-choose-bike').textContent = t.chooseBike;
+            document.getElementById('lbl-date').textContent = t.date;
+            document.getElementById('lbl-room').textContent = t.room;
+            document.getElementById('hotelRoomNumber').placeholder = t.roomPlaceholder;
+            document.getElementById('lbl-name').textContent = t.name;
+            document.getElementById('displayName').placeholder = t.namePlaceholder;
+            document.getElementById('lbl-terms').innerHTML = t.terms;
+            document.getElementById('txt-btn-submit').textContent = t.btnSubmit;
+            document.getElementById('link-back').textContent = t.backLink;
+            document.getElementById('link-back').href = t.homeUrl;
+
+            // Ticket labels
+            document.getElementById('ticket-title').textContent = t.ticketSuccess;
+            document.getElementById('ticket-lbl-bikes').textContent = t.ticketBikes;
+            document.getElementById('ticket-lbl-room').textContent = t.ticketRoom;
+            document.getElementById('ticket-lbl-guest').textContent = t.ticketGuest;
+            document.getElementById('ticket-lbl-date').textContent = t.ticketDate;
+            document.getElementById('ticket-lbl-time').textContent = t.ticketDuration;
+            document.getElementById('ticket-instructions-text').innerHTML = t.ticketInstructions;
+            document.getElementById('txt-print').textContent = t.print;
+            document.getElementById('txt-home').textContent = t.home;
+            document.getElementById('ticket-home-btn').href = t.homeUrl;
+
+            renderBikeCards();
+        }
+
+        async function loadBicycleAvailability() {
+            const date = document.getElementById('bikeDate').value;
+            const room = document.getElementById('hotelRoomNumber').value.trim();
+            const capText = document.getElementById('live-capacity-text');
+            const t = I18N[currentLang];
+
+            capText.textContent = t.loading;
+
+            try {
+                let url = `/api/customer/bicycles/status?date=${date}`;
+                if (room) url += `&hotelRoomNumber=${encodeURIComponent(room)}`;
+
+                const res = await fetch(url, {
+                    headers: { 'ngrok-skip-browser-warning': '1' }
+                });
+                const data = await res.json();
+                liveBikeData = data;
+
+                capText.textContent = t.availCount(data.availableCount || 0);
+
+                // Room quota warn
+                const warnEl = document.getElementById('room-quota-warn');
+                if (room && data.roomActiveCount >= 2) {
+                    warnEl.style.display = 'block';
+                    warnEl.textContent = currentLang === 'th' 
+                        ? `⚠️ ห้อง ${room} มีการยืมจักรยานอยู่แล้ว ${data.roomActiveCount} คัน (เต็มโควต้า 2 คันแล้ว)`
+                        : `⚠️ Room ${room} already has ${data.roomActiveCount} active bicycle(s) (Maximum 2 reached).`;
+                } else if (room && data.roomActiveCount === 1) {
+                    warnEl.style.display = 'block';
+                    warnEl.style.color = '#0284c7';
+                    warnEl.textContent = currentLang === 'th'
+                        ? `ℹ️ ห้อง ${room} มีการยืมอยู่ 1 คัน (สามารถยืมเพิ่มได้อีก 1 คัน)`
+                        : `ℹ️ Room ${room} currently has 1 active bicycle (can borrow 1 more).`;
+                } else {
+                    warnEl.style.display = 'none';
+                }
+
+                renderBikeCards();
+            } catch (err) {
+                console.error(err);
+                capText.textContent = "Error loading";
+            }
+        }
+
+        function onRoomNumberChange() {
+            clearTimeout(roomDebounceTimer);
+            roomDebounceTimer = setTimeout(() => {
+                loadBicycleAvailability();
+            }, 500);
+        }
+
+        function renderBikeCards() {
+            const container = document.getElementById('bike-cards-container');
+            if (!container) return;
+            const t = I18N[currentLang];
+
+            if (!liveBikeData || !liveBikeData.bikes) {
+                container.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:15px; color:#888;">${t.loading}</div>`;
+                return;
+            }
+
+            container.innerHTML = liveBikeData.bikes.map(b => {
+                const isSelected = selectedBikes.includes(b.bikeNumber);
+                const isAvailable = b.isAvailable;
+                
+                let tagClass = 'tag-avail';
+                let tagText = t.statusAvail;
+
+                if (b.status === 'in_use') {
+                    tagClass = 'tag-inuse';
+                    tagText = t.statusInUse;
+                } else if (b.status === 'offline') {
+                    tagClass = 'tag-off';
+                    tagText = t.statusOff;
+                }
+
+                const cardClass = `bike-card ${isSelected ? 'selected' : ''} ${!isAvailable ? 'disabled' : ''}`;
+
+                return `
+                    <div class="${cardClass}" onclick="toggleBikeSelect(${b.bikeNumber}, ${isAvailable})">
+                        <span class="bike-icon">🚲</span>
+                        <span class="bike-num">${b.bikeNumber}</span>
+                        <span class="bike-status-tag ${tagClass}">${tagText}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleBikeSelect(num, isAvailable) {
+            if (!isAvailable) return;
+            const t = I18N[currentLang];
+
+            const idx = selectedBikes.indexOf(num);
+            if (idx > -1) {
+                selectedBikes.splice(idx, 1);
+            } else {
+                // Room quota check
+                const activeCount = liveBikeData ? (liveBikeData.roomActiveCount || 0) : 0;
+                if (activeCount + selectedBikes.length >= 2) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: t.maxSelectedAlert,
+                        confirmButtonColor: '#10b981'
+                    });
+                    return;
+                }
+                selectedBikes.push(num);
+            }
+
+            renderBikeCards();
+        }
+
+        async function submitBicycleBooking() {
+            const t = I18N[currentLang];
+            const bookingDate = document.getElementById('bikeDate').value;
+            const hotelRoomNumber = document.getElementById('hotelRoomNumber').value.trim();
+            const displayName = document.getElementById('displayName').value.trim();
+            const agreeTerms = document.getElementById('agreeTerms').checked;
+
+            if (!bookingDate || !hotelRoomNumber || !displayName || selectedBikes.length === 0 || !agreeTerms) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: t.missingFieldsAlert,
+                    confirmButtonColor: '#10b981'
+                });
+                return;
+            }
+
+            const btnSubmit = document.getElementById('btn-submit');
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = `<span>⏳ กำลังดำเนินการ...</span>`;
+
+            try {
+                const res = await fetch('/api/customer/bicycles/book', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'ngrok-skip-browser-warning': '1'
+                    },
+                    body: JSON.stringify({
+                        displayName,
+                        hotelRoomNumber,
+                        bookingDate,
+                        selectedBikes
+                    })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(data.message || 'Booking failed');
+                }
+
+                // Show E-Ticket
+                showTicket(data, displayName, hotelRoomNumber, bookingDate);
+
+            } catch (err) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: err.message,
+                    confirmButtonColor: '#10b981'
+                });
+            } finally {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = `<span id="txt-btn-submit">${t.btnSubmit}</span>`;
+            }
+        }
+
+        function showTicket(data, displayName, hotelRoomNumber, bookingDate) {
+            document.getElementById('booking-section').style.display = 'none';
+            const ticketSec = document.getElementById('ticket-section');
+            ticketSec.style.display = 'block';
+
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(data.groupRef)}`;
+            document.getElementById('ticket-qr-img').src = qrUrl;
+            document.getElementById('ticket-ref-text').textContent = data.groupRef;
+
+            const t = I18N[currentLang];
+            const bikesList = data.bookings.map(b => t.bikeNum(b.bikeNumber)).join(', ');
+            document.getElementById('ticket-bikes-val').textContent = bikesList;
+            document.getElementById('ticket-room-val').textContent = hotelRoomNumber;
+            document.getElementById('ticket-guest-val').textContent = displayName;
+            document.getElementById('ticket-date-val').textContent = bookingDate;
+
+            // Scroll to ticket
+            ticketSec.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
