@@ -471,6 +471,10 @@
         const urlParams = new URLSearchParams(window.location.search);
         let currentLang = urlParams.get('lang') === 'en' ? 'en' : 'th';
 
+        const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.includes('ngrok')) 
+            ? '' 
+            : 'https://sibling-compacted-decrease.ngrok-free.dev';
+
         let liveBikeData = null;
         let selectedBikes = [];
         let roomDebounceTimer = null;
@@ -530,7 +534,7 @@
             capText.textContent = t.loading;
 
             try {
-                let url = `/api/customer/bicycles/status?date=${date}`;
+                let url = `${API_BASE}/api/customer/bicycles/status?date=${date}`;
                 if (room) url += `&hotelRoomNumber=${encodeURIComponent(room)}`;
 
                 const res = await fetch(url, {
@@ -660,7 +664,7 @@
             btnSubmit.innerHTML = `<span>⏳ กำลังดำเนินการ...</span>`;
 
             try {
-                const res = await fetch('/api/customer/bicycles/book', {
+                const res = await fetch(`${API_BASE}/api/customer/bicycles/book`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
