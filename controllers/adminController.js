@@ -193,13 +193,75 @@ exports.resetFacilityStatus = async (req, res) => {
 
 // ================= BICYCLE FLEET CONTROLS =================
 
+// ================= BICYCLE FLEET CONTROLS (ADMIN) =================
+
+// Helper: Time conversions and auto-cancel
+const timeToMinutes = (timeStr) => {
+    if (!timeStr || typeof timeStr !== 'string' || !timeStr.includes(':')) return 0;
+    const [h, m] = timeStr.split(':').map(Number);
+    return (h || 0) * 60 + (m || 0);
+};
+
+const minutesToTime = (mins) => {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+};
+
+const getBangkokDateTime = () => {
+    const now = new Date();
+    const formatter = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Asia/Bangkok',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    });
+    const timeStr = formatter.format(now);
+    const dateStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+    return { dateStr, timeStr, now };
+};
+
+const autoCancelExpiredBicycles = async (targetDate) => {
+    try {
+        const { dateStr, timeStr } = getBangkokDateTime();
+        if (targetDate && targetDate !== dateStr) return 0;
+
+        const currentMins = timeToMinutes(timeStr);
+        const bookedList = await Booking.find({
+            bookingDate: dateStr,
+            facility: 'bicycle',
+            status: 'booked'
+        });
+
+        let cancelledCount = 0;
+        for (const b of bookedList) {
+            const startMins = timeToMinutes(b.startTime);
+            if (currentMins > startMins + 30) {
+                b.status = 'cancelled';
+                await b.save();
+                cancelledCount++;
+                console.log(`[Admin Cron] Bicycle ${b.bookingRef} auto-cancelled (> 30 mins no-show)`);
+            }
+        }
+        return cancelledCount;
+    } catch (err) {
+        console.error('autoCancelExpiredBicycles error:', err);
+        return 0;
+    }
+};
+
 // ดึงสถานะจักรยาน 5 คันสำหรับหน้า Admin Dashboard
 exports.getBicycleFleet = async (req, res) => {
     try {
         const { date } = req.query;
-        const now = new Date();
-        const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+        const { dateStr: todayStr, timeStr: nowTimeStr } = getBangkokDateTime();
         const targetDate = date || todayStr;
+        const isToday = targetDate === todayStr;
+
+        // Auto-cancel late bookings
+        if (isToday) {
+            await autoCancelExpiredBicycles(todayStr);
+        }
 
         const settings = await SystemSetting.getSettingsForDate(targetDate);
         const bikeSettings = settings.bicycle || {
@@ -210,32 +272,88 @@ exports.getBicycleFleet = async (req, res) => {
             bookingDate: targetDate,
             facility: 'bicycle',
             status: { $in: ['booked', 'checked_in'] }
-        }).populate('userId', 'displayName hotelRoomNumber');
+        }).populate('userId', 'displayName hotelRoomNumber').sort({ startTime: 1 });
+
+        const currentMinutes = isToday ? timeToMinutes(nowTimeStr) : 0;
 
         const fleet = [];
         for (let i = 1; i <= 5; i++) {
             const key = `bike_${i}`;
             const isEnabled = bikeSettings.isOpen && bikeSettings[key];
-            const booking = activeBookings.find(b => b.bikeNumber === i);
+            const bikeType = i <= 3 ? 'adult' : 'kids';
+            const hasTrainingWheels = i >= 4;
+
+            const bikeBookings = activeBookings.filter(b => b.bikeNumber === i);
 
             let status = 'available';
+            let mainBooking = null;
+            let nextBooking = null;
+            let returnDeadline = null;
+            let pickupDeadline = null;
+            let note = '';
+
             if (!isEnabled) {
                 status = 'maintenance';
-            } else if (booking) {
-                status = booking.status === 'checked_in' ? 'in_use' : 'booked';
+                note = 'ปิดปรับปรุง (ตั้งค่าในแท็บ เปิด-ปิดบริการ)';
+            } else if (bikeBookings.length > 0) {
+                const inUseBooking = bikeBookings.find(b => b.status === 'checked_in');
+                const bookedList = bikeBookings.filter(b => b.status === 'booked');
+
+                if (inUseBooking) {
+                    status = 'in_use';
+                    mainBooking = inUseBooking;
+                    if (bookedList.length > 0) {
+                        nextBooking = bookedList[0];
+                        returnDeadline = minutesToTime(timeToMinutes(nextBooking.startTime) - 30);
+                        note = `มีคิวจองถัดไปเวลา ${nextBooking.startTime} น. (กำหนดคืนก่อน ${returnDeadline} น.)`;
+                    }
+                } else if (bookedList.length > 0) {
+                    const earliest = bookedList[0];
+                    const startMins = timeToMinutes(earliest.startTime);
+
+                    if (isToday) {
+                        if (currentMinutes < startMins - 30) {
+                            // Available to borrow until 30 mins before reservation
+                            status = 'available';
+                            nextBooking = earliest;
+                            returnDeadline = minutesToTime(startMins - 30);
+                            note = `ว่าง (ยืมได้ถึง ${returnDeadline} น. เนื่องจากมีคิวจอง ${earliest.startTime} น.)`;
+                        } else if (currentMinutes <= startMins + 30) {
+                            // Holding for guest
+                            status = 'booked';
+                            mainBooking = earliest;
+                            pickupDeadline = minutesToTime(startMins + 30);
+                            note = `รอรับรถรอบ ${earliest.startTime} น. (ตัดสิทธิ์หากไม่มาภายใน ${pickupDeadline} น.)`;
+                        } else {
+                            status = 'available';
+                        }
+                    } else {
+                        // Future date
+                        status = 'booked';
+                        mainBooking = earliest;
+                        note = `มีคิวจองล่วงหน้าเวลา ${earliest.startTime} น.`;
+                    }
+                }
             }
 
             fleet.push({
                 bikeNumber: i,
                 code: key,
-                name: `จักรยาน เบอร์ ${i}`,
+                name: i <= 3 ? `จักรยานผู้ใหญ่ คันที่ ${i}` : `จักรยานเด็ก (มีล้อประคอง) คันที่ ${i}`,
+                bikeType,
+                hasTrainingWheels,
                 status,
-                booking: booking || null
+                booking: mainBooking,
+                nextBooking,
+                returnDeadline,
+                pickupDeadline,
+                note
             });
         }
 
         res.json({
             targetDate,
+            currentTime: nowTimeStr,
             bicycleOpen: bikeSettings.isOpen,
             fleet
         });
@@ -257,8 +375,7 @@ exports.handoverBicycle = async (req, res) => {
         if (booking.status === 'completed') return res.status(400).json({ message: 'จักรยานคันนี้ส่งคืนเรียบร้อยแล้ว' });
         if (booking.status === 'checked_in') return res.status(400).json({ message: 'จักรยานคันนี้ส่งมอบไปแล้ว' });
 
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString('th-TH', { timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit' });
+        const { timeStr } = getBangkokDateTime();
 
         booking.status = 'checked_in';
         booking.checkOutTime = timeStr;
@@ -281,8 +398,7 @@ exports.returnBicycle = async (req, res) => {
         if (booking.facility !== 'bicycle') return res.status(400).json({ message: 'รายการนี้ไม่ใช่จักรยาน' });
         if (booking.status === 'completed') return res.status(400).json({ message: 'จักรยานคันนี้บันทึกรับคืนไปแล้ว' });
 
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString('th-TH', { timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit' });
+        const { timeStr } = getBangkokDateTime();
 
         booking.status = 'completed';
         booking.returnTime = timeStr;

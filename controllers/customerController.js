@@ -375,13 +375,77 @@ exports.getMyBooking = async (req, res) => {
     }
 };
 
+// ================= BICYCLE CONTROLLER & SCHEDULING =================
+
+// Helper: Time conversions and Bangkok timezone
+const timeToMinutes = (timeStr) => {
+    if (!timeStr || typeof timeStr !== 'string' || !timeStr.includes(':')) return 0;
+    const [h, m] = timeStr.split(':').map(Number);
+    return (h || 0) * 60 + (m || 0);
+};
+
+const minutesToTime = (mins) => {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+};
+
+const getBangkokDateTime = () => {
+    const now = new Date();
+    const formatter = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Asia/Bangkok',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    });
+    const timeStr = formatter.format(now);
+    const dateStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+    return { dateStr, timeStr, now };
+};
+
+// Auto-cancel bookings if not checked in within 30 minutes of startTime
+const autoCancelExpiredBicycles = async (targetDate) => {
+    try {
+        const { dateStr, timeStr } = getBangkokDateTime();
+        if (targetDate && targetDate !== dateStr) return 0;
+
+        const currentMins = timeToMinutes(timeStr);
+        const bookedList = await Booking.find({
+            bookingDate: dateStr,
+            facility: 'bicycle',
+            status: 'booked'
+        });
+
+        let cancelledCount = 0;
+        for (const b of bookedList) {
+            const startMins = timeToMinutes(b.startTime);
+            // Auto-cancel if guest does not show up within 30 minutes of startTime
+            if (currentMins > startMins + 30) {
+                b.status = 'cancelled';
+                await b.save();
+                cancelledCount++;
+                console.log(`[Bicycle Auto-Cancel] ${b.bookingRef} (Bike #${b.bikeNumber}) cancelled due to > 30 mins no-show.`);
+            }
+        }
+        return cancelledCount;
+    } catch (err) {
+        console.error('autoCancelExpiredBicycles error:', err);
+        return 0;
+    }
+};
+
 // ดึงสถานะจักรยาน 5 คัน (สำหรับหน้าลูกค้า)
 exports.getBicycleStatus = async (req, res) => {
     try {
-        const { date, hotelRoomNumber } = req.query;
-        const now = new Date();
-        const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+        const { date, hotelRoomNumber, startTime } = req.query;
+        const { dateStr: todayStr, timeStr: nowTimeStr } = getBangkokDateTime();
         const targetDate = date || todayStr;
+        const isToday = targetDate === todayStr;
+
+        // Auto-cancel any uncollected bicycle bookings past 30-minute grace period
+        if (isToday) {
+            await autoCancelExpiredBicycles(todayStr);
+        }
 
         const settings = await SystemSetting.getSettingsForDate(targetDate);
         const bikeSettings = settings.bicycle || {
@@ -392,32 +456,111 @@ exports.getBicycleStatus = async (req, res) => {
             bookingDate: targetDate,
             facility: 'bicycle',
             status: { $in: ['booked', 'checked_in'] }
-        });
+        }).sort({ startTime: 1 });
 
         let roomActiveCount = 0;
         if (hotelRoomNumber) {
             roomActiveCount = activeBookings.filter(b => b.hotelRoomNumber === hotelRoomNumber).length;
         }
 
+        const currentMinutes = isToday ? timeToMinutes(nowTimeStr) : 0;
+        const checkMinutes = startTime ? timeToMinutes(startTime) : (isToday ? currentMinutes : 480);
+
         const bikes = [];
         for (let i = 1; i <= 5; i++) {
             const key = `bike_${i}`;
             const isEnabled = bikeSettings.isOpen && bikeSettings[key];
-            const booking = activeBookings.find(b => b.bikeNumber === i);
+            const bikeType = i <= 3 ? 'adult' : 'kids';
+            const hasTrainingWheels = i >= 4;
+
+            // รายการจองของจักรยานคันนี้
+            const bikeBookings = activeBookings.filter(b => b.bikeNumber === i);
 
             let status = 'available';
+            let isAvailable = true;
+            let returnDeadline = null;
+            let nextBookingTime = null;
+            let currentBooking = null;
+            let note = '';
+
             if (!isEnabled) {
                 status = 'maintenance';
-            } else if (booking) {
-                status = booking.status === 'checked_in' ? 'in_use' : 'booked';
+                isAvailable = false;
+                note = 'ปิดปรับปรุงชั่วคราว';
+            } else if (bikeBookings.length > 0) {
+                const inUseBooking = bikeBookings.find(b => b.status === 'checked_in');
+                const bookedList = bikeBookings.filter(b => b.status === 'booked');
+
+                if (inUseBooking) {
+                    status = 'in_use';
+                    isAvailable = false;
+                    currentBooking = {
+                        hotelRoomNumber: inUseBooking.hotelRoomNumber,
+                        startTime: inUseBooking.startTime,
+                        checkOutTime: inUseBooking.checkOutTime || inUseBooking.startTime
+                    };
+                    if (bookedList.length > 0) {
+                        nextBookingTime = bookedList[0].startTime;
+                        returnDeadline = minutesToTime(timeToMinutes(bookedList[0].startTime) - 30);
+                    }
+                } else if (bookedList.length > 0) {
+                    const earliestBooking = bookedList[0];
+                    const startMins = timeToMinutes(earliestBooking.startTime);
+
+                    if (isToday) {
+                        // แนวทางที่ 1: ก่อนถึงเวลาจอง (มากกว่า 30 นาที) สามารถยืมได้ แต่ต้องคืนก่อนเวลาเริ่มจอง 30 นาที
+                        if (currentMinutes < startMins - 30) {
+                            status = 'available';
+                            isAvailable = true;
+                            nextBookingTime = earliestBooking.startTime;
+                            returnDeadline = minutesToTime(startMins - 30);
+                            note = `ยืมได้ถึง ${returnDeadline} น. (มีคิวถัดไป ${earliestBooking.startTime} น.)`;
+                        } else if (currentMinutes <= startMins + 30) {
+                            // อยู่ในช่วงเวลาล็อกรถ / รอผู้จองมารับรถ
+                            status = 'booked';
+                            isAvailable = false;
+                            nextBookingTime = earliestBooking.startTime;
+                            const pickupDeadline = minutesToTime(startMins + 30);
+                            note = `รอรับรถรอบ ${earliestBooking.startTime} น. (ตัดสิทธิ์หากไม่มาภายใน ${pickupDeadline} น.)`;
+                            currentBooking = {
+                                hotelRoomNumber: earliestBooking.hotelRoomNumber,
+                                startTime: earliestBooking.startTime,
+                                pickupDeadline
+                            };
+                        } else {
+                            status = 'available';
+                            isAvailable = true;
+                        }
+                    } else {
+                        // วันอื่นในอนาคต
+                        if (checkMinutes >= startMins - 30) {
+                            status = 'booked';
+                            isAvailable = false;
+                            nextBookingTime = earliestBooking.startTime;
+                            note = `มีคิวจองเวลา ${earliestBooking.startTime} น.`;
+                        } else {
+                            status = 'available';
+                            isAvailable = true;
+                            nextBookingTime = earliestBooking.startTime;
+                            returnDeadline = minutesToTime(startMins - 30);
+                            note = `ยืมได้ถึง ${returnDeadline} น.`;
+                        }
+                    }
+                }
             }
 
             bikes.push({
                 bikeNumber: i,
                 code: key,
-                name: `จักรยาน เบอร์ ${i}`,
-                isAvailable: status === 'available',
-                status
+                name: i <= 3 ? `จักรยานผู้ใหญ่ คันที่ ${i}` : `จักรยานเด็ก (มีล้อประคอง) คันที่ ${i}`,
+                bikeType,
+                hasTrainingWheels,
+                isAvailable,
+                status,
+                returnDeadline,
+                nextBookingTime,
+                note,
+                currentBooking
             });
         }
 
@@ -425,6 +568,7 @@ exports.getBicycleStatus = async (req, res) => {
 
         res.json({
             targetDate,
+            currentTime: nowTimeStr,
             isOpen: bikeSettings.isOpen,
             availableCount,
             roomActiveCount,
@@ -437,10 +581,10 @@ exports.getBicycleStatus = async (req, res) => {
     }
 };
 
-// จองจักรยาน (เลือก 1 หรือ 2 คัน)
+// จองจักรยาน (เลือก 1 หรือ 2 คัน พร้อมระบุเวลาเริ่มจอง)
 exports.bookBicycles = async (req, res) => {
     try {
-        const { displayName, hotelRoomNumber, bookingDate, selectedBikes } = req.body;
+        const { displayName, hotelRoomNumber, bookingDate, selectedBikes, startTime } = req.body;
 
         if (!displayName || !hotelRoomNumber || !bookingDate || !Array.isArray(selectedBikes) || selectedBikes.length === 0) {
             return res.status(400).json({ message: 'กรุณากรอกข้อมูลให้ครบถ้วนและเลือกจักรยานอย่างน้อย 1 คัน' });
@@ -449,6 +593,26 @@ exports.bookBicycles = async (req, res) => {
         if (selectedBikes.length > 2) {
             return res.status(400).json({ message: 'สามารถเลือกจองจักรยานได้สูงสุด 2 คันต่อครั้ง' });
         }
+
+        const { dateStr: todayStr, timeStr: nowTimeStr } = getBangkokDateTime();
+        const isToday = bookingDate === todayStr;
+
+        // Auto-cancel late bookings first
+        if (isToday) {
+            await autoCancelExpiredBicycles(todayStr);
+        }
+
+        // กำหนดเวลาเริ่มจอง (ถ้าไม่ได้ระบุหรือส่ง "now" มา ให้ใช้เวลาปัจจุบัน)
+        let bookingStartTime = startTime;
+        if (!bookingStartTime || bookingStartTime === 'now') {
+            bookingStartTime = isToday ? nowTimeStr : '08:00';
+        }
+
+        if (!/^\d{2}:\d{2}$/.test(bookingStartTime)) {
+            return res.status(400).json({ message: 'รูปแบบเวลาไม่ถูกต้อง (HH:mm)' });
+        }
+
+        const reqMinutes = timeToMinutes(bookingStartTime);
 
         // ตรวจสอบสถานะเปิด-ปิด บริการจักรยาน
         const settings = await SystemSetting.getSettingsForDate(bookingDate);
@@ -482,14 +646,33 @@ exports.bookBicycles = async (req, res) => {
             status: { $in: ['booked', 'checked_in'] }
         });
 
-        if (activeBikeBookings.length > 0) {
-            const bookedNumbers = activeBikeBookings.map(b => b.bikeNumber).join(', ');
-            return res.status(400).json({ message: `จักรยานเบอร์ ${bookedNumbers} มีผู้จองหรือกำลังใช้งานอยู่แล้ว` });
-        }
+        // ตรวจสอบเงื่อนไขตามแนวทางที่ 1 (ยืมก่อนได้แต่ต้องคืนก่อนคิวถัดไป 30 นาที)
+        const bikeDeadlines = {};
 
         for (const num of selectedBikes) {
             if (!bikeSettings[`bike_${num}`]) {
                 return res.status(400).json({ message: `จักรยานเบอร์ ${num} ปิดปรับปรุงอยู่ในขณะนี้` });
+            }
+
+            const existingBookingsOnBike = activeBikeBookings.filter(b => b.bikeNumber === num);
+            for (const eb of existingBookingsOnBike) {
+                if (eb.status === 'checked_in') {
+                    return res.status(400).json({ message: `จักรยานเบอร์ ${num} กำลังมีผู้ใช้งานอยู่ (ยังไม่ส่งคืน)` });
+                }
+
+                if (eb.status === 'booked') {
+                    const existStartMins = timeToMinutes(eb.startTime);
+                    // ถ้าเวลาที่ขอจอง ชนหรืออยู่ในระยะ 30 นาทีก่อนคิวถัดไป หรือหลังคิวถัดไป
+                    if (reqMinutes >= existStartMins - 30) {
+                        return res.status(400).json({
+                            message: `จักรยานเบอร์ ${num} มีผู้จองรอบเวลา ${eb.startTime} น. ไว้แล้ว ไม่สามารถจองเวลานี้ได้`
+                        });
+                    } else {
+                        // reqMinutes < existStartMins - 30: ยืมได้แต่ต้องส่งคืนก่อนเวลา existStartMins - 30
+                        const deadlineStr = minutesToTime(existStartMins - 30);
+                        bikeDeadlines[num] = deadlineStr;
+                    }
+                }
             }
         }
 
@@ -499,16 +682,15 @@ exports.bookBicycles = async (req, res) => {
             user = await User.create({ displayName, hotelRoomNumber });
         }
 
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString('th-TH', { timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit' });
-
         const createdBookings = [];
         const groupRef = 'BK-' + Date.now().toString().slice(-6);
 
         for (let i = 0; i < selectedBikes.length; i++) {
             const bikeNum = selectedBikes[i];
             const bookingRef = selectedBikes.length === 1 ? groupRef : `${groupRef}-${i + 1}`;
-            
+            const bikeType = bikeNum <= 3 ? 'adult' : 'kids';
+            const deadline = bikeDeadlines[bikeNum] || '';
+
             const booking = await Booking.create({
                 bookingRef,
                 userId: user._id,
@@ -518,8 +700,10 @@ exports.bookBicycles = async (req, res) => {
                 facility: 'bicycle',
                 facilityOption: `bike_${bikeNum}`,
                 bikeNumber: bikeNum,
-                startTime: timeStr,
-                endTime: 'ไม่มีเวลากำหนด',
+                bikeType,
+                startTime: bookingStartTime,
+                endTime: deadline ? `ต้องคืนก่อน ${deadline} น.` : 'ไม่มีเวลากำหนด',
+                returnDeadline: deadline,
                 status: 'booked',
                 agreedToTerms: true
             });
@@ -527,9 +711,12 @@ exports.bookBicycles = async (req, res) => {
         }
 
         res.status(201).json({
-            message: `จองจักรยานสำเร็จ (${selectedBikes.map(n => 'เบอร์ ' + n).join(', ')})`,
+            message: `จองจักรยานสำเร็จ (${selectedBikes.map(n => (n <= 3 ? `ผู้ใหญ่ #${n}` : `เด็กมีล้อประคอง #${n}`)).join(', ')})`,
             groupRef,
-            bookings: createdBookings
+            startTime: bookingStartTime,
+            bookings: createdBookings,
+            hasDeadline: Object.keys(bikeDeadlines).length > 0,
+            deadlines: bikeDeadlines
         });
 
     } catch (error) {

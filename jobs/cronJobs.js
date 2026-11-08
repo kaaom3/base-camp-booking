@@ -1,14 +1,19 @@
 const cron = require('node-cron');
 const Booking = require('../models/Booking');
 
-// สคริปต์รันทุกๆ 5 นาทีเพื่อตรวจสอบคิวที่หมดเวลาแล้ว
+// แปลงเวลา "HH:mm" เป็นนาที
+const timeToMinutes = (timeStr) => {
+    if (!timeStr || typeof timeStr !== 'string' || !timeStr.includes(':')) return 0;
+    const [h, m] = timeStr.split(':').map(Number);
+    return (h || 0) * 60 + (m || 0);
+};
+
+// สคริปต์รันทุกๆ 1 นาทีเพื่อตรวจสอบคิวหมดเวลา และยกเลิกจักรยานที่มารับสายเกิน 30 นาที
 const startCronJobs = () => {
-    cron.schedule('*/5 * * * *', async () => {
+    cron.schedule('* * * * *', async () => {
         try {
-            console.log('Running cron job: Check completed bookings');
-            
             const now = new Date();
-            // สร้างเวลาปัจจุบันในรูปแบบ "HH:mm" (เวลาไทย)
+            // เวลาปัจจุบันในรูปแบบ "HH:mm" (เวลาไทย)
             const formatter = new Intl.DateTimeFormat('en-GB', {
                 timeZone: 'Asia/Bangkok',
                 hour: '2-digit',
@@ -16,21 +21,39 @@ const startCronJobs = () => {
                 hour12: false
             });
             const currentTimeStr = formatter.format(now);
-            
+            const currentMins = timeToMinutes(currentTimeStr);
             const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }); // YYYY-MM-DD
 
-            // หาคิวของวันนี้ ที่เวลาสิ้นสุด (endTime) น้อยกว่าเวลาปัจจุบัน
-            // และสถานะยังค้างเป็น 'booked' หรือ 'checked_in'
-            const expiredBookings = await Booking.find({
+            // 1. ตรวจสอบคิว Game Room / Ice Bath ที่หมดเวลาแล้ว -> เปลี่ยนเป็น completed
+            const expiredStandardBookings = await Booking.find({
                 bookingDate: todayStr,
+                facility: { $in: ['game_room', 'ice_bath'] },
                 endTime: { $lt: currentTimeStr },
                 status: { $in: ['booked', 'checked_in'] }
             });
 
-            for (const booking of expiredBookings) {
+            for (const booking of expiredStandardBookings) {
                 booking.status = 'completed';
                 await booking.save();
-                console.log(`Auto-completed booking: ${booking.bookingRef}`);
+                console.log(`[Cron] Auto-completed booking: ${booking.bookingRef} (${booking.facility})`);
+            }
+
+            // 2. ตรวจสอบจักรยานที่จองไว้แต่ไม่มารับภายใน 30 นาที (Auto-Cancel Grace Period)
+            // สำหรับคิวจักรยานที่ status = 'booked' และเกิน 30 นาทีจากเวลาเริ่มจอง (startTime)
+            const uncollectedBikes = await Booking.find({
+                bookingDate: todayStr,
+                facility: 'bicycle',
+                status: 'booked'
+            });
+
+            for (const bikeBooking of uncollectedBikes) {
+                const startMins = timeToMinutes(bikeBooking.startTime);
+                // ถ้าเลยเวลาเริ่มจองมาแล้วเกิน 30 นาที (Grace period 30 mins)
+                if (currentMins > startMins + 30) {
+                    bikeBooking.status = 'cancelled';
+                    await bikeBooking.save();
+                    console.log(`[Cron] Auto-cancelled uncollected bicycle: ${bikeBooking.bookingRef} (Bike #${bikeBooking.bikeNumber}, start: ${bikeBooking.startTime}, current: ${currentTimeStr})`);
+                }
             }
 
         } catch (error) {

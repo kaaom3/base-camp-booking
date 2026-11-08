@@ -778,6 +778,13 @@ function renderAdminBicycleFleet(fleet) {
 
     let html = '';
     fleet.forEach(b => {
+        const isKids = b.bikeType === 'kids' || b.bikeNumber >= 4;
+        const typeBadge = isKids 
+            ? '<span style="font-size:11px; padding:3px 10px; border-radius:12px; background:#fff7ed; color:#ea580c; font-weight:700; border:1px solid #fed7aa;">🚲🧒 จักรยานเด็ก (มีล้อประคอง)</span>'
+            : '<span style="font-size:11px; padding:3px 10px; border-radius:12px; background:#eef2ff; color:#0011ff; font-weight:700; border:1px solid #c7d2fe;">🚴‍♂️ จักรยานผู้ใหญ่</span>';
+
+        const bikeIcon = isKids ? '🚲🧒' : '🚴‍♂️';
+
         let badgeClass = 'status-available';
         let badgeLabel = '🟢 ว่าง (พร้อมให้จอง)';
         let borderColor = '#10b981';
@@ -788,23 +795,47 @@ function renderAdminBicycleFleet(fleet) {
             badgeClass = 'status-booked';
             badgeLabel = '🟡 รอรับรถ (Booked)';
             borderColor = '#f59e0b';
+
+            const pickupNotice = b.pickupDeadline 
+                ? `<div style="font-size:12px; color:#c2410c; margin-top:4px; font-weight:600;">⏰ ตัดสิทธิ์อัตโนมัติหากไม่มารับภายใน <strong>${b.pickupDeadline} น.</strong> (Grace Period 30 นาที)</div>`
+                : '';
+
             borrowerInfo = `
                 <div><strong>ห้องพัก:</strong> <span style="color:#d97706; font-weight:700; font-size:16px;">${b.booking.hotelRoomNumber}</span> (${b.booking.userId?.displayName || 'ลูกค้า'})</div>
-                <div style="font-size:12.5px; color:#64748b; margin-top:3px;">รหัสจอง: <strong>${b.booking.bookingRef}</strong> | เวลาจอง: ${b.booking.startTime || '-'}</div>
+                <div style="font-size:12.5px; color:#64748b; margin-top:3px;">รหัสจอง: <strong>${b.booking.bookingRef}</strong> | เวลานัดรับ: <strong>${b.booking.startTime || '-'} น.</strong></div>
+                ${pickupNotice}
             `;
+
             actionBtn = `
-                <button class="btn-checkin" style="padding: 10px 20px; font-size: 14px;" onclick="handoverBike('${b.booking.bookingRef}', ${b.bikeNumber})">
-                    🔑 ส่งมอบรถให้ลูกค้า
-                </button>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button class="btn-checkin" style="padding: 10px 18px; font-size: 13.5px;" onclick="handoverBike('${b.booking.bookingRef}', ${b.bikeNumber})">
+                        🔑 ส่งมอบรถให้ลูกค้า
+                    </button>
+                    <button class="btn-cancel" style="padding: 10px 14px; font-size: 13px;" onclick="cancelBookingAdmin('${b.booking.bookingRef}')">
+                        ❌ ยกเลิก
+                    </button>
+                </div>
             `;
         } else if (b.status === 'in_use' && b.booking) {
             badgeClass = 'status-in_use';
             badgeLabel = '🔵 กำลังใช้งาน (In Use)';
             borderColor = '#0011ff';
+
+            let deadlineAlert = '';
+            if (b.nextBooking && b.returnDeadline) {
+                deadlineAlert = `
+                    <div style="background:#fff7ed; border-left:4px solid #ea580c; padding:6px 10px; border-radius:6px; margin-top:6px; font-size:12.5px; color:#9a3412; font-weight:600;">
+                        ⚠️ มีคิวจองถัดไปเวลา <strong>${b.nextBooking.startTime} น.</strong> (ต้องส่งคืนก่อน <strong>${b.returnDeadline} น.</strong>)
+                    </div>
+                `;
+            }
+
             borrowerInfo = `
                 <div><strong>ห้องพัก:</strong> <span style="color:#0011ff; font-weight:700; font-size:16px;">${b.booking.hotelRoomNumber}</span> (${b.booking.userId?.displayName || 'ลูกค้า'})</div>
-                <div style="font-size:12.5px; color:#64748b; margin-top:3px;">รหัสจอง: <strong>${b.booking.bookingRef}</strong> | รับรถเมื่อ: ${b.booking.checkOutTime || b.booking.startTime}</div>
+                <div style="font-size:12.5px; color:#64748b; margin-top:3px;">รหัสจอง: <strong>${b.booking.bookingRef}</strong> | รับรถเมื่อ: <strong>${b.booking.checkOutTime || b.booking.startTime} น.</strong></div>
+                ${deadlineAlert}
             `;
+
             actionBtn = `
                 <button class="btn-refresh" style="padding: 10px 20px; font-size: 14px; background: #10b981; box-shadow: 0 4px 12px rgba(16,185,129,0.25);" onclick="returnBike('${b.booking.bookingRef}', ${b.bikeNumber})">
                     🏁 รับคืนรถ (เปิดว่างทันที)
@@ -815,15 +846,25 @@ function renderAdminBicycleFleet(fleet) {
             badgeLabel = '🔴 ปิดซ่อมบำรุง';
             borderColor = '#ef4444';
             borrowerInfo = '<span style="color:#dc2626;">ปิดให้บริการชั่วคราว (ตั้งค่าได้ในแท็บ เปิด-ปิดบริการ)</span>';
+        } else if (b.returnDeadline && b.nextBooking) {
+            // Available with deadline
+            badgeClass = 'status-available';
+            badgeLabel = `🟢 ว่าง (ยืมได้ถึง ${b.returnDeadline} น.)`;
+            borderColor = '#f59e0b';
+            borrowerInfo = `
+                <span style="color:#059669; font-weight:600;">พร้อมให้ยืมได้ในขณะนี้</span>
+                <div style="font-size:12px; color:#b45309; margin-top:3px;">ℹ️ มีคิวจองล่วงหน้าเวลา <strong>${b.nextBooking.startTime} น.</strong> (ผู้ยืมรอบนี้ต้องคืนก่อน ${b.returnDeadline} น.)</div>
+            `;
         }
 
         html += `
             <div style="background:#ffffff; border:1.5px solid #e2e8f0; border-left: 6px solid ${borderColor}; border-radius:12px; padding:18px 22px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
                 <div style="display:flex; align-items:center; gap:18px;">
-                    <div style="font-size:38px; background:#f8fafc; width:64px; height:64px; display:flex; align-items:center; justify-content:center; border-radius:12px; border:1px solid #e2e8f0;">🚲</div>
+                    <div style="font-size:36px; background:#f8fafc; width:64px; height:64px; display:flex; align-items:center; justify-content:center; border-radius:12px; border:1px solid #e2e8f0;">${bikeIcon}</div>
                     <div>
                         <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                            <h3 style="margin:0; font-family:'Kanit',sans-serif; font-size:18px; color:#1e293b;">จักรยานคันที่ ${b.bikeNumber} (BIKE #${b.bikeNumber})</h3>
+                            <h3 style="margin:0; font-family:'Kanit',sans-serif; font-size:18px; color:#1e293b;">${b.name || `จักรยานคันที่ ${b.bikeNumber}`} (BIKE #${b.bikeNumber})</h3>
+                            ${typeBadge}
                             <span style="font-size:12px; padding:3px 12px; border-radius:20px; font-weight:600;" class="${badgeClass}">${badgeLabel}</span>
                         </div>
                         <div style="margin-top:6px; font-size:14px;">
