@@ -329,6 +329,167 @@
             background: #dc2626;
             color: #ffffff;
         }
+
+        /* Report & Analytics Dashboard Styles */
+        .report-preset-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .preset-btn {
+            font-family: 'Kanit', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            padding: 7px 14px;
+            border-radius: 20px;
+            border: 1.5px solid var(--bc-border);
+            background: #f8fafc;
+            color: var(--bc-text);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .preset-btn:hover {
+            border-color: var(--bc-blue);
+            color: var(--bc-blue);
+            background: #eef2ff;
+        }
+        .preset-btn.active {
+            background: var(--bc-blue);
+            color: #ffffff;
+            border-color: var(--bc-blue);
+            font-weight: 600;
+            box-shadow: 0 4px 10px rgba(0, 17, 255, 0.2);
+        }
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .kpi-card {
+            background: #ffffff;
+            border: 1.5px solid var(--bc-border);
+            border-radius: 14px;
+            padding: 18px 20px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.03);
+        }
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            background: var(--bc-blue);
+        }
+        .kpi-card.accent-orange::before { background: var(--bc-orange); }
+        .kpi-card.accent-green::before { background: #10b981; }
+        .kpi-card.accent-yellow::before { background: #f59e0b; }
+        .kpi-card.accent-purple::before { background: #8b5cf6; }
+        .kpi-card.accent-cyan::before { background: #06b6d4; }
+        .kpi-card.accent-red::before { background: #ef4444; }
+        .kpi-label {
+            font-size: 13px;
+            color: var(--bc-muted);
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .kpi-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--bc-text);
+            margin: 6px 0 4px 0;
+            line-height: 1.2;
+        }
+        .kpi-sub {
+            font-size: 12.5px;
+            color: var(--bc-muted);
+        }
+        .report-grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+        .report-grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+        .stat-bar-row {
+            margin-bottom: 12px;
+        }
+        .stat-bar-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13.5px;
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+        .stat-bar-track {
+            width: 100%;
+            height: 10px;
+            background: #f1f5f9;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .stat-bar-fill {
+            height: 100%;
+            border-radius: 8px;
+            transition: width 0.4s ease;
+        }
+        .hourly-chart-wrap {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            height: 190px;
+            padding: 20px 10px 10px 10px;
+            background: #f8fafc;
+            border: 1px solid var(--bc-border);
+            border-radius: 12px;
+            overflow-x: auto;
+        }
+        .hourly-col {
+            flex: 1;
+            min-width: 38px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            justify-content: flex-end;
+        }
+        .hourly-bar {
+            width: 24px;
+            background: linear-gradient(180deg, var(--bc-blue), #4f46e5);
+            border-radius: 6px 6px 0 0;
+            transition: height 0.3s ease;
+            position: relative;
+            min-height: 3px;
+        }
+        .hourly-bar.peak {
+            background: linear-gradient(180deg, var(--bc-orange), #f59e0b);
+        }
+        .hourly-val {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--bc-text);
+            margin-bottom: 4px;
+        }
+        .hourly-lbl {
+            font-size: 11px;
+            color: var(--bc-muted);
+            margin-top: 6px;
+            font-weight: 500;
+        }
+        @media print {
+            .admin-header, .tabs, .no-print { display: none !important; }
+            .admin-container { max-width: 100%; margin: 0; padding: 0; }
+            .card { box-shadow: none; border: 1px solid #cbd5e1; break-inside: avoid; }
+        }
     </style>
 </head>
 <body class="admin-body">
@@ -349,6 +510,7 @@
             <button class="tab-btn" onclick="switchTab('bicycle')">🚲 จัดการจักรยาน (Bicycle Fleet)</button>
             <button class="tab-btn" onclick="switchTab('facility')">⚙️ เปิด-ปิดบริการ (Unit Control)</button>
             <button class="tab-btn" onclick="switchTab('history')">📂 ประวัติการใช้งาน (History)</button>
+            <button class="tab-btn" onclick="switchTab('reports')">📊 รายงานและสถิติ (Reports & Analytics)</button>
         </div>
 
         <div id="tab-schedule" class="tab-content active">
@@ -655,8 +817,221 @@
             </div>
         </div>
 
+        <!-- ================= TAB 5: COMPREHENSIVE REPORTS & ANALYTICS ================= -->
+        <div id="tab-reports" class="tab-content">
+            <!-- Filter & Control Card -->
+            <div class="card no-print">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 14px;">
+                    <div>
+                        <h2 class="section-title" style="margin: 0; border: none; padding: 0;">📊 ระบบรายงานและวิเคราะห์สถิติการใช้งาน (Analytics & Insights)</h2>
+                        <div style="font-size: 13.5px; color: var(--bc-muted); margin-top: 4px;">วัดผลการใช้งาน รายได้ ช่วงเวลายอดนิยม ความคุ้มค่าของอุปกรณ์ และพฤติกรรมผู้เข้าพักครบทุกมิติ</div>
+                    </div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button class="btn-refresh" style="background: #059669; box-shadow: 0 4px 12px rgba(5,150,105,0.2);" onclick="exportReportCSV()">📥 Export CSV (Excel)</button>
+                        <button class="btn-refresh" style="background: #475569; box-shadow: 0 4px 12px rgba(71,85,105,0.2);" onclick="window.print()">🖨️ พิมพ์รายงาน / PDF</button>
+                    </div>
+                </div>
+
+                <!-- Quick Time Range Presets -->
+                <div style="font-size: 13px; font-weight: 600; color: var(--bc-text); margin-bottom: 8px;">⚡ เลือกช่วงเวลาด่วน (Quick Period):</div>
+                <div class="report-preset-bar">
+                    <button class="preset-btn" id="preset-today" onclick="applyReportPreset('today')">วันนี้ (Today)</button>
+                    <button class="preset-btn" id="preset-yesterday" onclick="applyReportPreset('yesterday')">เมื่อวาน (Yesterday)</button>
+                    <button class="preset-btn" id="preset-7d" onclick="applyReportPreset('7d')">7 วันล่าสุด</button>
+                    <button class="preset-btn" id="preset-30d" onclick="applyReportPreset('30d')">30 วันล่าสุด</button>
+                    <button class="preset-btn" id="preset-this_month" onclick="applyReportPreset('this_month')">เดือนนี้ (This Month)</button>
+                    <button class="preset-btn" id="preset-last_month" onclick="applyReportPreset('last_month')">เดือนที่แล้ว (Last Month)</button>
+                    <button class="preset-btn" id="preset-this_year" onclick="applyReportPreset('this_year')">ปีนี้ (This Year)</button>
+                    <button class="preset-btn active" id="preset-all" onclick="applyReportPreset('all')">ทั้งหมดตั้งแต่เปิดระบบ (All Time)</button>
+                </div>
+
+                <!-- Custom Date Range & Facility Filter -->
+                <div style="display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap; background: #f8fafc; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--bc-border);">
+                    <div>
+                        <label style="display: block; font-size: 12.5px; font-weight: 600; color: var(--bc-muted); margin-bottom: 4px;">ตั้งแต่วันที่ (Start Date)</label>
+                        <input type="date" id="reportStartDate" class="admin-input" style="width: auto; padding: 8px 12px;" onchange="clearPresetHighlight()">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12.5px; font-weight: 600; color: var(--bc-muted); margin-bottom: 4px;">ถึงวันที่ (End Date)</label>
+                        <input type="date" id="reportEndDate" class="admin-input" style="width: auto; padding: 8px 12px;" onchange="clearPresetHighlight()">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12.5px; font-weight: 600; color: var(--bc-muted); margin-bottom: 4px;">ประเภทบริการ (Facility)</label>
+                        <select id="reportFacility" class="admin-input" style="width: auto; padding: 8px 14px;" onchange="loadReportsData()">
+                            <option value="all">ทั้งหมดทุกบริการ (All Facilities)</option>
+                            <option value="game_room">🎮 ห้องเกมส์ (Game Room)</option>
+                            <option value="ice_bath">🧊 บ่อน้ำแข็ง (Ice Bath)</option>
+                            <option value="bicycle">🚲 จักรยาน (Bicycle Fleet)</option>
+                        </select>
+                    </div>
+                    <button class="btn-checkin" style="padding: 9px 22px; font-size: 14px;" onclick="loadReportsData()">🔍 ประมวลผลสถิติ</button>
+                </div>
+            </div>
+
+            <!-- Active Period Header Banner -->
+            <div id="report-period-banner" style="background: linear-gradient(90deg, #0011ff, #1e40af); color: #ffffff; padding: 14px 22px; border-radius: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; box-shadow: 0 6px 18px rgba(0, 17, 255, 0.15);">
+                <div>
+                    <span style="font-size: 13px; opacity: 0.85;">📅 ช่วงเวลาของรายงานที่กำลังแสดงผล:</span>
+                    <strong id="report-period-text" style="font-size: 16px; margin-left: 8px; color: #ffd600;">กำลังโหลดข้อมูล...</strong>
+                </div>
+                <div id="report-generated-at" style="font-size: 12.5px; opacity: 0.85;"></div>
+            </div>
+
+            <!-- 1. EXECUTIVE KPI CARDS (8 Cards) -->
+            <div class="kpi-grid" id="report-kpi-container">
+                <!-- Populated via JS -->
+            </div>
+
+            <!-- 2. FACILITY DEEP-DIVE (3 Columns: Game Room, Ice Bath, Bicycle) -->
+            <div class="report-grid-3" id="report-facility-cards">
+                <!-- Populated via JS -->
+            </div>
+
+            <!-- 3. TIME OF DAY & HOURLY DEMAND DISTRIBUTION -->
+            <div class="card">
+                <h2 class="section-title">⏰ วิเคราะห์ความหนาแน่นตามช่วงเวลาของวัน และรายชั่วโมง (Peak Time & Hourly Demand)</h2>
+                <p style="font-size: 13.5px; color: var(--bc-muted); margin-bottom: 16px;">ช่วยให้ฝ่ายบริหารวางแผนจัดสรรพนักงานต้อนรับ การเตรียมน้ำแข็ง และการตรวจเช็กอุปกรณ์ในชั่วโมงเร่งด่วน</p>
+
+                <!-- 4 Time of Day Buckets -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 24px;" id="report-time-of-day-grid">
+                    <!-- Populated via JS -->
+                </div>
+
+                <!-- Hourly Bar Chart (07:00 - 22:00) -->
+                <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--bc-text);">📈 กราฟจำนวนการจองแยกตามชั่วโมง (07:00 - 22:00 น.):</div>
+                <div class="hourly-chart-wrap" id="report-hourly-chart">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+
+            <!-- 4. DAY OF WEEK & MONTHLY SUMMARY -->
+            <div class="report-grid-2">
+                <!-- Day of Week Distribution -->
+                <div class="card" style="margin-bottom: 0;">
+                    <h2 class="section-title">📅 สถิติแยกตามวันในสัปดาห์ (Day of Week Analysis)</h2>
+                    <p style="font-size: 13px; color: var(--bc-muted); margin-bottom: 14px;">เปรียบเทียบความคึกคักระหว่างวันธรรมดา (Weekday) และวันหยุดสุดสัปดาห์ (Weekend)</p>
+                    <div id="report-dow-container">
+                        <!-- Populated via JS -->
+                    </div>
+                </div>
+
+                <!-- Monthly Summary Table -->
+                <div class="card" style="margin-bottom: 0;">
+                    <h2 class="section-title">🗓️ สรุปสถิติรายเดือน (Monthly Performance)</h2>
+                    <p style="font-size: 13px; color: var(--bc-muted); margin-bottom: 14px;">ภาพรวมการเติบโตของยอดการจอง จำนวนห้องพัก และรายได้แยกตามเดือน</p>
+                    <div class="table-responsive">
+                        <table class="schedule-table">
+                            <thead>
+                                <tr>
+                                    <th>เดือน (Month)</th>
+                                    <th>จองรวม</th>
+                                    <th>🎮 เกม</th>
+                                    <th>🧊 น้ำแข็ง</th>
+                                    <th>🚲 จักรยาน</th>
+                                    <th>ใช้งานจริง</th>
+                                    <th>ห้องพัก</th>
+                                    <th>รายได้ (฿)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="report-monthly-body">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. DAILY TREND & TOP ROOMS LEADERBOARD -->
+            <div class="report-grid-2" style="margin-top: 24px;">
+                <!-- Daily Trend Table -->
+                <div class="card" style="margin-bottom: 0;">
+                    <h2 class="section-title">📊 ตารางแนวโน้มรายวัน (Daily Breakdown)</h2>
+                    <div class="table-responsive" style="max-height: 380px; overflow-y: auto;">
+                        <table class="schedule-table">
+                            <thead>
+                                <tr>
+                                    <th>วันที่ (Date)</th>
+                                    <th>รวม</th>
+                                    <th>🎮 เกม</th>
+                                    <th>🧊 น้ำแข็ง</th>
+                                    <th>🚲 จักรยาน</th>
+                                    <th>สำเร็จ</th>
+                                    <th>ยกเลิก</th>
+                                    <th>รายได้ (฿)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="report-daily-body">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Top Active Rooms Leaderboard -->
+                <div class="card" style="margin-bottom: 0;">
+                    <h2 class="section-title">🏆 อันดับห้องพักที่ใช้บริการสูงสุด (Top 15 Active Rooms)</h2>
+                    <div class="table-responsive" style="max-height: 380px; overflow-y: auto;">
+                        <table class="schedule-table">
+                            <thead>
+                                <tr>
+                                    <th>อันดับ</th>
+                                    <th>เลขห้อง</th>
+                                    <th>รายชื่อผู้เข้าพัก</th>
+                                    <th>จองรวม</th>
+                                    <th>🎮/🧊/🚲</th>
+                                    <th>รายได้ (฿)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="report-top-rooms-body">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. RAW DATA EXPLORER TABLE -->
+            <div class="card" style="margin-top: 24px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
+                    <div>
+                        <h2 class="section-title" style="margin: 0; border: none; padding: 0;">📋 ตารางข้อมูลการจองละเอียด (Detailed Booking Logs)</h2>
+                        <div style="font-size: 13px; color: var(--bc-muted); margin-top: 2px;">ค้นหาและตรวจสอบรายการจองทุกใบในช่วงเวลาที่เลือก</div>
+                    </div>
+                    <div class="no-print" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <input type="text" id="reportSearchInput" class="admin-input" placeholder="🔎 ค้นหาเลขห้อง / ชื่อลูกค้า / รหัสจอง..." style="width: 250px; padding: 8px 12px;" oninput="filterReportRecordsTable()">
+                        <select id="reportStatusFilter" class="admin-input" style="width: auto; padding: 8px 12px;" onchange="filterReportRecordsTable()">
+                            <option value="all">ทุกสถานะ (All Status)</option>
+                            <option value="used">✅ เข้าใช้งานแล้ว (Completed / Checked-in)</option>
+                            <option value="booked">🟡 รอรับบริการ (Booked)</option>
+                            <option value="cancelled">❌ ยกเลิก (Cancelled)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-responsive" style="max-height: 460px; overflow-y: auto;">
+                    <table class="schedule-table">
+                        <thead>
+                            <tr>
+                                <th>วันที่</th>
+                                <th>รหัสจอง</th>
+                                <th>บริการ & ตัวเลือก</th>
+                                <th>เวลาจอง / รับ-คืน</th>
+                                <th>ห้องพัก</th>
+                                <th>ชื่อผู้จอง</th>
+                                <th>สถานะ</th>
+                                <th>ค่าบริการ (฿)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="report-records-body">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <script src="js/admin.js?v=1793620000000"></script>
+    <script src="js/admin.js?v=1793850000000"></script>
 </body>
 </html>

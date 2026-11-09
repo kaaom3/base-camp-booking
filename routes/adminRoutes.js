@@ -14,4 +14,7 @@ router.get('/bicycles/fleet', adminController.getBicycleFleet);
 router.post('/bicycles/handover', adminController.handoverBicycle);
 router.post('/bicycles/return', adminController.returnBicycle);
 
+// Comprehensive Reports & Statistics
+router.get('/reports', adminController.getReports);
+
 module.exports = router;

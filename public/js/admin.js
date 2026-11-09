@@ -60,6 +60,8 @@ function switchTab(tabId) {
         loadBicycleFleet();
     } else if (tabId === 'facility') {
         loadFacilityStatus();
+    } else if (tabId === 'reports') {
+        loadReportsData();
     } else {
         loadSchedule();
     }
@@ -930,4 +932,637 @@ async function returnBike(ref, bikeNum) {
     } catch (e) {
         await customAlert(e.message);
     }
+}
+
+
+// ================= COMPREHENSIVE REPORTS & ANALYTICS =================
+
+let currentReportData = null;
+
+function formatBangkokDate(dateObj) {
+    return dateObj.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+}
+
+function clearPresetHighlight() {
+    document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+}
+
+function applyReportPreset(preset) {
+    clearPresetHighlight();
+    const targetBtn = document.getElementById(`preset-${preset}`);
+    if (targetBtn) targetBtn.classList.add('active');
+
+    const now = new Date();
+    const todayStr = formatBangkokDate(now);
+    const [curY, curM, curD] = todayStr.split('-').map(Number);
+
+    let startStr = '';
+    let endStr = '';
+
+    if (preset === 'today') {
+        startStr = todayStr;
+        endStr = todayStr;
+    } else if (preset === 'yesterday') {
+        const yest = new Date(curY, curM - 1, curD - 1);
+        startStr = formatBangkokDate(yest);
+        endStr = startStr;
+    } else if (preset === '7d') {
+        const d7 = new Date(curY, curM - 1, curD - 6);
+        startStr = formatBangkokDate(d7);
+        endStr = todayStr;
+    } else if (preset === '30d') {
+        const d30 = new Date(curY, curM - 1, curD - 29);
+        startStr = formatBangkokDate(d30);
+        endStr = todayStr;
+    } else if (preset === 'this_month') {
+        startStr = `${curY}-${String(curM).padStart(2, '0')}-01`;
+        endStr = todayStr;
+    } else if (preset === 'last_month') {
+        const firstDayLastMonth = new Date(curY, curM - 2, 1);
+        const lastDayLastMonth = new Date(curY, curM - 1, 0);
+        startStr = formatBangkokDate(firstDayLastMonth);
+        endStr = formatBangkokDate(lastDayLastMonth);
+    } else if (preset === 'this_year') {
+        startStr = `${curY}-01-01`;
+        endStr = todayStr;
+    } else {
+        // 'all'
+        startStr = '';
+        endStr = '';
+    }
+
+    document.getElementById('reportStartDate').value = startStr;
+    document.getElementById('reportEndDate').value = endStr;
+
+    loadReportsData();
+}
+
+async function loadReportsData() {
+    const startDate = document.getElementById('reportStartDate').value || '';
+    const endDate = document.getElementById('reportEndDate').value || '';
+    const facility = document.getElementById('reportFacility').value || 'all';
+
+    const periodTextEl = document.getElementById('report-period-text');
+    if (periodTextEl) periodTextEl.textContent = '⏳ กำลังประมวลผลข้อมูลสถิติ...';
+
+    try {
+        const params = new URLSearchParams();
+        if (startDate) params.append('startDate', startDate);
+        if (endDate) params.append('endDate', endDate);
+        if (facility) params.append('facility', facility);
+
+        const res = await fetch(`${API_BASE}/api/admin/reports?${params.toString()}`, {
+            headers: { 'ngrok-skip-browser-warning': '69420' }
+        });
+
+        const contentType = res.headers.get('content-type') || '';
+        if (!res.ok || !contentType.includes('application/json')) {
+            throw new Error('เซิร์ฟเวอร์ยังไม่ได้อัปเดต API รายงาน (กรุณารัน git pull และ pm2 restart บนเซิร์ฟเวอร์)');
+        }
+
+        const data = await res.json();
+        currentReportData = data;
+
+        const facNames = {
+            all: 'ทุกบริการ (All Facilities)',
+            game_room: '🎮 ห้องเกมส์ (Game Room)',
+            ice_bath: '🧊 บ่อน้ำแข็ง (Ice Bath)',
+            bicycle: '🚲 จักรยาน (Bicycle)'
+        };
+
+        const rangeLabel = (data.filters.startDate && data.filters.endDate)
+            ? `${data.filters.startDate} ถึง ${data.filters.endDate}`
+            : 'ทั้งหมดตั้งแต่เปิดระบบ';
+
+        if (periodTextEl) {
+            periodTextEl.textContent = `${rangeLabel} • [${facNames[facility] || 'ทุกบริการ'}]`;
+        }
+
+        const genAtEl = document.getElementById('report-generated-at');
+        if (genAtEl) {
+            genAtEl.textContent = `อัปเดตล่าสุด: ${new Date().toLocaleTimeString('th-TH')} น.`;
+        }
+
+        renderReportKPIs(data);
+        renderReportFacilities(data);
+        renderReportTimeAndHourly(data);
+        renderReportDowAndMonthly(data);
+        renderReportDailyAndTopRooms(data);
+        filterReportRecordsTable();
+
+    } catch (e) {
+        console.error(e);
+        if (periodTextEl) periodTextEl.textContent = '⚠️ ไม่สามารถโหลดรายงานได้: ' + e.message;
+    }
+}
+
+function renderReportKPIs(data) {
+    const container = document.getElementById('report-kpi-container');
+    if (!container) return;
+    const s = data.summary;
+
+    const sameDayPct = s.totalBookings > 0 ? Math.round((s.sameDayBookings / s.totalBookings) * 100) : 0;
+    const advPct = s.totalBookings > 0 ? (100 - sameDayPct) : 0;
+
+    container.innerHTML = `
+        <div class="kpi-card">
+            <div class="kpi-label"><span>📌 ยอดการจองทั้งหมด (Total Bookings)</span><span>📋</span></div>
+            <div class="kpi-value" style="color: var(--bc-blue);">${s.totalBookings.toLocaleString()} <span style="font-size:15px; font-weight:500;">รายการ</span></div>
+            <div class="kpi-sub">สำเร็จ/เข้าใช้ <strong>${s.usedCount}</strong> • รอรับบริการ <strong>${s.bookedCount}</strong> • ยกเลิก <strong>${s.cancelledCount}</strong></div>
+        </div>
+
+        <div class="kpi-card accent-green">
+            <div class="kpi-label"><span>✅ อัตราการเข้าใช้งานจริง (Utilization Rate)</span><span>📈</span></div>
+            <div class="kpi-value" style="color: #059669;">${s.utilizationRate}%</div>
+            <div class="kpi-sub">เข้าใช้บริการจริง <strong>${s.usedCount}</strong> จาก ${s.totalBookings} รายการ</div>
+        </div>
+
+        <div class="kpi-card accent-red">
+            <div class="kpi-label"><span>❌ อัตราการยกเลิก / No-Show</span><span>⚠️</span></div>
+            <div class="kpi-value" style="color: #dc2626;">${s.cancellationRate}%</div>
+            <div class="kpi-sub">ถูกยกเลิก/ตัดสิทธิ์รวม <strong>${s.cancelledCount}</strong> รายการ</div>
+        </div>
+
+        <div class="kpi-card accent-orange">
+            <div class="kpi-label"><span>💰 รายได้บ่อน้ำแข็งสุทธิ (Ice Bath Revenue)</span><span>🧊</span></div>
+            <div class="kpi-value" style="color: var(--bc-orange);">฿${s.realizedRevenue.toLocaleString()}</div>
+            <div class="kpi-sub">คาดการณ์รวม ฿${s.expectedRevenue.toLocaleString()} • เสียโอกาสจากยกเลิก ฿${s.lostRevenue.toLocaleString()}</div>
+        </div>
+
+        <div class="kpi-card accent-purple">
+            <div class="kpi-label"><span>🏨 จำนวนห้องพักและผู้เข้าพักที่ใช้บริการ</span><span>👥</span></div>
+            <div class="kpi-value" style="color: #7c3aed;">${s.uniqueRooms} <span style="font-size:15px; font-weight:500;">ห้อง</span> / ${s.uniqueGuests} <span style="font-size:15px; font-weight:500;">ท่าน</span></div>
+            <div class="kpi-sub">เฉลี่ยห้องละ <strong>${s.avgBookingsPerRoom}</strong> ครั้ง</div>
+        </div>
+
+        <div class="kpi-card accent-cyan">
+            <div class="kpi-label"><span>📅 ความหนาแน่นการใช้งานรายวัน</span><span>📊</span></div>
+            <div class="kpi-value" style="color: #0891b2;">${s.avgBookingsPerActiveDay} <span style="font-size:15px; font-weight:500;">คิว/วัน</span></div>
+            <div class="kpi-sub">มีการใช้งาน <strong>${s.activeDaysCount}</strong> วัน • วันสูงสุด: <strong>${s.busiestDate.date}</strong> (${s.busiestDate.count} คิว)</div>
+        </div>
+
+        <div class="kpi-card accent-yellow">
+            <div class="kpi-label"><span>🔥 ช่วงเวลาและวันยอดนิยมสูงสุด (Peak Time)</span><span>⏰</span></div>
+            <div class="kpi-value" style="color: #d97706; font-size: 22px;">${s.peakHour.hour} น. <span style="font-size:14px; font-weight:500;">(${s.peakHour.count} คิว)</span></div>
+            <div class="kpi-sub">วันยอดฮิตประจำสัปดาห์: <strong>${s.peakDayOfWeek.dayNameTh}</strong> (${s.peakDayOfWeek.count} คิว)</div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-label"><span>⏳ พฤติกรรมการจองล่วงหน้า (Lead Time)</span><span>🗓️</span></div>
+            <div class="kpi-value" style="color: #1e293b; font-size: 22px;">วันเดียวกัน ${sameDayPct}% / ล่วงหน้า ${advPct}%</div>
+            <div class="kpi-sub">จองวันใช้งานจริง <strong>${s.sameDayBookings}</strong> ครั้ง • จองข้ามวันล่วงหน้า <strong>${s.advanceBookings}</strong> ครั้ง</div>
+        </div>
+    `;
+}
+
+function renderReportFacilities(data) {
+    const container = document.getElementById('report-facility-cards');
+    if (!container) return;
+
+    const gr = data.facilityBreakdown.gameRoom;
+    const ib = data.facilityBreakdown.iceBath;
+    const bk = data.facilityBreakdown.bicycle;
+
+    const ps5Pct = gr.total > 0 ? Math.round((gr.ps5.total / gr.total) * 100) : 0;
+    const ninPct = gr.total > 0 ? Math.round((gr.nintendo.total / gr.total) * 100) : 0;
+
+    const malePct = ib.total > 0 ? Math.round((ib.male.total / ib.total) * 100) : 0;
+    const femalePct = ib.total > 0 ? Math.round((ib.female.total / ib.total) * 100) : 0;
+    const bothPct = ib.total > 0 ? Math.round((ib.both.total / ib.total) * 100) : 0;
+
+    const adultBikePct = bk.total > 0 ? Math.round((bk.adult.total / bk.total) * 100) : 0;
+    const kidsBikePct = bk.total > 0 ? Math.round((bk.kids.total / bk.total) * 100) : 0;
+
+    const perBikeRows = bk.perBike.map(pb => `
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size:12.5px; padding:4px 0; border-bottom:1px dashed #e2e8f0;">
+            <span><strong>#${pb.bikeNumber}</strong> ${pb.bikeType === 'kids' ? '🚲🧒 เด็ก (มีล้อประคอง)' : '🚴‍♂️ ผู้ใหญ่'}</span>
+            <span>ยืม <strong>${pb.total}</strong> ครั้ง (สำเร็จ ${pb.used} / ยกเลิก ${pb.cancelled}) ${pb.avgRideMinutes > 0 ? `• เฉลี่ย ${pb.avgRideMinutes} นาที` : ''}</span>
+        </div>
+    `).join('');
+
+    container.innerHTML = `
+        <!-- 1. GAME ROOM CARD -->
+        <div class="card" style="margin-bottom: 0; border-top: 5px solid var(--bc-blue);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <h3 style="margin:0; color:var(--bc-blue); font-size:18px;">🎮 ห้องเกมส์ (Game Room)</h3>
+                <span style="background:#eef2ff; color:var(--bc-blue); font-weight:700; padding:4px 12px; border-radius:20px; font-size:13px;">รวม ${gr.total} คิว</span>
+            </div>
+
+            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; text-align:center; background:#f8fafc; padding:10px; border-radius:10px; margin-bottom:16px; border:1px solid var(--bc-border);">
+                <div>
+                    <div style="font-size:11.5px; color:var(--bc-muted);">เข้าเล่นจริง</div>
+                    <div style="font-size:18px; font-weight:700; color:#059669;">${gr.used}</div>
+                </div>
+                <div>
+                    <div style="font-size:11.5px; color:var(--bc-muted);">ชั่วโมงเล่นรวม</div>
+                    <div style="font-size:18px; font-weight:700; color:var(--bc-blue);">${gr.totalHoursPlayed} ชม.</div>
+                </div>
+                <div>
+                    <div style="font-size:11.5px; color:var(--bc-muted);">ยกเลิก</div>
+                    <div style="font-size:18px; font-weight:700; color:#dc2626;">${gr.cancelled}</div>
+                </div>
+            </div>
+
+            <div class="stat-bar-row">
+                <div class="stat-bar-header">
+                    <span>🕹️ <strong>PlayStation 5 (PS5)</strong></span>
+                    <span><strong>${gr.ps5.total}</strong> ครั้ง (${ps5Pct}%) • เล่นจริง ${gr.ps5.used}</span>
+                </div>
+                <div class="stat-bar-track">
+                    <div class="stat-bar-fill" style="width:${ps5Pct}%; background:var(--bc-blue);"></div>
+                </div>
+            </div>
+
+            <div class="stat-bar-row">
+                <div class="stat-bar-header">
+                    <span>🍄 <strong>Nintendo Switch</strong></span>
+                    <span><strong>${gr.nintendo.total}</strong> ครั้ง (${ninPct}%) • เล่นจริง ${gr.nintendo.used}</span>
+                </div>
+                <div class="stat-bar-track">
+                    <div class="stat-bar-fill" style="width:${ninPct}%; background:var(--bc-orange);"></div>
+                </div>
+            </div>
+
+            <div style="margin-top:14px; font-size:12.5px; color:var(--bc-muted); background:#f8fafc; padding:8px 12px; border-radius:8px;">
+                ⏰ รอบเวลายอดฮิตของห้องเกมส์: <strong style="color:var(--bc-text);">${gr.peakHour.hour} น.</strong> (${gr.peakHour.count} ครั้ง)
+            </div>
+        </div>
+
+        <!-- 2. ICE BATH CARD -->
+        <div class="card" style="margin-bottom: 0; border-top: 5px solid #0284c7;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <h3 style="margin:0; color:#0284c7; font-size:18px;">🧊 บ่อน้ำแข็ง (Ice Bath)</h3>
+                <span style="background:#e0f2fe; color:#0369a1; font-weight:700; padding:4px 12px; border-radius:20px; font-size:13px;">รวม ${ib.total} คิว</span>
+            </div>
+
+            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; text-align:center; background:#f8fafc; padding:10px; border-radius:10px; margin-bottom:16px; border:1px solid var(--bc-border);">
+                <div>
+                    <div style="font-size:11.5px; color:var(--bc-muted);">ผู้ลงบ่อจริง</div>
+                    <div style="font-size:18px; font-weight:700; color:#0284c7;">${ib.realizedBathers} ท่าน</div>
+                </div>
+                <div>
+                    <div style="font-size:11.5px; color:var(--bc-muted);">รายได้สุทธิ</div>
+                    <div style="font-size:18px; font-weight:700; color:#059669;">฿${ib.realizedRevenue.toLocaleString()}</div>
+                </div>
+                <div>
+                    <div style="font-size:11.5px; color:var(--bc-muted);">ยกเลิก</div>
+                    <div style="font-size:18px; font-weight:700; color:#dc2626;">${ib.cancelled} (฿${ib.lostRevenue})</div>
+                </div>
+            </div>
+
+            <div class="stat-bar-row">
+                <div class="stat-bar-header">
+                    <span>🚹 <strong>บ่อชาย (Male - 150฿)</strong></span>
+                    <span><strong>${ib.male.total}</strong> คิว (${malePct}%) • ฿${ib.male.revenue.toLocaleString()}</span>
+                </div>
+                <div class="stat-bar-track">
+                    <div class="stat-bar-fill" style="width:${malePct}%; background:#0284c7;"></div>
+                </div>
+            </div>
+
+            <div class="stat-bar-row">
+                <div class="stat-bar-header">
+                    <span>🚺 <strong>บ่อหญิง (Female - 150฿)</strong></span>
+                    <span><strong>${ib.female.total}</strong> คิว (${femalePct}%) • ฿${ib.female.revenue.toLocaleString()}</span>
+                </div>
+                <div class="stat-bar-track">
+                    <div class="stat-bar-fill" style="width:${femalePct}%; background:#ec4899;"></div>
+                </div>
+            </div>
+
+            <div class="stat-bar-row">
+                <div class="stat-bar-header">
+                    <span>👫 <strong>คู่ ชาย+หญิง (Both - 300฿)</strong></span>
+                    <span><strong>${ib.both.total}</strong> คิว (${bothPct}%) • ฿${ib.both.revenue.toLocaleString()}</span>
+                </div>
+                <div class="stat-bar-track">
+                    <div class="stat-bar-fill" style="width:${bothPct}%; background:#8b5cf6;"></div>
+                </div>
+            </div>
+
+            <div style="margin-top:14px; font-size:12.5px; color:var(--bc-muted); background:#f8fafc; padding:8px 12px; border-radius:8px;">
+                ⏰ รอบเวลายอดฮิตของบ่อน้ำแข็ง: <strong style="color:var(--bc-text);">${ib.peakHour.hour} น.</strong> (${ib.peakHour.count} ครั้ง)
+            </div>
+        </div>
+
+        <!-- 3. BICYCLE FLEET CARD -->
+        <div class="card" style="margin-bottom: 0; border-top: 5px solid var(--bc-orange);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <h3 style="margin:0; color:var(--bc-orange); font-size:18px;">🚲 บริการจักรยาน (Bicycles)</h3>
+                <span style="background:#ffedd5; color:#c2410c; font-weight:700; padding:4px 12px; border-radius:20px; font-size:13px;">รวม ${bk.total} ครั้ง</span>
+            </div>
+
+            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; text-align:center; background:#f8fafc; padding:10px; border-radius:10px; margin-bottom:14px; border:1px solid var(--bc-border);">
+                <div>
+                    <div style="font-size:11.5px; color:var(--bc-muted);">รับรถ/คืนแล้ว</div>
+                    <div style="font-size:18px; font-weight:700; color:#059669;">${bk.used}</div>
+                </div>
+                <div>
+                    <div style="font-size:11.5px; color:var(--bc-muted);">เวลาปั่นเฉลี่ย</div>
+                    <div style="font-size:18px; font-weight:700; color:var(--bc-orange);">${bk.rideDuration.avgMinutes} นาที</div>
+                </div>
+                <div>
+                    <div style="font-size:11.5px; color:var(--bc-muted);">ยกเลิก/เกิน30นาที</div>
+                    <div style="font-size:18px; font-weight:700; color:#dc2626;">${bk.cancelled}</div>
+                </div>
+            </div>
+
+            <div class="stat-bar-row">
+                <div class="stat-bar-header">
+                    <span>🚴‍♂️ <strong>จักรยานผู้ใหญ่ (#1-#3)</strong></span>
+                    <span><strong>${bk.adult.total}</strong> ครั้ง (${adultBikePct}%)</span>
+                </div>
+                <div class="stat-bar-track">
+                    <div class="stat-bar-fill" style="width:${adultBikePct}%; background:var(--bc-blue);"></div>
+                </div>
+            </div>
+
+            <div class="stat-bar-row">
+                <div class="stat-bar-header">
+                    <span>🚲🧒 <strong>จักรยานเด็ก มีล้อประคอง (#4-#5)</strong></span>
+                    <span><strong>${bk.kids.total}</strong> ครั้ง (${kidsBikePct}%)</span>
+                </div>
+                <div class="stat-bar-track">
+                    <div class="stat-bar-fill" style="width:${kidsBikePct}%; background:var(--bc-orange);"></div>
+                </div>
+            </div>
+
+            <div style="margin-top:10px; background:#f8fafc; padding:8px 12px; border-radius:8px; border:1px solid var(--bc-border);">
+                <div style="font-size:12px; font-weight:700; color:var(--bc-text); margin-bottom:4px;">📊 สถิติรายคัน (Bike #1 - #5):</div>
+                ${perBikeRows}
+            </div>
+        </div>
+    `;
+}
+
+function renderReportTimeAndHourly(data) {
+    const todContainer = document.getElementById('report-time-of-day-grid');
+    const hourlyContainer = document.getElementById('report-hourly-chart');
+    if (!todContainer || !hourlyContainer) return;
+
+    const totalAll = data.summary.totalBookings || 1;
+    const periodIcons = {
+        morning: '🌅',
+        afternoon: '☀️',
+        evening: '🌇',
+        night: '🌙'
+    };
+
+    todContainer.innerHTML = data.timeOfDayBreakdown.map(p => {
+        const pct = data.summary.totalBookings > 0 ? Math.round((p.total / totalAll) * 100) : 0;
+        return `
+            <div style="background:#f8fafc; border:1.5px solid var(--bc-border); border-radius:12px; padding:14px 16px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <span style="font-weight:700; font-size:14px;">${periodIcons[p.key] || '⏰'} ${p.label}</span>
+                    <span style="font-weight:700; color:var(--bc-blue); font-size:15px;">${pct}%</span>
+                </div>
+                <div style="font-size:22px; font-weight:700; color:var(--bc-text); margin-bottom:6px;">${p.total} <span style="font-size:13px; font-weight:500; color:var(--bc-muted);">รายการ</span></div>
+                <div class="stat-bar-track" style="margin-bottom:8px;">
+                    <div class="stat-bar-fill" style="width:${pct}%; background:var(--bc-blue);"></div>
+                </div>
+                <div style="font-size:12px; color:var(--bc-muted);">
+                    🎮 เกม <strong>${p.game_room}</strong> • 🧊 น้ำแข็ง <strong>${p.ice_bath}</strong> • 🚲 จักรยาน <strong>${p.bicycle}</strong>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    // Hourly Chart
+    const maxHourly = Math.max(...data.hourlyDistribution.map(h => h.total), 1);
+    hourlyContainer.innerHTML = data.hourlyDistribution.map(h => {
+        const heightPct = Math.max(Math.round((h.total / maxHourly) * 125), 4);
+        const isPeak = h.total === maxHourly && h.total > 0;
+        return `
+            <div class="hourly-col" title="${h.hour} น. : รวม ${h.total} คิว (เกม ${h.game_room}, น้ำแข็ง ${h.ice_bath}, จักรยาน ${h.bicycle})">
+                <div class="hourly-val">${h.total}</div>
+                <div class="hourly-bar ${isPeak ? 'peak' : ''}" style="height: ${heightPct}px;"></div>
+                <div class="hourly-lbl">${h.hour.slice(0, 2)}:00</div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderReportDowAndMonthly(data) {
+    const dowContainer = document.getElementById('report-dow-container');
+    const monthlyBody = document.getElementById('report-monthly-body');
+    if (!dowContainer || !monthlyBody) return;
+
+    const maxDow = Math.max(...data.dayOfWeekDistribution.map(d => d.total), 1);
+    dowContainer.innerHTML = data.dayOfWeekDistribution.map(d => {
+        const pct = Math.round((d.total / maxDow) * 100);
+        const isWeekend = d.dayIndex === 0 || d.dayIndex === 6;
+        return `
+            <div class="stat-bar-row">
+                <div class="stat-bar-header">
+                    <span>${isWeekend ? '🔥' : '📅'} <strong>${d.dayNameTh} (${d.dayNameEn})</strong></span>
+                    <span>รวม <strong>${d.total}</strong> คิว (🎮${d.game_room} / 🧊${d.ice_bath} / 🚲${d.bicycle}) • ฿${d.revenue.toLocaleString()}</span>
+                </div>
+                <div class="stat-bar-track">
+                    <div class="stat-bar-fill" style="width:${pct}%; background:${isWeekend ? 'var(--bc-orange)' : 'var(--bc-blue)'};"></div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    if (data.monthlyTrend.length === 0) {
+        monthlyBody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#888; padding:20px;">ไม่มีข้อมูลในช่วงเวลาที่เลือก</td></tr>`;
+    } else {
+        monthlyBody.innerHTML = [...data.monthlyTrend].reverse().map(m => `
+            <tr>
+                <td><strong>${m.month}</strong></td>
+                <td><strong style="color:var(--bc-blue);">${m.total}</strong></td>
+                <td>${m.game_room}</td>
+                <td>${m.ice_bath}</td>
+                <td>${m.bicycle}</td>
+                <td><span style="color:#059669; font-weight:600;">${m.used}</span></td>
+                <td>${m.uniqueRooms} ห้อง</td>
+                <td><strong style="color:var(--bc-orange);">฿${m.revenue.toLocaleString()}</strong></td>
+            </tr>
+        `).join('');
+    }
+}
+
+function renderReportDailyAndTopRooms(data) {
+    const dailyBody = document.getElementById('report-daily-body');
+    const roomsBody = document.getElementById('report-top-rooms-body');
+    if (!dailyBody || !roomsBody) return;
+
+    if (data.dailyTrend.length === 0) {
+        dailyBody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#888; padding:20px;">ไม่มีข้อมูลรายวัน</td></tr>`;
+    } else {
+        dailyBody.innerHTML = [...data.dailyTrend].reverse().map(d => `
+            <tr>
+                <td><strong>${d.date}</strong></td>
+                <td><strong style="color:var(--bc-blue);">${d.total}</strong></td>
+                <td>${d.game_room}</td>
+                <td>${d.ice_bath}</td>
+                <td>${d.bicycle}</td>
+                <td><span style="color:#059669; font-weight:600;">${d.used}</span></td>
+                <td><span style="color:#dc2626;">${d.cancelled}</span></td>
+                <td><strong>฿${d.revenue.toLocaleString()}</strong></td>
+            </tr>
+        `).join('');
+    }
+
+    if (data.topRooms.length === 0) {
+        roomsBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#888; padding:20px;">ไม่มีข้อมูลห้องพัก</td></tr>`;
+    } else {
+        roomsBody.innerHTML = data.topRooms.map((r, idx) => {
+            const medal = idx === 0 ? '🥇' : (idx === 1 ? '🥈' : (idx === 2 ? '🥉' : `#${idx + 1}`));
+            return `
+                <tr>
+                    <td><strong>${medal}</strong></td>
+                    <td><strong style="color:var(--bc-orange); font-size:15px;">ห้อง ${r.roomNumber}</strong></td>
+                    <td style="font-size:12.5px; color:#475569; max-width:200px;">${r.guests.join(', ') || '-'}</td>
+                    <td><strong style="color:var(--bc-blue);">${r.total} ครั้ง</strong> <span style="font-size:11.5px; color:#64748b;">(ใช้จริง ${r.used})</span></td>
+                    <td style="font-size:12.5px;">🎮${r.game_room} • 🧊${r.ice_bath} • 🚲${r.bicycle}</td>
+                    <td><strong style="color:#059669;">฿${r.revenue.toLocaleString()}</strong></td>
+                </tr>
+            `;
+        }).join('');
+    }
+}
+
+function filterReportRecordsTable() {
+    const tbody = document.getElementById('report-records-body');
+    if (!tbody || !currentReportData) return;
+
+    const searchQ = (document.getElementById('reportSearchInput')?.value || '').trim().toLowerCase();
+    const statusFilter = document.getElementById('reportStatusFilter')?.value || 'all';
+
+    const filtered = currentReportData.records.filter(r => {
+        if (statusFilter === 'used' && r.status !== 'completed' && r.status !== 'checked_in') return false;
+        if (statusFilter === 'booked' && r.status !== 'booked') return false;
+        if (statusFilter === 'cancelled' && r.status !== 'cancelled') return false;
+
+        if (searchQ) {
+            const haystack = `${r.bookingRef} ${r.hotelRoomNumber} ${r.guestName} ${r.bookingDate} ${r.facility}`.toLowerCase();
+            if (!haystack.includes(searchQ)) return false;
+        }
+        return true;
+    });
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#888; padding:24px;">ไม่พบรายการที่ตรงกับเงื่อนไขการค้นหา</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = filtered.map(r => {
+        const stInfo = statusMap[r.status] || { label: r.status, color: '' };
+        let timeDetail = `${r.startTime} - ${r.returnTime || r.endTime}`;
+        if (r.facility === 'bicycle') {
+            timeDetail = `นัดรับ ${r.startTime}`;
+            if (r.checkOutTime) timeDetail += ` | รับจริง ${r.checkOutTime}`;
+            if (r.returnTime) timeDetail += ` | คืน ${r.returnTime}`;
+            if (r.rideDurationMins) timeDetail += ` (${r.rideDurationMins} นาที)`;
+        }
+
+        return `
+            <tr>
+                <td style="white-space:nowrap;">${r.bookingDate}</td>
+                <td><strong>${r.bookingRef}</strong></td>
+                <td>${getFacilityBadgeHtml(r)}</td>
+                <td style="font-size:13px;">${timeDetail}</td>
+                <td><strong style="color:var(--bc-orange);">${r.hotelRoomNumber}</strong></td>
+                <td>${r.guestName}</td>
+                <td><span class="status-badge ${stInfo.color}">${stInfo.label}</span></td>
+                <td>${r.realizedRevenue > 0 ? `<strong style="color:#059669;">฿${r.realizedRevenue}</strong>` : '-'}</td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function exportReportCSV() {
+    if (!currentReportData) {
+        customAlert('กรุณารอให้ข้อมูลรายงานโหลดเสร็จสิ้นก่อนส่งออก CSV');
+        return;
+    }
+
+    const s = currentReportData.summary;
+    const gr = currentReportData.facilityBreakdown.gameRoom;
+    const ib = currentReportData.facilityBreakdown.iceBath;
+    const bk = currentReportData.facilityBreakdown.bicycle;
+
+    const lines = [];
+    const esc = (val) => `"${String(val ?? '').replace(/"/g, '""')}"`;
+
+    lines.push(['รายงานสถิติการใช้งานระบบจองบริการ Base Camp Hotel'].map(esc).join(','));
+    lines.push(['ช่วงเวลาที่รายงาน', `${currentReportData.filters.startDate || 'เริ่มต้น'} ถึง ${currentReportData.filters.endDate || 'ปัจจุบัน'}`].map(esc).join(','));
+    lines.push(['วันที่ส่งออกรายงาน', new Date().toLocaleString('th-TH')].map(esc).join(','));
+    lines.push('');
+
+    // Summary Section
+    lines.push(['=== 1. สรุปภาพรวมผู้บริหาร (Executive Summary) ==='].map(esc).join(','));
+    lines.push(['ตัวชี้วัด (Metric)', 'ค่าที่ได้ (Value)'].map(esc).join(','));
+    lines.push(['ยอดการจองรวมทั้งหมด (รายการ)', s.totalBookings].map(esc).join(','));
+    lines.push(['เข้าใช้งานจริง Completed/Checked-in (รายการ)', s.usedCount].map(esc).join(','));
+    lines.push(['รอรับบริการ Booked (รายการ)', s.bookedCount].map(esc).join(','));
+    lines.push(['ยกเลิก Cancelled (รายการ)', s.cancelledCount].map(esc).join(','));
+    lines.push(['อัตราการเข้าใช้งานจริง (%)', `${s.utilizationRate}%`].map(esc).join(','));
+    lines.push(['อัตราการยกเลิก (%)', `${s.cancellationRate}%`].map(esc).join(','));
+    lines.push(['จำนวนห้องพักที่ใช้บริการ (ห้อง)', s.uniqueRooms].map(esc).join(','));
+    lines.push(['จำนวนผู้เข้าพักที่ใช้บริการ (ท่าน)', s.uniqueGuests].map(esc).join(','));
+    lines.push(['เฉลี่ยการจองต่อห้องพัก (ครั้ง/ห้อง)', s.avgBookingsPerRoom].map(esc).join(','));
+    lines.push(['รายได้จริงจาก Ice Bath (บาท)', s.realizedRevenue].map(esc).join(','));
+    lines.push(['รายได้คาดการณ์รวม Ice Bath (บาท)', s.expectedRevenue].map(esc).join(','));
+    lines.push(['รายได้ที่เสียโอกาสจากการยกเลิก Ice Bath (บาท)', s.lostRevenue].map(esc).join(','));
+    lines.push(['ช่วงเวลายอดนิยมสูงสุด (Peak Hour)', `${s.peakHour.hour} น. (${s.peakHour.count} คิว)`].map(esc).join(','));
+    lines.push(['วันยอดนิยมในสัปดาห์ (Peak Day)', `${s.peakDayOfWeek.dayNameTh} (${s.peakDayOfWeek.count} คิว)`].map(esc).join(','));
+    lines.push('');
+
+    // Facility Breakdown
+    lines.push(['=== 2. สถิติแยกตามประเภทบริการ (Facility Breakdown) ==='].map(esc).join(','));
+    lines.push(['บริการ', 'จองรวม', 'ใช้งานจริง', 'ยกเลิก', 'รายละเอียดเพิ่มเติม'].map(esc).join(','));
+    lines.push(['ห้องเกมส์ (Game Room)', gr.total, gr.used, gr.cancelled, `PS5: ${gr.ps5.total} ครั้ง | Nintendo Switch: ${gr.nintendo.total} ครั้ง | รวม ${gr.totalHoursPlayed} ชม.`].map(esc).join(','));
+    lines.push(['บ่อน้ำแข็ง (Ice Bath)', ib.total, ib.used, ib.cancelled, `ชาย: ${ib.male.total} | หญิง: ${ib.female.total} | คู่: ${ib.both.total} | ผู้ลงบ่อจริง ${ib.realizedBathers} ท่าน | รายได้จริง ${ib.realizedRevenue} บาท`].map(esc).join(','));
+    lines.push(['จักรยาน (Bicycle Fleet)', bk.total, bk.used, bk.cancelled, `ผู้ใหญ่ (#1-#3): ${bk.adult.total} ครั้ง | เด็กมีล้อประคอง (#4-#5): ${bk.kids.total} ครั้ง | เวลาปั่นเฉลี่ย ${bk.rideDuration.avgMinutes} นาที`].map(esc).join(','));
+    lines.push('');
+
+    // Detailed Records
+    lines.push(['=== 3. รายการจองละเอียดทั้งหมด (Detailed Booking Records) ==='].map(esc).join(','));
+    lines.push([
+        'วันที่ใช้บริการ',
+        'รหัสการจอง',
+        'บริการ',
+        'ตัวเลือก/เครื่อง/เบอร์รถ',
+        'เวลาเริ่มจอง',
+        'เวลาสิ้นสุด/กำหนดคืน',
+        'เวลารับรถจริง',
+        'เวลาคืนรถจริง',
+        'ระยะเวลาปั่น(นาที)',
+        'เลขห้องพัก',
+        'ชื่อผู้จอง',
+        'สถานะ',
+        'รายได้จริง(บาท)'
+    ].map(esc).join(','));
+
+    currentReportData.records.forEach(r => {
+        lines.push([
+            r.bookingDate,
+            r.bookingRef,
+            r.facility,
+            r.facilityOption,
+            r.startTime,
+            r.endTime,
+            r.checkOutTime,
+            r.returnTime,
+            r.rideDurationMins ?? '',
+            r.hotelRoomNumber,
+            r.guestName,
+            r.status,
+            r.realizedRevenue
+        ].map(esc).join(','));
+    });
+
+    const csvContent = '\uFEFF' + lines.join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const todayStr = formatBangkokDate(new Date());
+    link.href = url;
+    link.setAttribute('download', `BaseCamp_Analytics_Report_${todayStr}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 }
