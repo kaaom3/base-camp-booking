@@ -624,8 +624,8 @@
                 terms: "ข้าพเจ้ายินยอมปฏิบัติตามกฎความปลอดภัยในการขับขี่ หากจองล่วงหน้าจะมารับภายใน 30 นาที และจะนำจักรยานพร้อมกุญแจมาส่งคืนเจ้าหน้าที่เมื่อใช้งานเสร็จสิ้น",
                 btnSubmit: "ยืนยันการจองจักรยาน",
                 backLink: "← กลับหน้าเลือกบริการ (Back to Services)",
-                bikeAdult: (n) => `จักรยานผู้ใหญ่ #${n}`,
-                bikeKids: (n) => `จักรยานเด็ก #${n}`,
+                bikeAdult: (n) => `จักรยานผู้ใหญ่ คันที่ ${n}`,
+                bikeKids: (n) => `จักรยานเด็ก (มีล้อประคอง) คันที่ ${n}`,
                 trainingWheels: "🛞 ล้อประคอง",
                 statusAvail: "ว่าง",
                 statusAvailDeadline: (t) => `คืนก่อน ${t} น.`,
@@ -672,7 +672,7 @@
                 btnSubmit: "Confirm Bicycle Booking",
                 backLink: "← Back to Service Menu",
                 bikeAdult: (n) => `Adult Bike #${n}`,
-                bikeKids: (n) => `Kids Bike #${n}`,
+                bikeKids: (n) => `Kids Bike (with Stabilizers) #${n}`,
                 trainingWheels: "🛞 Stabilizers",
                 statusAvail: "Available",
                 statusAvailDeadline: (t) => `Return by ${t}`,
@@ -899,7 +899,7 @@
             const buildCard = (b) => {
                 const isSelected = selectedBikes.includes(b.bikeNumber);
                 const isAvailable = b.isAvailable;
-                const isKids = b.bikeType === 'kids';
+                const isKids = Number(b.bikeNumber) >= 4 || b.bikeType === 'kids';
 
                 let tagClass = 'tag-avail';
                 let tagText = t.statusAvail;
@@ -1049,7 +1049,7 @@
 
             const t = I18N[currentLang];
             const bikesList = data.bookings.map(b => {
-                const isKids = b.bikeNumber >= 4;
+                const isKids = Number(b.bikeNumber) >= 4 || b.bikeType === 'kids';
                 const name = isKids ? t.bikeKids(b.bikeNumber) : t.bikeAdult(b.bikeNumber);
                 return `${name} ${isKids ? `(${t.trainingWheels})` : ''}`;
             }).join(', ');

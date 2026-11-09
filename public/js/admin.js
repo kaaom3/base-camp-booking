@@ -857,13 +857,15 @@ function renderAdminBicycleFleet(fleet) {
             `;
         }
 
+        const bikeTitle = isKids ? `จักรยานเด็ก (มีล้อประคอง) คันที่ ${b.bikeNumber}` : `จักรยานผู้ใหญ่ คันที่ ${b.bikeNumber}`;
+
         html += `
             <div style="background:#ffffff; border:1.5px solid #e2e8f0; border-left: 6px solid ${borderColor}; border-radius:12px; padding:18px 22px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
                 <div style="display:flex; align-items:center; gap:18px;">
                     <div style="font-size:36px; background:#f8fafc; width:64px; height:64px; display:flex; align-items:center; justify-content:center; border-radius:12px; border:1px solid #e2e8f0;">${bikeIcon}</div>
                     <div>
                         <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                            <h3 style="margin:0; font-family:'Kanit',sans-serif; font-size:18px; color:#1e293b;">${b.name || `จักรยานคันที่ ${b.bikeNumber}`} (BIKE #${b.bikeNumber})</h3>
+                            <h3 style="margin:0; font-family:'Kanit',sans-serif; font-size:18px; color:#1e293b;">${bikeTitle} (BIKE #${b.bikeNumber})</h3>
                             ${typeBadge}
                             <span style="font-size:12px; padding:3px 12px; border-radius:20px; font-weight:600;" class="${badgeClass}">${badgeLabel}</span>
                         </div>
